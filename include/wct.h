@@ -22,7 +22,13 @@ typedef int (*wct_call_fn)(const char *id, const char *const *args, size_t argc,
 typedef struct { char *id; wct_call *calls; size_t call_count; wct_relation *relations; size_t relation_count; } wct_relation_graph;
 
 typedef struct { size_t max_steps; size_t max_flows; unsigned seed; } wct_limits;
-typedef struct { size_t steps; size_t covered; size_t failures; char *error; } wct_report;
+typedef struct {
+    size_t steps;
+    size_t covered;
+    size_t failures;
+    size_t uncovered;
+    char *error;
+} wct_report;
 
 void wct_state_graph_free(wct_state_graph *g);
 void wct_relation_graph_free(wct_relation_graph *g);
