@@ -75,7 +75,7 @@ Your next move: run `$start-work wise-combine-test` in a worker session after th
   Acceptance criteria (agent-executable): `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug` exits 0; `cmake --build build --parallel` exits 0; `(cd build && ctest --output-on-failure)` reports 1/1 smoke test passed on CTest 3.16; compiler warnings are enabled and no third-party package is required.
   QA scenarios (name the exact tool + invocation): happy `(cd build && ctest --output-on-failure)`; failure `cmake -S . -B /tmp/wise-combine-invalid -G 'DefinitelyNotAGenerator'` must exit non-zero and its diagnostic is captured in `.omo/evidence/wise-combine-test/task-1-wise-combine-test.log`; Evidence `.omo/evidence/wise-combine-test/task-1-wise-combine-test.log`
   Commit: Y | build(skeleton): add reproducible CMake and CTest baseline
-- [ ] 2. Implement typed state/function/relation domain model
+- [x] 2. Implement typed state/function/relation domain model
   What to do / Must NOT do: Add headers and sources under `src/model/` for states, transitions, functions, parameters, argument edges, ordering constraints, limits, and observed outcomes with explicit invariants and error types. State-transition self-loops and longer cycles are valid; relation/order self-edges and contradictory ordering are invalid. Use C++20; do not parse files or invoke external code here.
   Parallelization: Wave 1 | Blocked by: 1 | Blocks: 3
   References (executor has NO interview context - be exhaustive): `AGENTS.md:8-11`; planned `src/model/`; `.omo/drafts/wise-combine-test.md` Components/model and Decisions
