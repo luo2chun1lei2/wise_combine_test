@@ -1,0 +1,1 @@
+{"version":1,"states":[{"id":"done"},{"id":"idle"}],"initial_state":"idle","transitions":[{"id":"finish","from":"idle","to":"done","function":"finish","expect":{"state":"done"}}],"functions":[{"id":"finish","params":[],"returns":[]}],"relations":[],"limits":{"max_cases":1,"max_steps":1,"max_subprocesses":1},"seed":1}

@@ -1,0 +1,7 @@
+#!/bin/sh
+if grep -q '"function":"produce"' ; then
+  state=ready
+else
+  state=done
+fi
+printf '{"protocol":1,"status":"ok","observed_state":"%s","returns":{},"stderr":""}\n' "$state"

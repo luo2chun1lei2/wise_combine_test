@@ -44,6 +44,12 @@ endif()
 add_executable(wise-combine-smoke src/smoke.cpp)
 target_link_libraries(wise-combine-smoke PRIVATE wise-combine-compile-options)
 
+add_executable(wise-combine src/main.cpp src/cli/cli.cpp)
+target_include_directories(wise-combine PRIVATE src)
+target_link_libraries(wise-combine PRIVATE wise-combine-report wise-combine-runtime
+  wise-combine-generate wise-combine-spec wise-combine-model
+  wise-combine-compile-options)
+
 add_executable(wise-combine-smoke-test tests/smoke_test.cpp)
 target_link_libraries(wise-combine-smoke-test PRIVATE wise-combine-compile-options)
 add_test(NAME smoke COMMAND wise-combine-smoke-test)
@@ -96,3 +102,20 @@ add_test(NAME runtime_timeout COMMAND wise-combine-runtime-test $<TARGET_FILE:wi
 add_test(NAME runtime_crash COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> crash)
 add_test(NAME runtime_output_cap COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> cap)
 set_tests_properties(runtime_timeout PROPERTIES TIMEOUT 5)
+
+add_test(NAME cli_validate COMMAND wise-combine validate
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/state_valid.json)
+add_test(NAME cli_generate COMMAND wise-combine generate
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/relation_valid.json)
+add_test(NAME cli_run COMMAND wise-combine run
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/relation_valid.json
+  --adapter ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/bin/adapter_ok
+  --reports ${CMAKE_CURRENT_BINARY_DIR}/cli-reports --run-id integration)
+add_test(NAME cli_run_failure COMMAND wise-combine run
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/relation_valid.json
+  --adapter ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/bin/adapter_mismatch
+  --reports ${CMAKE_CURRENT_BINARY_DIR}/cli-failure-reports --run-id integration-failure)
+set_tests_properties(cli_run_failure PROPERTIES WILL_FAIL TRUE)
+add_test(NAME cli_invalid COMMAND wise-combine validate
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/invalid.json)
+set_tests_properties(cli_invalid PROPERTIES WILL_FAIL TRUE)

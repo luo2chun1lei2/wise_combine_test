@@ -103,7 +103,7 @@ Your next move: run `$start-work wise-combine-test` in a worker session after th
   Acceptance criteria (agent-executable): passing adapter fixture executes all steps and records expected final state; failing, malformed-response, timeout, and crash fixtures identify sequence index, function, relation/state mismatch, stderr/exit status, and produce machine-readable plus human-readable artifacts; process groups and inherited file descriptors are closed and runner never hangs.
   QA scenarios (name the exact tool + invocation): happy `ctest --test-dir build -R runtime_pass --output-on-failure`; failure `ctest --test-dir build -R runtime_failure --output-on-failure` validates mismatch, timeout, and non-zero subprocess reports; Evidence `.omo/evidence/wise-combine-test/task-5-wise-combine-test.json`
   Commit: Y | feat(runtime): add adapter execution and failure reports
-- [ ] 6. Expose the CLI, integration fixtures, documentation, measurements, and safety gates
+- [x] 6. Expose the CLI, integration fixtures, documentation, measurements, and safety gates
   What to do / Must NOT do: Add `src/cli/` (or `src/main.cpp`) commands for validate/generate/run/report, `tests/integration/` fixtures for both mandatory workflows, `README.md`, sanitizer/Valgrind/coverage/CPU-memory measurement scripts or documented invocations, and commit all non-binary artifacts; do not add unrequested service/UI surfaces.
   Parallelization: Wave 5 | Blocked by: 5 | Blocks: final wave
   References (executor has NO interview context - be exhaustive): `AGENTS.md:8-34,70-79,104-109`; planned `src/cli/`, `tests/integration/`, `tests/fixtures/`, `README.md`; `.omo/drafts/wise-combine-test.md` evidence mapping
