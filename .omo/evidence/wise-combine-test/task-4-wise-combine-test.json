@@ -36,6 +36,6 @@
     "src/spec/spec.cpp",
     "CMakeLists.txt"
   ],
-  "run_log": ".omo/evidence/wise-combine-test/task-4-wise-combine-test-run.log"
-  ,"commit": "8f9bbcb"
+  "run_log": ".omo/evidence/wise-combine-test/task-4-wise-combine-test-run.log",
+  "commit": "8f9bbcb"
 }
