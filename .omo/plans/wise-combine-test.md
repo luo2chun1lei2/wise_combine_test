@@ -82,7 +82,7 @@ Your next move: run `$start-work wise-combine-test` in a worker session after th
   Acceptance criteria (agent-executable): model unit tests cover valid construction, valid state self-loop, duplicate states, unknown references, invalid relation/order self-edges, and contradictory ordering; all tests pass under Debug and sanitizer builds.
   QA scenarios (name the exact tool + invocation): happy `ctest --test-dir build -R model --output-on-failure`; failure fixture with an unknown state/function returns a typed validation error and non-zero test assertion; Evidence `.omo/evidence/wise-combine-test/task-2-wise-combine-test.json`
   Commit: Y | feat(model): add typed state and relation domain
-- [ ] 3. Define and validate the versioned declarative specification
+- [x] 3. Define and validate the versioned declarative specification
   What to do / Must NOT do: Add `src/spec/` strict RFC 8259 JSON parser for schema version `1`, canonical key ordering/number formatting, normalization, and semantic validation for state graphs, function signatures, argument flow, ordering, expected observations, seed, and generation limits; provide JSON-pointer diagnostics; do not accept comments/trailing commas or silently coerce invalid relations.
   Parallelization: Wave 2 | Blocked by: 1, 2 | Blocks: 4
   References (executor has NO interview context - be exhaustive): `AGENTS.md:8-20`; planned `src/spec/`; `.omo/drafts/wise-combine-test.md` Open assumptions/input format and Decisions

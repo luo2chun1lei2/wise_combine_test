@@ -1,26 +1,30 @@
 {
   "task": 3,
-  "head_before": "3f4d35f9bafbb7859ae4e5f6014a4ddbe9c670a2",
-  "restoration": {
-    "command": "git restore --source=HEAD -- src/spec/spec.cpp",
-    "result": "exit 0; src/spec/spec.cpp restored byte-for-byte from HEAD (sha256 069636e45bca425271e1334f1f034c31ba07413b5c1f5b5b8cfd225f88f7d4ce)"
+  "head_before": "d7fbe8d83b2e7a8576043b087395d196b74a564a",
+  "source_scope": {
+    "path": "src/spec/spec.cpp",
+    "diff_check": "git diff --numstat: 3 insertions, 2 deletions; existing parser edits preserved exactly, including the required local root lifetime fix",
+    "required_fix_preserved": true
   },
   "debug": {
-    "configure_command": "cmake -S . -B /tmp/wise-spec-final -DCMAKE_BUILD_TYPE=Debug",
-    "configure_result": "exit 0; configure and generate completed",
-    "build_command": "cmake --build /tmp/wise-spec-final --parallel",
-    "build_result": "exit 2; src/spec/spec.cpp failed to compile: std::chars_format not declared (line 74), malformed set_limits initializer (line 88), and canonical(top) type mismatch (line 89)",
-    "test_command": "(cd /tmp/wise-spec-final && ctest -R spec --output-on-failure)",
-    "test_result": "exit 8; spec_valid and spec_invalid both Not Run because wise-combine-spec-test was not built"
+    "command": "cmake -S . -B /tmp/wct-final -DCMAKE_BUILD_TYPE=Debug && cmake --build /tmp/wct-final --parallel && (cd /tmp/wct-final && ctest -R spec --output-on-failure)",
+    "exit_code": 0,
+    "configure": "exit 0; configure and generate completed",
+    "build": "exit 0; all targets including wise-combine-spec-test built",
+    "ctest": "exit 0; 100% tests passed, 0 tests failed out of 2",
+    "observed_output": "spec_valid and spec_invalid both passed"
   },
   "sanitizer": {
-    "configure_command": "cmake -S . -B /tmp/wise-spec-final-asan -DCMAKE_BUILD_TYPE=Debug -DWISE_COMBINE_ENABLE_SANITIZERS=ON",
-    "configure_result": "exit 0; configure and generate completed",
-    "build_command": "cmake --build /tmp/wise-spec-final-asan --parallel",
-    "build_result": "exit 2; same src/spec/spec.cpp compile errors as Debug build",
-    "test_command": "(cd /tmp/wise-spec-final-asan && ctest -R spec --output-on-failure)",
-    "test_result": "exit 8; spec_valid and spec_invalid both Not Run because wise-combine-spec-test was not built"
+    "command": "cmake -S . -B /tmp/wct-final-asan -DCMAKE_BUILD_TYPE=Debug -DWISE_COMBINE_ENABLE_SANITIZERS=ON && cmake --build /tmp/wct-final-asan --parallel && (cd /tmp/wct-final-asan && ASAN_OPTIONS=abort_on_error=1:detect_leaks=1 ctest -R spec --output-on-failure)",
+    "exit_code": 0,
+    "configure": "exit 0; configure and generate completed",
+    "build": "exit 0; all targets including wise-combine-spec-test built with sanitizers",
+    "ctest": "exit 0; 100% tests passed, 0 tests failed out of 2",
+    "observed_output": "spec_valid and spec_invalid both passed; no ASAN leak or memory error reported"
   },
-  "status": "FAIL",
-  "scope": "Only src/spec/spec.cpp restoration and task-3 evidence/ledger were changed; no other task files altered."
+  "status": "PASS",
+  "blocker": null,
+  "artifact": ".omo/evidence/wise-combine-test/task-3-wise-combine-test.json",
+  "commit": null,
+  "scope": "Updated only the requested parser lifetime fix and task-3 completion metadata; .debug-journal.md is absent and build outputs remain outside the repository."
 }
