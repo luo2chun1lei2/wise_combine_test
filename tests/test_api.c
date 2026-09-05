@@ -73,12 +73,25 @@ static void test_state_success_and_limit(void)
 
     CHECK(wct_validate_state(&graph, NULL, 0) == 0, "valid state graph should validate");
     CHECK(wct_run_state(&graph, state_callback, &context,
-                        (wct_limits){.max_steps = 1}, &report) == 0,
-          "limited state run should succeed");
-    CHECK(report.steps == 1 && report.covered == 1 && report.failures == 0,
-          "state limit should bound execution and coverage");
-    CHECK(context.count == 1 && strcmp(context.inputs[0], "begin") == 0,
-          "state callback should receive the first transition input");
+                        (wct_limits){.max_steps = 2}, &report) == 0,
+          "state run should succeed when all edges fit the limit");
+    CHECK(report.steps == 2 && report.covered == 2 && report.uncovered == 0 &&
+              report.failures == 0,
+          "state run should report complete coverage");
+    CHECK(context.count == 2 && strcmp(context.inputs[0], "begin") == 0 &&
+              strcmp(context.inputs[1], "finish") == 0,
+          "state callback should receive transitions in graph order");
+    wct_report_free(&report);
+    wct_state_graph_free(&graph);
+
+    init_state_graph(&graph);
+    context = (state_context){0};
+    CHECK(wct_run_state(&graph, state_callback, &context,
+                        (wct_limits){.max_steps = 1}, &report) == -1,
+          "a bounded run with uncovered edges should be reported as incomplete");
+    CHECK(report.steps == 1 && report.covered == 1 && report.uncovered == 1 &&
+              report.failures == 0,
+          "state limit should preserve bounded progress and uncovered count");
     wct_report_free(&report);
     wct_state_graph_free(&graph);
 }
@@ -96,6 +109,30 @@ static void test_state_callback_failure(void)
           "failed transition must not count as completed or covered");
     CHECK(report.error != NULL, "failed transition should provide an error");
     wct_report_free(&report);
+    wct_state_graph_free(&graph);
+}
+
+static void test_state_validation_errors(void)
+{
+    wct_state_graph graph;
+    char error[64] = {0};
+    init_state_graph(&graph);
+    free(graph.transitions[1].to);
+    graph.transitions[1].to = copy_string("missing");
+    CHECK(wct_validate_state(&graph, error, sizeof error) == -1,
+          "unknown transition endpoint should be rejected");
+    CHECK(strstr(error, "unknown state") != NULL,
+          "unknown endpoint error should identify the state problem");
+    wct_state_graph_free(&graph);
+
+    init_state_graph(&graph);
+    free(graph.transitions[1].id);
+    graph.transitions[1].id = copy_string("start");
+    memset(error, 0, sizeof error);
+    CHECK(wct_validate_state(&graph, error, sizeof error) == -1,
+          "duplicate transition ID should be rejected");
+    CHECK(strstr(error, "duplicate transition") != NULL,
+          "duplicate transition error should be diagnosable");
     wct_state_graph_free(&graph);
 }
 
@@ -208,6 +245,7 @@ int main(void)
 {
     test_state_success_and_limit();
     test_state_callback_failure();
+    test_state_validation_errors();
     test_relation_order_and_failure();
     test_relation_cycle();
     test_parse_fixtures();
