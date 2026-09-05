@@ -249,6 +249,16 @@ static void test_parse_fixtures(void)
           "relation fixture should populate calls and edges");
     wct_state_graph_free(&state);
     wct_relation_graph_free(&relation);
+
+    memset(error, 0, sizeof error);
+    CHECK(wct_parse_file("fixtures/missing_schema.model", &state, &relation,
+                         error, sizeof error) == -1,
+          "a model without schema should be rejected");
+    CHECK(strstr(error, "missing schema") != NULL && state.id == NULL &&
+              relation.id == NULL,
+          "missing-schema failure should release partial graph allocations");
+    wct_state_graph_free(&state);
+    wct_relation_graph_free(&relation);
 }
 
 int main(void)

@@ -42,7 +42,14 @@ int wct_parse_file(const char *path, wct_state_graph *s, wct_relation_graph *r, 
         else if(!strcmp(tok,"relation")){ char *a=strtok_r(NULL," \t\r\n",&save), *b=strtok_r(NULL," \t\r\n",&save); if(!a||!b){seterr(err,errlen,"line missing relation fields");goto fail;} wct_relation *x=realloc(r->relations,(r->relation_count+1)*sizeof *x);if(!x)goto oom;r->relations=x;x=&x[r->relation_count];x->from=dupstr(a);x->to=dupstr(b);if(!x->from||!x->to)goto oom;r->relation_count++; }
         else { char msg[128]; snprintf(msg,sizeof msg,"line %zu: unknown directive",ln);seterr(err,errlen,msg);goto fail; }
     }
-    fclose(f); if(schema!=WCT_SCHEMA_VERSION){seterr(err,errlen,"missing schema");return -1;} return 0;
+    fclose(f);
+    if (schema != WCT_SCHEMA_VERSION) {
+        seterr(err, errlen, "missing schema");
+        wct_state_graph_free(s);
+        wct_relation_graph_free(r);
+        return -1;
+    }
+    return 0;
 oom: seterr(err,errlen,"out of memory");
 fail: fclose(f); wct_state_graph_free(s); wct_relation_graph_free(r); return -1;
 }

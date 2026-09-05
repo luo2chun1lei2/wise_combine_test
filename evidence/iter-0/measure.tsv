@@ -1,2 +1,2 @@
 command	wall_seconds	max_rss_kb
-./bin/wise-combine-test --model fixtures/smoke.model --mode state	0.01	6580
+./bin/wise-combine-test --model fixtures/smoke.model --mode state	0.01	6884
