@@ -1,0 +1,7 @@
+schema 1
+relation_graph pipeline
+call fetch url
+call transform json
+call store db
+relation fetch transform
+relation transform store
