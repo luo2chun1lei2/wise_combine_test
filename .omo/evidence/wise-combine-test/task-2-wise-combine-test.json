@@ -1,9 +1,9 @@
 {
   "task": "2",
   "title": "typed state/function/relation domain model",
-  "commit": "96fd9153c7b60c50700473e947097ae58c57123c",
+  "commit": "97782d71471f488620ecf5b654614c371d8a24a6",
   "independent_verification": {
-    "invocation": "cmake -S . -B /tmp/wise-model-verify -DCMAKE_BUILD_TYPE=Debug && cmake --build /tmp/wise-model-verify --parallel && (cd /tmp/wise-model-verify && ctest -R model --output-on-failure)",
+    "invocation": "cmake -S . -B /tmp/wise-model-final -DCMAKE_BUILD_TYPE=Debug && cmake --build /tmp/wise-model-final --parallel && (cd /tmp/wise-model-final && ctest -R model --output-on-failure)",
     "exit_code": 0,
     "observable": "single model library/test registration; fresh build and 1/1 model test passed"
   },
@@ -16,32 +16,32 @@
   },
   "commands": [
     {
-      "invocation": "cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel",
+      "invocation": "cmake -S . -B /tmp/wise-model-final -DCMAKE_BUILD_TYPE=Debug && cmake --build /tmp/wise-model-final --parallel",
       "exit_code": 0,
       "observable": "wise-combine-model and wise-combine-model-test built"
     },
     {
-      "invocation": "./build/wise-combine-model-test",
+      "invocation": "/tmp/wise-model-final/wise-combine-model-test",
       "exit_code": 0,
       "stdout": "model: all tests passed"
     },
     {
-      "invocation": "(cd build && ctest -R model --output-on-failure)",
+      "invocation": "(cd /tmp/wise-model-final && ctest -R model --output-on-failure)",
       "exit_code": 0,
       "observable": "1/1 Test #2: model passed; 100% tests passed"
     },
     {
-      "invocation": "cmake -S . -B build-asan -DCMAKE_BUILD_TYPE=Debug -DWISE_COMBINE_ENABLE_SANITIZERS=ON && cmake --build build-asan --parallel && (cd build-asan && ctest -R model --output-on-failure)",
+      "invocation": "cmake -S . -B /tmp/wise-model-final-asan -DCMAKE_BUILD_TYPE=Debug -DWISE_COMBINE_ENABLE_SANITIZERS=ON && cmake --build /tmp/wise-model-final-asan --parallel && (cd /tmp/wise-model-final-asan && ctest -R model --output-on-failure)",
       "exit_code": 0,
       "observable": "1/1 Test #2: model passed; 100% tests passed; no sanitizer diagnostics"
     },
     {
-      "invocation": "./build-asan/wise-combine-model-test",
+      "invocation": "/tmp/wise-model-final-asan/wise-combine-model-test",
       "exit_code": 0,
       "stdout": "model: all tests passed"
     },
     {
-      "invocation": "cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel && (cd build && ctest -R model --output-on-failure)",
+      "invocation": "cmake -S . -B /tmp/wise-model-final -DCMAKE_BUILD_TYPE=Debug && cmake --build /tmp/wise-model-final --parallel && (cd /tmp/wise-model-final && ctest -R model --output-on-failure)",
       "exit_code": 0,
       "observable": "fresh final Debug configure/build; 1/1 model test passed"
     }
