@@ -218,6 +218,16 @@ static void test_relation_cycle(void)
           "relation cycle should be rejected");
     CHECK(strstr(error, "cycle") != NULL, "cycle rejection should be diagnosable");
     wct_relation_graph_free(&graph);
+
+    init_relation_graph(&graph);
+    free(graph.relations[0].to);
+    graph.relations[0].to = copy_string("missing");
+    memset(error, 0, sizeof error);
+    CHECK(wct_validate_relation(&graph, error, sizeof error) == -1,
+          "unknown relation endpoint should be rejected");
+    CHECK(strstr(error, "unknown call") != NULL,
+          "unknown endpoint error should identify the call problem");
+    wct_relation_graph_free(&graph);
 }
 
 static void test_parse_fixtures(void)
