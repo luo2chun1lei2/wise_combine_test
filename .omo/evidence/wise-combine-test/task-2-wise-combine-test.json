@@ -1,0 +1,73 @@
+{
+  "task": "2",
+  "title": "typed state/function/relation domain model",
+  "commit": "96fd9153c7b60c50700473e947097ae58c57123c",
+  "independent_verification": {
+    "invocation": "cmake -S . -B /tmp/wise-model-verify -DCMAKE_BUILD_TYPE=Debug && cmake --build /tmp/wise-model-verify --parallel && (cd /tmp/wise-model-verify && ctest -R model --output-on-failure)",
+    "exit_code": 0,
+    "observable": "single model library/test registration; fresh build and 1/1 model test passed"
+  },
+  "artifacts": {
+    "implementation": [
+      "src/model/model.hpp",
+      "src/model/model.cpp"
+    ],
+    "tests": ["tests/model_test.cpp"]
+  },
+  "commands": [
+    {
+      "invocation": "cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel",
+      "exit_code": 0,
+      "observable": "wise-combine-model and wise-combine-model-test built"
+    },
+    {
+      "invocation": "./build/wise-combine-model-test",
+      "exit_code": 0,
+      "stdout": "model: all tests passed"
+    },
+    {
+      "invocation": "(cd build && ctest -R model --output-on-failure)",
+      "exit_code": 0,
+      "observable": "1/1 Test #2: model passed; 100% tests passed"
+    },
+    {
+      "invocation": "cmake -S . -B build-asan -DCMAKE_BUILD_TYPE=Debug -DWISE_COMBINE_ENABLE_SANITIZERS=ON && cmake --build build-asan --parallel && (cd build-asan && ctest -R model --output-on-failure)",
+      "exit_code": 0,
+      "observable": "1/1 Test #2: model passed; 100% tests passed; no sanitizer diagnostics"
+    },
+    {
+      "invocation": "./build-asan/wise-combine-model-test",
+      "exit_code": 0,
+      "stdout": "model: all tests passed"
+    },
+    {
+      "invocation": "cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel && (cd build && ctest -R model --output-on-failure)",
+      "exit_code": 0,
+      "observable": "fresh final Debug configure/build; 1/1 model test passed"
+    }
+  ],
+  "coverage_scenarios": [
+    "valid graph with argument and ordering relations",
+    "valid state self-loop and longer cycle",
+    "duplicate state ID",
+    "unknown transition state/function reference",
+    "argument and ordering relation self-edges",
+    "duplicate producer binding for one consumer argument",
+    "argument producer/consumer type mismatch",
+    "contradictory ordering cycle"
+  ],
+  "adversarial_classes": {
+    "dirty_worktree": "observed and preserved unrelated .omo executor state",
+    "stale_state": "Debug and sanitizer builds reconfigured after model source appeared",
+    "misleading_success_output": "direct model executable and CTest result both independently passed",
+    "malformed_input": "not applicable: parsing belongs to Todo 3",
+    "hung_command": "not observed; all model commands terminated",
+    "cancel_resume": "not applicable: no long-running process",
+    "repeated_interruptions": "not applicable: no interruption occurred"
+  },
+  "cleanup": {
+    "build_directories": "ignored build/ and build-asan/ outputs retained for reproducibility",
+    "processes": "none left running",
+    "ports_or_temp_dirs": "none created"
+  }
+}

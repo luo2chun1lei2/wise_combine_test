@@ -47,3 +47,12 @@ target_link_libraries(wise-combine-smoke PRIVATE wise-combine-compile-options)
 add_executable(wise-combine-smoke-test tests/smoke_test.cpp)
 target_link_libraries(wise-combine-smoke-test PRIVATE wise-combine-compile-options)
 add_test(NAME smoke COMMAND wise-combine-smoke-test)
+
+add_library(wise-combine-model src/model/model.cpp)
+target_include_directories(wise-combine-model PUBLIC src)
+target_link_libraries(wise-combine-model PRIVATE wise-combine-compile-options)
+
+add_executable(wise-combine-model-test tests/model_test.cpp)
+target_link_libraries(wise-combine-model-test PRIVATE wise-combine-model
+  wise-combine-compile-options)
+add_test(NAME model COMMAND wise-combine-model-test)
