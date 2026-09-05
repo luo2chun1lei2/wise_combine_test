@@ -56,3 +56,12 @@ add_executable(wise-combine-model-test tests/model_test.cpp)
 target_link_libraries(wise-combine-model-test PRIVATE wise-combine-model
   wise-combine-compile-options)
 add_test(NAME model COMMAND wise-combine-model-test)
+
+add_library(wise-combine-spec src/spec/spec.cpp)
+target_include_directories(wise-combine-spec PUBLIC src)
+target_link_libraries(wise-combine-spec PUBLIC wise-combine-model
+  wise-combine-compile-options)
+add_executable(wise-combine-spec-test tests/spec_test.cpp)
+target_link_libraries(wise-combine-spec-test PRIVATE wise-combine-spec)
+add_test(NAME spec_valid COMMAND wise-combine-spec-test)
+add_test(NAME spec_invalid COMMAND wise-combine-spec-test)

@@ -7,7 +7,7 @@
       "active_plan": ".omo/plans/wise-combine-test.md",
       "plan_name": "wise-combine-test",
       "session_ids": ["codex:01a06f81-b027-7f30-95fa-decf7b65e2d4"],
-      "status": "active",
+      "status": "paused",
       "worktree_path": null
     }
   }
