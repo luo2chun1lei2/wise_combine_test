@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "evidenceLayoutVersion": 2,
+  "createdAt": "2026-09-05T09:18:27.383Z",
+  "updatedAt": "2026-09-05T09:54:47.678Z",
+  "briefPath": ".omo/ulw-loop/ulw-final-f1f4/brief.md",
+  "goalsPath": ".omo/ulw-loop/ulw-final-f1f4/goals.json",
+  "ledgerPath": ".omo/ulw-loop/ulw-final-f1f4/ledger.jsonl",
+  "codexGoalMode": "aggregate",
+  "goals": [
+    {
+      "id": "G001-strictly-complete-the-wise-combine-t",
+      "title": "Strictly complete the wise-combine-test final verification wave on th...",
+      "objective": "Strictly complete the wise-combine-test final verification wave on the frozen current tree. F1 plan compliance must produce final-f1.md; F2 sanitizer and code-quality audit must produce final-f2.log; F3 real CLI manual QA plus F4 scope-fidelity audit must produce final-f3.md and final-f4.md. Preserve AGENTS.md, do not change product behavior unless a criterion-cited blocker is found, and stop only after all four artifacts pass, cleanup receipts exist, and the plan checkboxes are complete.",
+      "status": "in_progress",
+      "successCriteria": [
+        {
+          "id": "C001",
+          "scenario": "Run git diff --check, inspect AGENTS.md and .omo/plans/wise-combine-test.md, and map every mandatory requirement to source, tests, README, or evidence. PASS iff final-f1.md contains a zero-unresolved checklist and explicitly excludes forbidden parameter-sweeping, GUI, network, and distributed features.",
+          "userModel": "happy",
+          "expectedEvidence": ".omo/evidence/wise-combine-test/final-f1.md",
+          "essential": true,
+          "capturedEvidence": ".omo/evidence/wise-combine-test/final-f1.md current-tree re-audit for d520342/ae7de11: all mandatory mappings, relation-flow repair, and forbidden-scope scan pass @tree:ae7de11 | cleanup: no QA processes/ports; temporary paths absent",
+          "status": "pass",
+          "capturedAt": "2026-09-05T09:54:47.643Z"
+        },
+        {
+          "id": "C002",
+          "scenario": "Run cmake --build build-asan --parallel and (cd build-asan && ctest --output-on-failure), then inspect all changed source and the sanitizer output for unchecked errors, unsafe default invocation, leaks, out-of-bounds access, and nondeterminism. PASS iff the build and all tests exit 0 and final-f2.log has no criterion-cited blocker.",
+          "userModel": "edge",
+          "expectedEvidence": ".omo/evidence/wise-combine-test/final-f2.log",
+          "essential": true,
+          "capturedEvidence": ".omo/evidence/wise-combine-test/final-f2.log current-tree rerun for d520342/ae7de11: ASan/UBSan/LSan build rc=0, 19/19 CTest pass including runtime_argument_relation, no diagnostics @tree:ae7de11 | cleanup: /tmp/wise-final-f2.okOvaZ.log absent; no processes",
+          "status": "pass",
+          "capturedAt": "2026-09-05T09:54:47.678Z"
+        },
+        {
+          "id": "C003",
+          "scenario": "Run the exact Linux CLI matrix: validate tests/integration/state_workflow.json; generate tests/integration/relation_workflow.json; run with adapter_ok; run with adapter_mismatch; validate tests/fixtures/invalid.json; run the timeout and crash runtime fixtures; and report a generated TXT report. Then inspect JSON/TXT reports and measurement fields, and grep the final tree for forbidden surfaces. PASS iff documented exit codes/artifacts match and final-f3.md plus final-f4.md include cleanup receipts and zero scope violations.",
+          "userModel": "regression",
+          "expectedEvidence": ".omo/evidence/wise-combine-test/final-f3.md and .omo/evidence/wise-combine-test/final-f4.md",
+          "essential": false,
+          "capturedEvidence": ".omo/evidence/wise-combine-test/final-f3.md and final-f4.md on tree:ae7de11: current CLI matrix passed validate/generate/run/report, mismatch=4, invalid=2, relation injection is observable, forbidden scan had no matches, and old F4 RED was re-audited PASS | cleanup: /tmp/wise-final-f3.emvEKb, /tmp/wise-relation-final.ir1wbM, and /tmp/wise-final-f2.okOvaZ.log absent; no processes remain",
+          "status": "pass",
+          "capturedAt": "2026-09-05T09:54:35.358Z"
+        }
+      ],
+      "attempt": 1,
+      "createdAt": "2026-09-05T09:18:27.383Z",
+      "updatedAt": "2026-09-05T09:54:47.678Z",
+      "startedAt": "2026-09-05T09:19:35.916Z"
+    }
+  ],
+  "codexObjective": "Complete the durable ulw-loop plan in .omo/ulw-loop/ulw-final-f1f4/goals.json, including later accepted/appended stories, under the original brief constraints; use .omo/ulw-loop/ulw-final-f1f4/ledger.jsonl as the audit trail.",
+  "activeGoalId": "G001-strictly-complete-the-wise-combine-t"
+}

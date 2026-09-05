@@ -1,0 +1,19 @@
+F1 refresh verification for d520342848928da3c25941c445da4fb0eaa1a499
+
+$ cmake --build build --parallel && (cd build && ctest --output-on-failure)
+exit=0
+100% tests passed, 0 tests failed out of 19
+runtime_argument_relation ... Passed
+
+$ cmake --build build-asan --parallel && (cd build-asan && ctest --output-on-failure)
+exit=0
+100% tests passed, 0 tests failed out of 19
+runtime_argument_relation ... Passed
+
+$ ctest --test-dir build -R runtime_argument_relation --output-on-failure
+Test #14: runtime_argument_relation ... Passed
+exit=0
+
+Relation observable: producer response returns token=from-producer; the
+consumer fixture rejects the static wrong value and accepts only the injected
+value. The relation fixture has no consumer literal argument.

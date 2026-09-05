@@ -113,10 +113,10 @@ Your next move: run `$start-work wise-combine-test` in a worker session after th
 
 ## Final verification wave
 > Runs in parallel after ALL todos. ALL must APPROVE. Surface results and wait for the user's explicit okay before declaring complete.
-- [ ] F1. Plan compliance audit
-- [ ] F2. Code quality review
-- [ ] F3. Real manual QA
-- [ ] F4. Scope fidelity
+- [x] F1. Plan compliance audit
+- [x] F2. Code quality review
+- [x] F3. Real manual QA
+- [x] F4. Scope fidelity
 
   F1: inspect every changed path against `AGENTS.md` and this plan; verify mandatory requirements have a corresponding test/evidence artifact and forbidden scope is absent. Acceptance: a signed checklist at `.omo/evidence/wise-combine-test/final-f1.md` with zero unaddressed items.
   F2: run `cmake --build build-asan && (cd build-asan && ctest --output-on-failure)` and static review over `src/` and `tests/`; reject leaks, out-of-bounds access, unchecked parse failures, nondeterminism, or unsafe default invocation. Acceptance: sanitizer log and review report at `.omo/evidence/wise-combine-test/final-f2.log` with exit 0.

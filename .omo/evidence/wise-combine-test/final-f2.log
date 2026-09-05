@@ -1,0 +1,126 @@
+F2 FINAL SANITIZER AND CODE-QUALITY AUDIT
+Date: 2026-09-05 (Asia/Shanghai)
+Tree: frozen wise-combine-test checkout; product files were read-only during this audit.
+
+PIN/RED: required pre-audit artifact check
+Command: test -s .omo/evidence/wise-combine-test/final-f2.log
+Result captured before this file was created:
+RED_CHECK_EXIT=1
+RED_CHECK_EXPECTED_MISSING=1
+RED_CHECK_SIZE_BYTES=0
+
+SANITIZER CONFIGURATION
+build-asan/CMakeCache.txt: WISE_COMBINE_ENABLE_SANITIZERS:BOOL=ON
+build-asan compile/link flags include:
+  -fsanitize=address,undefined,leak -fno-omit-frame-pointer
+The sanitizer flags were present on all product and test targets inspected in
+build-asan/CMakeFiles/*/{flags.make,link.txt}.
+
+EXACT BUILD TRANSCRIPT
+Command: cmake --build build-asan --parallel
+[  7%] Built target wise-combine-model
+[ 14%] Built target wise-combine-smoke-test
+[ 22%] Built target wise-combine-smoke
+[ 29%] Built target wise-combine-runtime-fixture
+[ 37%] Built target wise-combine-model-test
+[ 44%] Built target wise-combine-spec
+[ 51%] Built target wise-combine-spec-test
+[ 59%] Built target wise-combine-generate
+[ 66%] Built target wise-combine-generator-test
+[ 74%] Built target wise-combine-runtime
+[ 81%] Built target wise-combine-report
+[ 88%] Built target wise-combine-runtime-test
+[100%] Built target wise-combine
+BUILD_RC=0
+
+EXACT CTEST TRANSCRIPT
+Command: (cd build-asan && ctest --output-on-failure)
+Test project /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-asan
+      Start  1: smoke
+ 1/18 Test  #1: smoke ............................   Passed    0.02 sec
+      Start  2: model
+ 2/18 Test  #2: model ............................   Passed    0.02 sec
+      Start  3: spec_valid
+ 3/18 Test  #3: spec_valid .......................   Passed    0.02 sec
+      Start  4: spec_invalid
+ 4/18 Test  #4: spec_invalid .....................   Passed    0.03 sec
+      Start  5: generator_determinism
+ 5/18 Test  #5: generator_determinism ............   Passed    0.02 sec
+      Start  6: generator_limits
+ 6/18 Test  #6: generator_limits .................   Passed    0.02 sec
+      Start  7: runtime_pass
+ 7/18 Test  #7: runtime_pass .....................   Passed    0.04 sec
+      Start  8: runtime_mismatch
+ 8/18 Test  #8: runtime_mismatch .................   Passed    0.04 sec
+      Start  9: runtime_malformed
+ 9/18 Test  #9: runtime_malformed ................   Passed    0.03 sec
+      Start 10: runtime_extra_json
+10/18 Test #10: runtime_extra_json ...............   Passed    0.03 sec
+      Start 11: runtime_timeout
+11/18 Test #11: runtime_timeout ..................   Passed    0.17 sec
+      Start 12: runtime_crash
+12/18 Test #12: runtime_crash ....................   Passed    0.02 sec
+      Start 13: runtime_output_cap
+13/18 Test #13: runtime_output_cap ...............   Passed    0.08 sec
+      Start 14: cli_validate
+14/18 Test #14: cli_validate .....................   Passed    0.02 sec
+      Start 15: cli_generate
+15/18 Test #15: cli_generate .....................   Passed    0.02 sec
+      Start 16: cli_run
+16/18 Test #16: cli_run ..........................   Passed    0.03 sec
+      Start 17: cli_run_failure
+17/18 Test #17: cli_run_failure ..................   Passed    0.03 sec
+      Start 18: cli_invalid
+18/18 Test #18: cli_invalid .....................   Passed    0.02 sec
+
+100% tests passed, 0 tests failed out of 18
+
+Total Test time (real) =   0.66 sec
+CTEST_RC=0
+
+SOURCE AUDIT
+- src/model/model.cpp:55-172 validates non-empty/unique IDs, state/function
+  references, typed argument bindings, duplicate producers, and ordering cycles;
+  limits reject zero max_steps/max_subprocesses at lines 109-115. No unchecked
+  indexing or raw ownership was found.
+- src/spec/spec.cpp:19-33 parses RFC8259 forms with bounds checks before every
+  indexed read; duplicate object keys and non-finite/overflow numbers are
+  rejected. Lines 44-60 enforce strict schema and canonical deterministic JSON.
+- src/generate/generate.cpp:17-91 sorts transition choices by ID, tracks emitted
+  sequences, and checks max_cases/max_steps before recursion. The seed is
+  intentionally ignored (determinism is covered by generator_determinism).
+- src/runtime/runtime.cpp:72-105 canonicalizes and allowlists executables;
+  lines 107-130 use fork/execve with a fixed environment, process group,
+  nonblocking poll, step deadline, output cap, kill/wait cleanup, and bounded
+  protocol checks. Runtime pass/mismatch/malformed/extra/timeout/crash/cap tests
+  all pass under ASan/UBSan/LSan.
+- src/report/report.cpp:5-15 escapes JSON/text fields and emits bounded per-flow
+  reports; src/cli/cli.cpp:92-223 maps parse, generation, runtime, and usage
+  failures to stable exit codes and records wall/CPU/RSS measurements.
+- CMakeLists.txt:12-42 wires address, undefined-behavior, and leak sanitizers;
+  CMakeLists.txt:53-120 registers all 18 functional tests. README.md:98-120
+  documents the sanitizer workflow and optional Valgrind check.
+
+AUDIT VERDICT
+PASS. No unresolved criterion-cited blocker was found for memory leaks,
+out-of-bounds access, unsafe shell execution, unchecked model references,
+generator nondeterminism, or adapter process cleanup in the exercised tree.
+The sanitizer-enabled build and all 18 CTest cases exited 0 with no sanitizer
+diagnostics.
+
+CLEANUP RECEIPT
+Temporary transcripts were /tmp/wise-combine-f2-build.log and
+/tmp/wise-combine-f2-ctest.log only; both paths are absent after verification.
+The final pgrep check matched only its own audit shell command and found no
+long-lived adapter or wise-combine child process. These temporary logs are not
+repository artifacts and were removed after this evidence file was written.
+
+CURRENT-TREE RE-RUN (supersedes the pre-repair 18-test transcript)
+Tree: ae7de11 (`d520342`)
+`cmake --build build-asan --parallel`: BUILD_RC=0.
+`(cd build-asan && ctest --output-on-failure)`: CTEST_RC=0, 19/19 passed,
+including `runtime_argument_relation`; no sanitizer diagnostics.
+`git diff --check`: exit 0. The relation-flow repair is covered by the
+ASan/UBSan/LSan run.
+Cleanup receipt: `/tmp/wise-final-f2.okOvaZ.log` was inspected and removed;
+no adapter or wise-combine process remained.
