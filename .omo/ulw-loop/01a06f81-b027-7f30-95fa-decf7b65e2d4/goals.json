@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "evidenceLayoutVersion": 2,
+  "createdAt": "2026-09-05T07:07:29.892Z",
+  "updatedAt": "2026-09-05T07:12:53.665Z",
+  "briefPath": ".omo/ulw-loop/01a06f81-b027-7f30-95fa-decf7b65e2d4/brief.md",
+  "goalsPath": ".omo/ulw-loop/01a06f81-b027-7f30-95fa-decf7b65e2d4/goals.json",
+  "ledgerPath": ".omo/ulw-loop/01a06f81-b027-7f30-95fa-decf7b65e2d4/ledger.jsonl",
+  "codexGoalMode": "aggregate",
+  "goals": [
+    {
+      "id": "G001-execute-the-approved-wise-combine-te",
+      "title": "Execute the approved wise-combine-test plan end to end from the curre...",
+      "objective": "Execute the approved wise-combine-test plan end to end from the current worktree. Preserve the project requirements in AGENTS.md. Complete remaining runtime adapter/reporting and CLI/documentation/measurement work, with Linux C++20 build, tests, memory safety, user documentation, evidence, and atomic commits. Do not implement the explicitly forbidden parameter-sweeping completeness checker.",
+      "status": "in_progress",
+      "successCriteria": [
+        {
+          "id": "C001",
+          "scenario": "Run cmake -S . -B /tmp/wct-final-cxx20 -DCMAKE_BUILD_TYPE=Debug && cmake --build /tmp/wct-final-cxx20 --parallel && (cd /tmp/wct-final-cxx20 && ctest --output-on-failure); PASS iff all registered tests pass and CLI/runtime artifacts exist.",
+          "userModel": "happy",
+          "expectedEvidence": ".omo/ulw-loop/01a06f81-b027-7f30-95fa-decf7b65e2d4/evidence-C001.md",
+          "essential": true,
+          "capturedEvidence": null,
+          "status": "pending"
+        },
+        {
+          "id": "C002",
+          "scenario": "Run the CLI/runtime failure matrix: malformed spec, adapter mismatch, malformed response, timeout, crash, output cap, and max_cases=0. PASS iff each returns its documented non-zero/status classification and writes a diagnostic report.",
+          "userModel": "edge",
+          "expectedEvidence": ".omo/ulw-loop/01a06f81-b027-7f30-95fa-decf7b65e2d4/evidence-C002.md",
+          "essential": true,
+          "capturedEvidence": "Runtime worker produced no new artifact and remained live beyond 80 seconds; existing independent evidence only covers the success fixture.",
+          "status": "blocked",
+          "capturedAt": "2026-09-05T07:12:53.665Z",
+          "notes": "Need a stable single worker session to implement and verify mismatch, malformed response, timeout, crash, output cap, allowlist, and JSON escaping."
+        },
+        {
+          "id": "C003",
+          "scenario": "Run the complete CTest suite from the C++20 build and sanitizer build. PASS iff smoke, model, spec, generator, and runtime tests all pass with no sanitizer diagnostics and no forbidden feature files appear.",
+          "userModel": "regression",
+          "expectedEvidence": ".omo/ulw-loop/01a06f81-b027-7f30-95fa-decf7b65e2d4/evidence-C003.md",
+          "essential": false,
+          "capturedEvidence": null,
+          "status": "pending"
+        }
+      ],
+      "attempt": 1,
+      "createdAt": "2026-09-05T07:07:29.892Z",
+      "updatedAt": "2026-09-05T07:12:53.665Z",
+      "startedAt": "2026-09-05T07:08:21.251Z"
+    }
+  ],
+  "codexObjective": "Complete the durable ulw-loop plan in .omo/ulw-loop/01a06f81-b027-7f30-95fa-decf7b65e2d4/goals.json, including later accepted/appended stories, under the original brief constraints; use .omo/ulw-loop/01a06f81-b027-7f30-95fa-decf7b65e2d4/ledger.jsonl as the audit trail.",
+  "activeGoalId": "G001-execute-the-approved-wise-combine-te"
+}

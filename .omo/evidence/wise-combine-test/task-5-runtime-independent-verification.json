@@ -1,0 +1,15 @@
+{
+  "invocation": "cmake -S . -B /tmp/wct-runtime-verify -DCMAKE_BUILD_TYPE=Debug && cmake --build /tmp/wct-runtime-verify --parallel && (cd /tmp/wct-runtime-verify && ctest -R '^runtime_(pass|failure)$' --output-on-failure)",
+  "result": "PASS",
+  "ctest": "2/2 passed",
+  "artifact_inspection": {
+    "json": "/tmp/wise-runtime-report/run.json",
+    "text": "/tmp/wise-runtime-report/run.txt",
+    "observed": "flow t1 passed; step 0 finish passed; observed_state done; exit_status 0"
+  },
+  "evidence_logs": [
+    ".omo/evidence/wise-combine-test/task-5-runtime-verification.log",
+    ".omo/evidence/wise-combine-test/task-5-runtime-artifact-inspection.log"
+  ],
+  "cleanup": "No child processes remained; temporary build is under /tmp/wct-runtime-verify"
+}
