@@ -47,9 +47,129 @@ oom: seterr(err,errlen,"out of memory");
 fail: fclose(f); wct_state_graph_free(s); wct_relation_graph_free(r); return -1;
 }
 
-int wct_validate_state(const wct_state_graph *g, char *err, size_t n) { if(!g||!g->initial||find_state(g,g->initial)<0){seterr(err,n,"unknown initial state");return -1;} for(size_t i=0;i<g->state_count;i++)for(size_t j=i+1;j<g->state_count;j++)if(!strcmp(g->states[i],g->states[j])){seterr(err,n,"duplicate state");return -1;} for(size_t i=0;i<g->transition_count;i++){const wct_transition*t=&g->transitions[i];if(find_state(g,t->from)<0||find_state(g,t->to)<0){seterr(err,n,"transition references unknown state");return -1;} for(size_t j=0;j<i;j++)if(!strcmp(t->id,g->transitions[j].id)){seterr(err,n,"duplicate transition");return -1;}} return 0; }
-int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) { if(!g)return -1; for(size_t i=0;i<g->call_count;i++)for(size_t j=i+1;j<g->call_count;j++)if(!strcmp(g->calls[i].id,g->calls[j].id)){seterr(err,n,"duplicate call");return -1;} for(size_t i=0;i<g->relation_count;i++){if(find_call(g,g->relations[i].from)<0||find_call(g,g->relations[i].to)<0){seterr(err,n,"relation references unknown call");return -1;} if(!strcmp(g->relations[i].from,g->relations[i].to)){seterr(err,n,"relation cycle");return -1;}} size_t *ind=calloc(g->call_count,sizeof *ind);if(!ind)return -1;for(size_t i=0;i<g->relation_count;i++)ind[find_call(g,g->relations[i].to)]++;size_t done=0;while(1){int found=-1;for(size_t i=0;i<g->call_count;i++)if(ind[i]==0){found=(int)i;break;}if(found<0)break;ind[found]=(size_t)-1;done++;for(size_t i=0;i<g->relation_count;i++)if(find_call(g,g->relations[i].from)==found)ind[find_call(g,g->relations[i].to)]--;}free(ind);if(done!=g->call_count){seterr(err,n,"relation cycle");return -1;}return 0; }
+int wct_validate_state(const wct_state_graph *g, char *err, size_t n) {
+    if (!g || !g->initial || find_state(g, g->initial) < 0) {
+        seterr(err, n, "unknown initial state");
+        return -1;
+    }
+    for (size_t i = 0; i < g->state_count; i++) {
+        if (!g->states[i] || !*g->states[i]) {
+            seterr(err, n, "empty state id");
+            return -1;
+        }
+        for (size_t j = i + 1; j < g->state_count; j++) {
+            if (!strcmp(g->states[i], g->states[j])) {
+                seterr(err, n, "duplicate state");
+                return -1;
+            }
+        }
+    }
+    for (size_t i = 0; i < g->transition_count; i++) {
+        const wct_transition *t = &g->transitions[i];
+        if (!t->id || !t->from || !t->to || !t->input || !t->expect) {
+            seterr(err, n, "incomplete transition");
+            return -1;
+        }
+        if (find_state(g, t->from) < 0 || find_state(g, t->to) < 0) {
+            seterr(err, n, "transition references unknown state");
+            return -1;
+        }
+        for (size_t j = 0; j < i; j++) {
+            if (!strcmp(t->id, g->transitions[j].id)) {
+                seterr(err, n, "duplicate transition");
+                return -1;
+            }
+        }
+    }
+    return 0;
+}
 
-int wct_run_state(const wct_state_graph *g,wct_transition_fn fn,void *ctx,wct_limits lim,wct_report *r){memset(r,0,sizeof*r);char err[128];if(wct_validate_state(g,err,sizeof err)){r->error=dupstr(err);return -1;}size_t max=lim.max_steps?lim.max_steps:g->transition_count*2+1;char *state=dupstr(g->initial);unsigned char *seen=calloc(g->transition_count,1);for(size_t step=0;step<max;step++){int picked=-1;for(size_t i=0;i<g->transition_count;i++)if(!seen[i]&&!strcmp(g->transitions[i].from,state)){picked=(int)i;break;}if(picked<0)break;wct_transition*t=&g->transitions[picked];char *actual=NULL;int rc=fn?fn(t->input,&actual,ctx):0;if(rc|| (actual&&strcmp(actual,t->expect))){r->failures++;r->error=dupstr("transition callback/expectation failed");free(actual);break;}free(actual);free(state);state=dupstr(t->to);seen[picked]=1;r->steps++;r->covered++;}free(state);free(seen);return r->failures?-1:0;}
+int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) {
+    if (!g) { seterr(err, n, "null relation graph"); return -1; }
+    for (size_t i = 0; i < g->call_count; i++) {
+        if (!g->calls[i].id || !*g->calls[i].id) {
+            seterr(err, n, "empty call id");
+            return -1;
+        }
+        for (size_t j = i + 1; j < g->call_count; j++) {
+            if (!strcmp(g->calls[i].id, g->calls[j].id)) {
+                seterr(err, n, "duplicate call");
+                return -1;
+            }
+        }
+    }
+    for (size_t i = 0; i < g->relation_count; i++) {
+        if (!g->relations[i].from || !g->relations[i].to ||
+            find_call(g, g->relations[i].from) < 0 ||
+            find_call(g, g->relations[i].to) < 0) {
+            seterr(err, n, "relation references unknown call");
+            return -1;
+        }
+        if (!strcmp(g->relations[i].from, g->relations[i].to)) {
+            seterr(err, n, "relation cycle");
+            return -1;
+        }
+    }
+    size_t *ind = calloc(g->call_count ? g->call_count : 1, sizeof *ind);
+    if (!ind) { seterr(err, n, "out of memory"); return -1; }
+    for (size_t i = 0; i < g->relation_count; i++)
+        ind[(size_t)find_call(g, g->relations[i].to)]++;
+    size_t done = 0;
+    while (1) {
+        int found = -1;
+        for (size_t i = 0; i < g->call_count; i++)
+            if (ind[i] == 0) { found = (int)i; break; }
+        if (found < 0) break;
+        ind[(size_t)found] = (size_t)-1;
+        done++;
+        for (size_t i = 0; i < g->relation_count; i++) {
+            if (find_call(g, g->relations[i].from) == found)
+                ind[(size_t)find_call(g, g->relations[i].to)]--;
+        }
+    }
+    free(ind);
+    if (done != g->call_count) { seterr(err, n, "relation cycle"); return -1; }
+    return 0;
+}
+
+int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
+                  wct_limits lim, wct_report *r) {
+    if (!r) return -1;
+    memset(r, 0, sizeof *r);
+    char err[128];
+    if (wct_validate_state(g, err, sizeof err)) {
+        r->error = dupstr(err);
+        return -1;
+    }
+    size_t max = lim.max_steps ? lim.max_steps : g->transition_count * 2 + 1;
+    char *state = dupstr(g->initial);
+    unsigned char *seen = calloc(g->transition_count ? g->transition_count : 1, 1);
+    if (!state || !seen) {
+        free(state); free(seen); r->error = dupstr("out of memory"); return -1;
+    }
+    for (size_t step = 0; step < max; step++) {
+        int picked = -1;
+        for (size_t i = 0; i < g->transition_count; i++)
+            if (!seen[i] && !strcmp(g->transitions[i].from, state)) { picked = (int)i; break; }
+        if (picked < 0) break;
+        wct_transition *t = &g->transitions[(size_t)picked];
+        char *actual = NULL;
+        int rc = fn ? fn(t->input, &actual, ctx) : 0;
+        if (rc || !actual || strcmp(actual, t->expect)) {
+            r->failures++;
+            r->error = dupstr(rc ? "transition callback failed" : "transition expectation failed");
+            free(actual);
+            break;
+        }
+        free(actual);
+        char *next = dupstr(t->to);
+        if (!next) { r->failures++; r->error = dupstr("out of memory"); break; }
+        free(state); state = next; seen[(size_t)picked] = 1; r->steps++; r->covered++;
+    }
+    for (size_t i = 0; i < g->transition_count; i++) if (!seen[i]) r->uncovered++;
+    free(state); free(seen);
+    if (!r->failures && r->uncovered) { r->error = dupstr("uncovered transition"); return -1; }
+    return r->failures ? -1 : 0;
+}
 
 int wct_run_relation(const wct_relation_graph *g,wct_call_fn fn,void *ctx,wct_limits lim,wct_report *r){memset(r,0,sizeof*r);char err[128];if(wct_validate_relation(g,err,sizeof err)){r->error=dupstr(err);return -1;}size_t n=g->call_count,max=lim.max_flows?lim.max_flows:n;unsigned char*done=calloc(n,1);char**res=calloc(n,sizeof*res);for(size_t step=0;step<max;step++){int pick=-1;for(size_t i=0;i<n;i++)if(!done[i]){int ready=1;for(size_t j=0;j<g->relation_count;j++)if(find_call(g,g->relations[j].to)==(int)i&&!done[find_call(g,g->relations[j].from)])ready=0;if(ready){pick=(int)i;break;}}if(pick<0)break;wct_call*c=&g->calls[pick];const char**args=(const char**)c->args;char*out=NULL;int rc=fn?fn(c->id,args,c->argc,&out,ctx):0;if(rc){r->failures++;r->error=dupstr("call callback failed");free(out);break;}res[pick]=out;done[pick]=1;r->steps++;r->covered++;}for(size_t i=0;i<n;i++)free(res[i]);free(res);free(done);return r->failures?-1:0;}
