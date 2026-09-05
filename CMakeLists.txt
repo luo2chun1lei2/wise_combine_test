@@ -104,15 +104,15 @@ add_test(NAME runtime_output_cap COMMAND wise-combine-runtime-test $<TARGET_FILE
 set_tests_properties(runtime_timeout PROPERTIES TIMEOUT 5)
 
 add_test(NAME cli_validate COMMAND wise-combine validate
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/state_valid.json)
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/state_workflow.json)
 add_test(NAME cli_generate COMMAND wise-combine generate
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/relation_valid.json)
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/relation_workflow.json)
 add_test(NAME cli_run COMMAND wise-combine run
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/relation_valid.json
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/relation_workflow.json
   --adapter ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/bin/adapter_ok
   --reports ${CMAKE_CURRENT_BINARY_DIR}/cli-reports --run-id integration)
 add_test(NAME cli_run_failure COMMAND wise-combine run
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/relation_valid.json
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/relation_workflow.json
   --adapter ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/bin/adapter_mismatch
   --reports ${CMAKE_CURRENT_BINARY_DIR}/cli-failure-reports --run-id integration-failure)
 set_tests_properties(cli_run_failure PROPERTIES WILL_FAIL TRUE)
