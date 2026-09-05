@@ -74,3 +74,19 @@ add_executable(wise-combine-generator-test tests/generator_test.cpp)
 target_link_libraries(wise-combine-generator-test PRIVATE wise-combine-generate)
 add_test(NAME generator_determinism COMMAND wise-combine-generator-test)
 add_test(NAME generator_limits COMMAND wise-combine-generator-test)
+
+add_library(wise-combine-runtime src/runtime/runtime.cpp)
+target_include_directories(wise-combine-runtime PUBLIC src)
+target_link_libraries(wise-combine-runtime PUBLIC wise-combine-generate
+  wise-combine-compile-options)
+add_library(wise-combine-report src/report/report.cpp)
+target_include_directories(wise-combine-report PUBLIC src)
+target_link_libraries(wise-combine-report PUBLIC wise-combine-runtime
+  wise-combine-compile-options)
+add_executable(wise-combine-runtime-fixture tests/fixture_adapter.cpp)
+target_link_libraries(wise-combine-runtime-fixture PRIVATE wise-combine-compile-options)
+add_executable(wise-combine-runtime-test tests/runtime_test.cpp)
+target_link_libraries(wise-combine-runtime-test PRIVATE wise-combine-report
+  wise-combine-runtime wise-combine-generate wise-combine-compile-options)
+add_test(NAME runtime_pass COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture>)
+add_test(NAME runtime_failure COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture>)
