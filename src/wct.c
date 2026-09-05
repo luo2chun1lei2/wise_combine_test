@@ -3,9 +3,24 @@
 #include <stdlib.h>
 #include <string.h>
 
-static char *dupstr(const char *s) { size_t n = strlen(s) + 1; char *p = malloc(n); if (p) memcpy(p, s, n); return p; }
+static char *dupstr(const char *s) {
+    if (!s) return NULL;
+    size_t n = strlen(s) + 1;
+    char *p = malloc(n);
+    if (p) memcpy(p, s, n);
+    return p;
+}
 static void seterr(char *e, size_t n, const char *s) { if (n) { snprintf(e, n, "%s", s); } }
-static int addstr(char ***a, size_t *n, const char *s) { char **p = realloc(*a, (*n + 1) * sizeof **a); if (!p) return -1; *a = p; p[*n] = dupstr(s); if (!p[*n]) return -1; (*n)++; return 0; }
+static int addstr(char ***a, size_t *n, const char *s) {
+    char *copy = dupstr(s);
+    if (!copy) return -1;
+    char **p = realloc(*a, (*n + 1) * sizeof **a);
+    if (!p) { free(copy); return -1; }
+    *a = p;
+    p[*n] = copy;
+    (*n)++;
+    return 0;
+}
 static int find_state(const wct_state_graph *g, const char *id) { for (size_t i=0;i<g->state_count;i++) if (!strcmp(g->states[i], id)) return (int)i; return -1; }
 static int find_call(const wct_relation_graph *g, const char *id) { for (size_t i=0;i<g->call_count;i++) if (!strcmp(g->calls[i].id,id)) return (int)i; return -1; }
 
@@ -14,16 +29,17 @@ void wct_relation_graph_free(wct_relation_graph *g) { if (!g) return; free(g->id
 void wct_report_free(wct_report *r) { if (r) { free(r->error); memset(r,0,sizeof *r); } }
 
 int wct_parse_file(const char *path, wct_state_graph *s, wct_relation_graph *r, char *err, size_t errlen) {
-    FILE *f = fopen(path,"r"); char line[2048]; unsigned schema=0; size_t ln=0; if (!f) { seterr(err,errlen,"cannot open model"); return -1; }
     memset(s,0,sizeof *s); memset(r,0,sizeof *r);
+    FILE *f = fopen(path,"r"); char line[2048]; unsigned schema=0; size_t ln=0;
+    if (!f) { seterr(err,errlen,"cannot open model"); return -1; }
     while (fgets(line,sizeof line,f)) { ln++; char *save=NULL, *tok=strtok_r(line," \t\r\n",&save); if(!tok || tok[0]=='#') continue;
         if(!strcmp(tok,"schema")){ char *v=strtok_r(NULL," \t\r\n",&save); if(!v || sscanf(v,"%u",&schema)!=1 || schema!=WCT_SCHEMA_VERSION){seterr(err,errlen,"unsupported schema");goto fail;} }
-        else if(!strcmp(tok,"state_graph")){ char *id=strtok_r(NULL," \t\r\n",&save), *init=strtok_r(NULL," \t\r\n",&save); if(!id||!init){seterr(err,errlen,"line missing state_graph fields");goto fail;} s->id=dupstr(id);s->initial=dupstr(init); }
+        else if(!strcmp(tok,"state_graph")){ char *id=strtok_r(NULL," \t\r\n",&save), *init=strtok_r(NULL," \t\r\n",&save); if(!id||!init){seterr(err,errlen,"line missing state_graph fields");goto fail;} free(s->id); free(s->initial); s->id=dupstr(id);s->initial=dupstr(init); if(!s->id||!s->initial)goto oom; }
         else if(!strcmp(tok,"state")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id||addstr(&s->states,&s->state_count,id)){seterr(err,errlen,"invalid state");goto fail;} }
-        else if(!strcmp(tok,"transition")){ char *a[5]; for(int i=0;i<5;i++)a[i]=strtok_r(NULL," \t\r\n",&save); if(!a[4]){seterr(err,errlen,"line missing transition fields");goto fail;} wct_transition *t=realloc(s->transitions,(s->transition_count+1)*sizeof *t); if(!t)goto oom; s->transitions=t; t=&t[s->transition_count++]; t->id=dupstr(a[0]);t->from=dupstr(a[1]);t->to=dupstr(a[2]);t->input=dupstr(a[3]);t->expect=dupstr(a[4]); }
-        else if(!strcmp(tok,"relation_graph")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){seterr(err,errlen,"line missing relation_graph id");goto fail;} r->id=dupstr(id); }
-        else if(!strcmp(tok,"call")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){seterr(err,errlen,"line missing call id");goto fail;} wct_call *c=realloc(r->calls,(r->call_count+1)*sizeof *c); if(!c)goto oom; r->calls=c; c=&c[r->call_count++]; memset(c,0,sizeof *c); c->id=dupstr(id); char *arg; while((arg=strtok_r(NULL," \t\r\n",&save))){ if(addstr(&c->args,&c->argc,arg))goto oom; } }
-        else if(!strcmp(tok,"relation")){ char *a=strtok_r(NULL," \t\r\n",&save), *b=strtok_r(NULL," \t\r\n",&save); if(!a||!b){seterr(err,errlen,"line missing relation fields");goto fail;} wct_relation *x=realloc(r->relations,(r->relation_count+1)*sizeof *x);if(!x)goto oom;r->relations=x;x=&x[r->relation_count++];x->from=dupstr(a);x->to=dupstr(b); }
+        else if(!strcmp(tok,"transition")){ char *a[5]; for(int i=0;i<5;i++)a[i]=strtok_r(NULL," \t\r\n",&save); if(!a[4]){seterr(err,errlen,"line missing transition fields");goto fail;} wct_transition *t=realloc(s->transitions,(s->transition_count+1)*sizeof *t); if(!t)goto oom; s->transitions=t; t=&t[s->transition_count]; memset(t,0,sizeof *t); t->id=dupstr(a[0]);t->from=dupstr(a[1]);t->to=dupstr(a[2]);t->input=dupstr(a[3]);t->expect=dupstr(a[4]); if(!t->id||!t->from||!t->to||!t->input||!t->expect)goto oom; s->transition_count++; }
+        else if(!strcmp(tok,"relation_graph")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){seterr(err,errlen,"line missing relation_graph id");goto fail;} free(r->id); r->id=dupstr(id); if(!r->id)goto oom; }
+        else if(!strcmp(tok,"call")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){seterr(err,errlen,"line missing call id");goto fail;} wct_call *c=realloc(r->calls,(r->call_count+1)*sizeof *c); if(!c)goto oom; r->calls=c; c=&c[r->call_count]; memset(c,0,sizeof *c); c->id=dupstr(id); if(!c->id)goto oom; char *arg; while((arg=strtok_r(NULL," \t\r\n",&save))){ if(addstr(&c->args,&c->argc,arg))goto oom; } r->call_count++; }
+        else if(!strcmp(tok,"relation")){ char *a=strtok_r(NULL," \t\r\n",&save), *b=strtok_r(NULL," \t\r\n",&save); if(!a||!b){seterr(err,errlen,"line missing relation fields");goto fail;} wct_relation *x=realloc(r->relations,(r->relation_count+1)*sizeof *x);if(!x)goto oom;r->relations=x;x=&x[r->relation_count];x->from=dupstr(a);x->to=dupstr(b);if(!x->from||!x->to)goto oom;r->relation_count++; }
         else { char msg[128]; snprintf(msg,sizeof msg,"line %zu: unknown directive",ln);seterr(err,errlen,msg);goto fail; }
     }
     fclose(f); if(schema!=WCT_SCHEMA_VERSION){seterr(err,errlen,"missing schema");return -1;} return 0;
