@@ -3,6 +3,7 @@
 ## Test Contract
 
 - 所有命令从仓库根目录执行；测试脚本必须返回非零表示失败。
+- 首发验收同时覆盖 C API 与版本化 DSL/CLI；示例 C runner 是不依赖外部测试框架的用户侧入口。
 - 每个迭代使用固定 fixture、seed 和流程/深度上限，记录 `git rev-parse HEAD`、编译器版本、内核/架构、命令和退出码。
 - 证据目录只存文本/JSON/TSV/日志，不提交编译产物；建议路径 `evidence/iter-N/{commands.txt,summary.json,stdout.log,stderr.log,measure.tsv,sanitizer.log,valgrind.log}`。
 - 后一迭代的入口脚本先检查前一迭代 `summary.json` 为 `status: PASS`，否则退出 2（blocked）。

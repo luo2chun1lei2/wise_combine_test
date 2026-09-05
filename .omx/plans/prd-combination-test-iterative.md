@@ -4,6 +4,10 @@
 
 在 Linux 上交付一个可重复、低依赖的组合测试工具。用户能够以文件或 C API 描述对象状态图、状态迁移函数、函数节点及其参数/调用顺序关系，工具生成并执行确定性的组合流程，输出可定位的失败场景；每个迭代必须先通过本轮验证，才允许进入下一轮。
 
+### First-release interface decision
+
+The deep-interview decision is that the C API and the versioned DSL/CLI are both first-class interfaces in the initial release. The C API is the primary integration surface, while a standalone example C runner and the DSL/CLI provide independent user-facing verification paths. No external test framework is required.
+
 ## Scope and Non-goals
 
 ### In scope (mandatory)
