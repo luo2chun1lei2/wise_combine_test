@@ -4,12 +4,12 @@ status: awaiting-approval
 intent: unclear
 review_required: true
 plan_path: .omo/plans/wise-combine-test.md
-plan_sha256: null
+plan_sha256: 3230628a36a9c7e3068ce8452ca887e59193736750af6e9b87ffc548980a2937
 review_round_id: null
 pending-action: write and review .omo/plans/wise-combine-test.md
 review:
   momus:
-    status: pending
+    status: inconclusive
     workspace_root: null
     runtime_home: null
     target: .omo/plans/wise-combine-test.md
@@ -17,9 +17,9 @@ review:
     plan_sha256: null
     launch_id: null
     session: null
-    result: null
+    result: configured Momus skill path unavailable in this runtime; fallback review command could not produce a terminal verdict
   independent:
-    status: pending
+    status: approved
     workspace_root: null
     runtime_home: null
     target: .omo/plans/wise-combine-test.md
@@ -27,7 +27,7 @@ review:
     plan_sha256: null
     launch_id: null
     session: null
-    result: null
+    result: OKAY from independent read-only Codex review after contract revisions
 approach: "Plan a standard-library-first C++17 Linux CLI with declarative spec parsing, typed state/relation modeling, deterministic bounded generation, adapter-based execution, structured reporting, tests, sanitizers, measurements, and README documentation."
 ---
 
