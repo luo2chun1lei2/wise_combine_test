@@ -2,7 +2,7 @@
   "version": 1,
   "evidenceLayoutVersion": 2,
   "createdAt": "2026-09-05T09:18:27.383Z",
-  "updatedAt": "2026-09-05T09:54:47.678Z",
+  "updatedAt": "2026-09-05T10:04:32.413Z",
   "briefPath": ".omo/ulw-loop/ulw-final-f1f4/brief.md",
   "goalsPath": ".omo/ulw-loop/ulw-final-f1f4/goals.json",
   "ledgerPath": ".omo/ulw-loop/ulw-final-f1f4/ledger.jsonl",
@@ -12,7 +12,7 @@
       "id": "G001-strictly-complete-the-wise-combine-t",
       "title": "Strictly complete the wise-combine-test final verification wave on th...",
       "objective": "Strictly complete the wise-combine-test final verification wave on the frozen current tree. F1 plan compliance must produce final-f1.md; F2 sanitizer and code-quality audit must produce final-f2.log; F3 real CLI manual QA plus F4 scope-fidelity audit must produce final-f3.md and final-f4.md. Preserve AGENTS.md, do not change product behavior unless a criterion-cited blocker is found, and stop only after all four artifacts pass, cleanup receipts exist, and the plan checkboxes are complete.",
-      "status": "in_progress",
+      "status": "complete",
       "successCriteria": [
         {
           "id": "C001",
@@ -20,9 +20,9 @@
           "userModel": "happy",
           "expectedEvidence": ".omo/evidence/wise-combine-test/final-f1.md",
           "essential": true,
-          "capturedEvidence": ".omo/evidence/wise-combine-test/final-f1.md current-tree re-audit for d520342/ae7de11: all mandatory mappings, relation-flow repair, and forbidden-scope scan pass @tree:ae7de11 | cleanup: no QA processes/ports; temporary paths absent",
+          "capturedEvidence": "Final F1 artifact and plan-compliance audit committed in 48951f2; current frozen tree 46714a6a9a46ec6d0176183283dfa03b79ac069e; git diff --check clean and relation-flow mapping current",
           "status": "pass",
-          "capturedAt": "2026-09-05T09:54:47.643Z"
+          "capturedAt": "2026-09-05T10:01:04.735Z"
         },
         {
           "id": "C002",
@@ -30,9 +30,9 @@
           "userModel": "edge",
           "expectedEvidence": ".omo/evidence/wise-combine-test/final-f2.log",
           "essential": true,
-          "capturedEvidence": ".omo/evidence/wise-combine-test/final-f2.log current-tree rerun for d520342/ae7de11: ASan/UBSan/LSan build rc=0, 19/19 CTest pass including runtime_argument_relation, no diagnostics @tree:ae7de11 | cleanup: /tmp/wise-final-f2.okOvaZ.log absent; no processes",
+          "capturedEvidence": "Final F2 artifact plus freeze rerun committed in 48951f2; current frozen tree 46714a6a9a46ec6d0176183283dfa03b79ac069e; Debug and ASan/UBSan/LSan 19/19 pass",
           "status": "pass",
-          "capturedAt": "2026-09-05T09:54:47.678Z"
+          "capturedAt": "2026-09-05T10:01:04.765Z"
         },
         {
           "id": "C003",
@@ -40,17 +40,34 @@
           "userModel": "regression",
           "expectedEvidence": ".omo/evidence/wise-combine-test/final-f3.md and .omo/evidence/wise-combine-test/final-f4.md",
           "essential": false,
-          "capturedEvidence": ".omo/evidence/wise-combine-test/final-f3.md and final-f4.md on tree:ae7de11: current CLI matrix passed validate/generate/run/report, mismatch=4, invalid=2, relation injection is observable, forbidden scan had no matches, and old F4 RED was re-audited PASS | cleanup: /tmp/wise-final-f3.emvEKb, /tmp/wise-relation-final.ir1wbM, and /tmp/wise-final-f2.okOvaZ.log absent; no processes remain",
+          "capturedEvidence": "Final F3/F4 artifacts plus quality-gate reports committed in 48951f2; current frozen tree 46714a6a9a46ec6d0176183283dfa03b79ac069e; CLI matrix and scope scan pass with cleanup",
           "status": "pass",
-          "capturedAt": "2026-09-05T09:54:35.358Z"
+          "capturedAt": "2026-09-05T10:01:04.800Z"
         }
       ],
       "attempt": 1,
       "createdAt": "2026-09-05T09:18:27.383Z",
-      "updatedAt": "2026-09-05T09:54:47.678Z",
-      "startedAt": "2026-09-05T09:19:35.916Z"
+      "updatedAt": "2026-09-05T10:04:32.413Z",
+      "startedAt": "2026-09-05T09:19:35.916Z",
+      "completedAt": "2026-09-05T10:04:32.413Z",
+      "evidence": "F1/F2/F3/F4 committed artifacts, d520342 relation-flow repair, final Debug/ASan 19/19, CLI matrix, and frozen quality gate reports all pass."
     }
   ],
   "codexObjective": "Complete the durable ulw-loop plan in .omo/ulw-loop/ulw-final-f1f4/goals.json, including later accepted/appended stories, under the original brief constraints; use .omo/ulw-loop/ulw-final-f1f4/ledger.jsonl as the audit trail.",
-  "activeGoalId": "G001-strictly-complete-the-wise-combine-t"
+  "aggregateCompletion": {
+    "status": "complete",
+    "completedAt": "2026-09-05T10:04:32.413Z",
+    "evidence": "F1/F2/F3/F4 committed artifacts, d520342 relation-flow repair, final Debug/ASan 19/19, CLI matrix, and frozen quality gate reports all pass.",
+    "codexGoal": {
+      "goal": {
+        "threadId": "01a070c7-cbb5-7a23-94a0-027af851a0b3",
+        "objective": "Complete the durable ulw-loop plan in .omo/ulw-loop/ulw-final-f1f4/goals.json, including later accepted/appended stories, under the original brief constraints; use .omo/ulw-loop/ulw-final-f1f4/ledger.jsonl as the audit trail.",
+        "status": "complete",
+        "tokensUsed": 2202,
+        "timeUsedSeconds": 7,
+        "createdAt": 1788602544,
+        "updatedAt": 1788602551
+      }
+    }
+  }
 }
