@@ -1,1 +1,26 @@
-{"task":3,"debug":"pass","sanitizer":"pass","tests":"spec_valid spec_invalid model","status":"DoneClaim"}
+{
+  "task": 3,
+  "head_before": "3f4d35f9bafbb7859ae4e5f6014a4ddbe9c670a2",
+  "restoration": {
+    "command": "git restore --source=HEAD -- src/spec/spec.cpp",
+    "result": "exit 0; src/spec/spec.cpp restored byte-for-byte from HEAD (sha256 069636e45bca425271e1334f1f034c31ba07413b5c1f5b5b8cfd225f88f7d4ce)"
+  },
+  "debug": {
+    "configure_command": "cmake -S . -B /tmp/wise-spec-final -DCMAKE_BUILD_TYPE=Debug",
+    "configure_result": "exit 0; configure and generate completed",
+    "build_command": "cmake --build /tmp/wise-spec-final --parallel",
+    "build_result": "exit 2; src/spec/spec.cpp failed to compile: std::chars_format not declared (line 74), malformed set_limits initializer (line 88), and canonical(top) type mismatch (line 89)",
+    "test_command": "(cd /tmp/wise-spec-final && ctest -R spec --output-on-failure)",
+    "test_result": "exit 8; spec_valid and spec_invalid both Not Run because wise-combine-spec-test was not built"
+  },
+  "sanitizer": {
+    "configure_command": "cmake -S . -B /tmp/wise-spec-final-asan -DCMAKE_BUILD_TYPE=Debug -DWISE_COMBINE_ENABLE_SANITIZERS=ON",
+    "configure_result": "exit 0; configure and generate completed",
+    "build_command": "cmake --build /tmp/wise-spec-final-asan --parallel",
+    "build_result": "exit 2; same src/spec/spec.cpp compile errors as Debug build",
+    "test_command": "(cd /tmp/wise-spec-final-asan && ctest -R spec --output-on-failure)",
+    "test_result": "exit 8; spec_valid and spec_invalid both Not Run because wise-combine-spec-test was not built"
+  },
+  "status": "FAIL",
+  "scope": "Only src/spec/spec.cpp restoration and task-3 evidence/ledger were changed; no other task files altered."
+}
