@@ -96,7 +96,7 @@ Your next move: run `$start-work wise-combine-test` in a worker session after th
   Acceptance criteria (agent-executable): same normalized spec/seed/limits produce byte-identical sequences; reference fixtures assert exact flow IDs/counts (linear=1, two-branch with `max_cases=2`=2, one valid self-loop with `max_steps=3` yields one length-3 flow, ordering cycle=validation error); generated flows never violate state or relation constraints; limit zero/one and cyclic/dead-end graphs terminate with explicit outcomes.
   QA scenarios (name the exact tool + invocation): happy `ctest --test-dir build -R generator_determinism --output-on-failure`; failure `ctest --test-dir build -R generator_limits --output-on-failure` proves bounded termination and rejects invalid limits; Evidence `.omo/evidence/wise-combine-test/task-4-wise-combine-test.json`
   Commit: Y | feat(generate): add bounded deterministic flow generation
-- [ ] 5. Implement safe adapter-based runtime execution and structured reporting
+- [x] 5. Implement safe adapter-based runtime execution and structured reporting
   What to do / Must NOT do: Add `src/runtime/` and `src/report/` around a normative no-shell subprocess adapter: `fork`/`execve` with explicit argv, allowlisted environment, fixed working directory, 2-second per-step and 30-second total timeout, 16 MiB output cap, and SIGTERM then SIGKILL cleanup. Track state, compare expected-vs-observed outcomes, and emit JSON/human reports; do not default to arbitrary dynamic symbol calls.
   Parallelization: Wave 4 | Blocked by: 4 | Blocks: 6
   References (executor has NO interview context - be exhaustive): `AGENTS.md:8-20,33-34`; planned `src/runtime/`, `src/report/`; `.omo/drafts/wise-combine-test.md` invocation contract and evidence mapping

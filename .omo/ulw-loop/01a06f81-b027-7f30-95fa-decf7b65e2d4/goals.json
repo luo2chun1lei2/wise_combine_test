@@ -2,7 +2,7 @@
   "version": 1,
   "evidenceLayoutVersion": 2,
   "createdAt": "2026-09-05T07:07:29.892Z",
-  "updatedAt": "2026-09-05T07:12:53.665Z",
+  "updatedAt": "2026-09-05T07:35:06.913Z",
   "briefPath": ".omo/ulw-loop/01a06f81-b027-7f30-95fa-decf7b65e2d4/brief.md",
   "goalsPath": ".omo/ulw-loop/01a06f81-b027-7f30-95fa-decf7b65e2d4/goals.json",
   "ledgerPath": ".omo/ulw-loop/01a06f81-b027-7f30-95fa-decf7b65e2d4/ledger.jsonl",
@@ -20,8 +20,10 @@
           "userModel": "happy",
           "expectedEvidence": ".omo/ulw-loop/01a06f81-b027-7f30-95fa-decf7b65e2d4/evidence-C001.md",
           "essential": true,
-          "capturedEvidence": null,
-          "status": "pending"
+          "capturedEvidence": "Task 6 worker remained live after connection retries with no CLI/README/measurement artifacts; current tree has no src/main.cpp or README.md.",
+          "status": "blocked",
+          "capturedAt": "2026-09-05T07:35:06.913Z",
+          "notes": "Need a stable implementation worker for CLI, integration fixtures, measurements, documentation, and final CTest gate."
         },
         {
           "id": "C002",
@@ -29,9 +31,9 @@
           "userModel": "edge",
           "expectedEvidence": ".omo/ulw-loop/01a06f81-b027-7f30-95fa-decf7b65e2d4/evidence-C002.md",
           "essential": true,
-          "capturedEvidence": "Runtime worker produced no new artifact and remained live beyond 80 seconds; existing independent evidence only covers the success fixture.",
-          "status": "blocked",
-          "capturedAt": "2026-09-05T07:12:53.665Z",
+          "capturedEvidence": ".omo/ulw-loop/01a06f81-b027-7f30-95fa-decf7b65e2d4/G001-execute-the-approved-wise-combine-te/a1/evidence-C002.md @tree:a8f0cdd | cleanup: no child processes or ports; /tmp build dirs retained as test artifacts",
+          "status": "pass",
+          "capturedAt": "2026-09-05T07:32:41.193Z",
           "notes": "Need a stable single worker session to implement and verify mismatch, malformed response, timeout, crash, output cap, allowlist, and JSON escaping."
         },
         {
@@ -46,7 +48,7 @@
       ],
       "attempt": 1,
       "createdAt": "2026-09-05T07:07:29.892Z",
-      "updatedAt": "2026-09-05T07:12:53.665Z",
+      "updatedAt": "2026-09-05T07:35:06.913Z",
       "startedAt": "2026-09-05T07:08:21.251Z"
     }
   ],

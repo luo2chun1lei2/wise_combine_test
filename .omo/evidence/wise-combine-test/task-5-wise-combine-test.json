@@ -1,8 +1,8 @@
 {
   "task": 5,
-  "scenario": "runtime_pass_and_failure_registration",
-  "invocation": "cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel && (cd build && ctest -R '^runtime_(pass|failure)$' --output-on-failure)",
-  "observable": "100% tests passed, 0 tests failed out of 2",
+  "scenario": "runtime_pass_and_failure_matrix",
+  "invocation": "cmake -S . -B /tmp/wct-runtime-debug -DCMAKE_BUILD_TYPE=Debug && cmake --build /tmp/wct-runtime-debug --parallel 2 && (cd /tmp/wct-runtime-debug && ctest -R '^runtime_' --output-on-failure)",
+  "observable": "100% tests passed, 0 tests failed out of 7",
   "artifacts": [
     "build/wise-combine-runtime-test",
     "/tmp/wise-runtime-report/run.json",
@@ -12,7 +12,9 @@
     "execution": "fork/execve without shell",
     "timeouts_ms": {"step": 2000, "total": 30000},
     "output_cap_bytes": 16777216,
-    "process_group_cleanup": "SIGTERM then SIGKILL"
+    "process_group_cleanup": "SIGTERM then SIGKILL",
+    "allowlist": "regular executable basename wise-combine-runtime-fixture or adapter_* only",
+    "fixtures": ["ok", "mismatch", "malformed", "extra", "timeout", "crash", "cap"]
   },
   "report_fields": ["sequence index", "function", "state mismatch", "stderr", "exit status"]
 }

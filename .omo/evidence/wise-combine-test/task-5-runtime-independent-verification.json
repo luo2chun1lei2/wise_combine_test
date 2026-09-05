@@ -1,7 +1,8 @@
 {
-  "invocation": "cmake -S . -B /tmp/wct-runtime-verify -DCMAKE_BUILD_TYPE=Debug && cmake --build /tmp/wct-runtime-verify --parallel && (cd /tmp/wct-runtime-verify && ctest -R '^runtime_(pass|failure)$' --output-on-failure)",
+  "invocation": "cmake -S . -B /tmp/wct-runtime-debug -DCMAKE_BUILD_TYPE=Debug && cmake --build /tmp/wct-runtime-debug --parallel 2 && (cd /tmp/wct-runtime-debug && ctest -R '^runtime_' --output-on-failure)",
   "result": "PASS",
-  "ctest": "2/2 passed",
+    "ctest": "7/7 passed",
+    "sanitizer": "cmake -S . -B /tmp/wct-runtime-asan -DWISE_COMBINE_ENABLE_SANITIZERS=ON; ctest runtime_: 7/7 passed; ASAN_OPTIONS=detect_leaks=1",
   "artifact_inspection": {
     "json": "/tmp/wise-runtime-report/run.json",
     "text": "/tmp/wise-runtime-report/run.txt",

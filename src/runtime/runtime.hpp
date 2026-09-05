@@ -30,6 +30,7 @@ struct RunResult {
 
 struct Options {
   std::string executable;
+  std::vector<std::string> arguments;
   std::string working_directory;
   std::size_t step_timeout_ms{2000};
   std::size_t total_timeout_ms{30000};
