@@ -2,8 +2,8 @@
 
 Status: **FAIL / BLOCKED**
 
-Audit date: 2026-09-05 (Asia/Shanghai)  
-Repository HEAD audited: `82034fd` (`test(integration): add workflow specifications`)  
+Audit date: 2026-09-05 (Asia/Shanghai)
+Repository HEAD audited: `82034fd` (`test(integration): add workflow specifications`)
 Scope: product source, tests, CMake, README, and the mandatory parameter-flow
 contract. No product code was edited by this audit.
 

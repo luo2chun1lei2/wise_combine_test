@@ -2,8 +2,8 @@
 
 Status: **PASS**
 
-Audit date: 2026-09-05 (Asia/Shanghai)  
-Repository HEAD audited: `82034fd` (`test(integration): add workflow specifications`)  
+Audit date: 2026-09-05 (Asia/Shanghai)
+Repository HEAD audited: `82034fd` (`test(integration): add workflow specifications`)
 Scope: read-only CLI/product tree plus this evidence artifact. No C++,
 CMake, README, or plan files were changed.
 
@@ -75,8 +75,8 @@ success-summary.json
 
 ```text
 flow produce: passed
-step 0 produce: passed state=ready exit=0 
-step 1 consume: passed state=done exit=0 
+step 0 produce: passed state=ready exit=0
+step 1 consume: passed state=done exit=0
 ```
 
 `success-summary.json`:
@@ -178,8 +178,8 @@ EXIT=0
 $ ./build/wise-combine report /tmp/wise-combine-f3.MZ9tzG/reports/replay-0.txt
 EXIT=0
 flow produce: passed
-step 0 produce: passed state=ready exit=0 
-step 1 consume: passed state=done exit=0 
+step 0 produce: passed state=ready exit=0
+step 1 consume: passed state=done exit=0
 ```
 
 Both JSON and text reports replay unchanged and return success.
