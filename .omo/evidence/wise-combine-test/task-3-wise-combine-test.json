@@ -25,6 +25,6 @@
   "status": "PASS",
   "blocker": null,
   "artifact": ".omo/evidence/wise-combine-test/task-3-wise-combine-test.json",
-  "commit": null,
+  "commit": "f0ff73a",
   "scope": "Updated only the requested parser lifetime fix and task-3 completion metadata; .debug-journal.md is absent and build outputs remain outside the repository."
 }
