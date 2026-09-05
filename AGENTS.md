@@ -40,3 +40,76 @@
 
 不一定能实现，或者说是一种尝试：
 1. [不要实现] 通过编码等方式描述一组函数的调用模式后，通过设置各种参数，查看这个调用模式是否处理了所有的情况，是否有遗漏
+
+---
+
+# PROJECT KNOWLEDGE BASE
+
+**Generated:** 2026-09-05  **Commit:** 81daf6f  **Branch:** layzcodex
+
+## OVERVIEW
+
+`wise_combine_test` is currently a requirements-only repository for a Linux
+combination-testing tool. The intended product models object state graphs and
+relationships among functions (argument flow and call order), then generates
+and executes combination call-flow tests. No implementation exists in this
+checkout yet.
+
+## STRUCTURE
+
+```text
+wise_combine_test.lazycodex/
+├── AGENTS.md       # project specification and repository guidance
+├── LICENSE         # project license
+└── .gitignore      # C/C++/CMake and test-artifact exclusions
+```
+
+`.codegraph/` and `.pytest_cache/` are local generated state, not modules.
+There are no source, test, build, CI, or documentation subdirectories yet.
+
+## WHERE TO LOOK
+
+| Task | Location | Notes |
+|------|----------|-------|
+| Requirements | `AGENTS.md` | Authoritative functional and delivery specification |
+| Artifact conventions | `.gitignore` | C/C++/CMake outputs and test caches are ignored |
+| License | `LICENSE` | Applies to future source and documentation |
+| State-graph implementation | `src/` (planned) | Create when implementation begins |
+| Combination-flow tests | `tests/` (planned) | Cover state transitions and function relations |
+| Usage documentation | `README.md` (planned) | Add installation and user instructions |
+
+## CODE MAP
+
+No symbols, exports, entry points, or call graph are present. CodeGraph reports
+zero indexed files, so centrality and reference counts are not measurable.
+
+## CONVENTIONS
+
+- Linux is the required runtime platform; keep dependencies minimal.
+- Every step must commit repository files, including `.omo/` and `.agents/`;
+  compiled and test binaries are the only stated exclusions.
+- New implementation must provide reproducible tests and measurements,
+  including leak and out-of-bounds checks.
+- Preserve `[必须]` versus `[可选]` when mapping requirements to evidence.
+
+## ANTI-PATTERNS (THIS PROJECT)
+
+- Do not implement the memorandum item that encodes call patterns solely to
+  vary parameters and check for missing cases; it is explicitly out of scope.
+- Do not claim completion without runnable tests and measurements.
+- Do not treat `.codegraph/` or `.pytest_cache/` as source or verification.
+- Do not add child `AGENTS.md` files until a distinct implementation boundary
+  exists.
+
+## COMMANDS
+
+No build, test, lint, coverage, sanitizer, Valgrind, install, or run command
+exists at this revision. Add and document these with the first executable
+implementation; the eventual workflow must expose build, functional test, and
+memory-safety commands.
+
+## NOTES
+
+This root file is the only guidance needed: one directory and three tracked
+files. Re-score locations after adding `src/`, `tests/`, or other substantial
+modules, and create child guidance only for domains with distinct conventions.
