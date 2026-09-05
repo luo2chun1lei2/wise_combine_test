@@ -1,0 +1,7 @@
+schema 1
+state_graph smoke idle
+state idle
+state ready
+transition start idle ready start start
+relation_graph smoke_calls
+call ping hello

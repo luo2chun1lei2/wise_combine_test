@@ -1,0 +1,7 @@
+schema 1
+state_graph unused idle
+state idle
+relation_graph relation_smoke
+call first alpha
+call second result
+relation first second
