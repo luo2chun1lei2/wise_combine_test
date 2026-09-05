@@ -1,25 +1,28 @@
--- The CXX compiler identification is GNU 9.4.0
--- Check for working CXX compiler: /usr/bin/c++
--- Check for working CXX compiler: /usr/bin/c++ -- works
--- Detecting CXX compiler ABI info
--- Detecting CXX compiler ABI info - done
--- Detecting CXX compile features
--- Detecting CXX compile features - done
+=== Task 1 CMake/CTest evidence ===
+CTest version:
+ctest version 3.16.3
+--- seed stale cache with BUILD_TESTING=OFF ---
 -- Configuring done
 -- Generating done
 -- Build files have been written to: /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build
-Scanning dependencies of target wise-combine-smoke-test
-Scanning dependencies of target wise-combine-smoke
-[ 25%] Building CXX object CMakeFiles/wise-combine-smoke-test.dir/tests/smoke_test.cpp.o
-[ 50%] Building CXX object CMakeFiles/wise-combine-smoke.dir/src/smoke.cpp.o
-[ 75%] Linking CXX executable wise-combine-smoke
-[100%] Linking CXX executable wise-combine-smoke-test
+seed_exit_status=0
+--- documented configure (must restore BUILD_TESTING=ON) ---
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build
+configure_exit_status=0
+--- cache and generated-test assertions ---
+18:BUILD_TESTING:BOOL=ON
+7:add_test(smoke "/home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build/wise-combine-smoke-test")
+--- documented build ---
+[ 50%] Built target wise-combine-smoke-test
 [100%] Built target wise-combine-smoke
-[100%] Built target wise-combine-smoke-test
+build_exit_status=0
+--- ctest --test-dir build (unsupported by local CTest 3.16; recorded) ---
 Test project /home/workspace_data/works/myprojects/wise_combine_test.lazycodex
 No tests were found!!!
---- compatibility note: ctest 3.16.3 ignores --test-dir when invoked from parent ---
---- command: (cd build && ctest --test-dir build --output-on-failure) ---
+ctest_test_dir_exit_status=0
+--- supported local equivalent: (cd build && ctest --output-on-failure) ---
 Test project /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build
     Start 1: smoke
 1/1 Test #1: smoke ............................   Passed    0.00 sec
@@ -27,7 +30,8 @@ Test project /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/b
 100% tests passed, 0 tests failed out of 1
 
 Total Test time (real) =   0.00 sec
---- command: cmake -S . -B /tmp/wise-combine-invalid -G DefinitelyNotAGenerator (expected failure) ---
+ctest_build_dir_exit_status=0
+--- invalid generator (must fail) ---
 CMake Error: Could not create named generator DefinitelyNotAGenerator
 
 Generators
@@ -48,34 +52,50 @@ Generators
   Eclipse CDT4 - Ninja         = Generates Eclipse CDT 4.0 project files.
   Eclipse CDT4 - Unix Makefiles= Generates Eclipse CDT 4.0 project files.
 
-exit_status=1
---- command: cmake -S . -B build-asan -DCMAKE_BUILD_TYPE=Debug -DWISE_COMBINE_ENABLE_SANITIZERS=ON ---
--- The CXX compiler identification is GNU 9.4.0
--- Check for working CXX compiler: /usr/bin/c++
--- Check for working CXX compiler: /usr/bin/c++ -- works
--- Detecting CXX compiler ABI info
--- Detecting CXX compiler ABI info - done
--- Detecting CXX compile features
--- Detecting CXX compile features - done
+invalid_generator_exit_status=1
+=== evidence complete ===
+
+Final required-command rerun after current-input change:
+COMMAND: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+EXIT_CODE: 0
+OUTPUT:
 -- Configuring done
 -- Generating done
--- Build files have been written to: /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-asan
---- command: cmake --build build-asan --parallel ---
-Scanning dependencies of target wise-combine-smoke-test
-Scanning dependencies of target wise-combine-smoke
-[ 25%] Building CXX object CMakeFiles/wise-combine-smoke-test.dir/tests/smoke_test.cpp.o
-[ 50%] Building CXX object CMakeFiles/wise-combine-smoke.dir/src/smoke.cpp.o
-[ 75%] Linking CXX executable wise-combine-smoke-test
-[100%] Linking CXX executable wise-combine-smoke
+-- Build files have been written to: /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build
+
+COMMAND: cmake --build build --parallel
+EXIT_CODE: 0
+OUTPUT:
+[ 50%] Built target wise-combine-smoke
 [100%] Built target wise-combine-smoke-test
-[100%] Built target wise-combine-smoke
---- command: (cd build-asan && ctest --test-dir build-asan --output-on-failure) ---
-Test project /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-asan
-    Start 1: smoke
-1/1 Test #1: smoke ............................   Passed    0.02 sec
 
-100% tests passed, 0 tests failed out of 1
+COMMAND: ctest --test-dir build --output-on-failure
+EXIT_CODE: 0
+OUTPUT:
+Test project /home/workspace_data/works/myprojects/wise_combine_test.lazycodex
+No tests were found!!!
 
-Total Test time (real) =   0.02 sec
---- command: ./build/wise-combine-smoke ---
-wise-combine-test baseline ready
+COMMAND: cmake -S . -B /tmp/wise-combine-invalid -G 'DefinitelyNotAGenerator'
+EXIT_CODE: 1
+OUTPUT:
+CMake Error: Could not create named generator DefinitelyNotAGenerator
+
+Generators
+* Unix Makefiles               = Generates standard UNIX makefiles.
+  Green Hills MULTI            = Generates Green Hills MULTI files
+                                 (experimental, work-in-progress).
+  Ninja                        = Generates build.ninja files.
+  Watcom WMake                 = Generates Watcom WMake makefiles.
+  CodeBlocks - Ninja           = Generates CodeBlocks project files.
+  CodeBlocks - Unix Makefiles  = Generates CodeBlocks project files.
+  CodeLite - Ninja             = Generates CodeLite project files.
+  CodeLite - Unix Makefiles    = Generates CodeLite project files.
+  Sublime Text 2 - Ninja       = Generates Sublime Text 2 project files.
+  Sublime Text 2 - Unix Makefiles
+                               = Generates Sublime Text 2 project files.
+  Kate - Ninja                 = Generates Kate project files.
+  Kate - Unix Makefiles        = Generates Kate project files.
+  Eclipse CDT4 - Ninja         = Generates Eclipse CDT 4.0 project files.
+  Eclipse CDT4 - Unix Makefiles= Generates Eclipse CDT 4.0 project files.
+
+Final classifications: dirty_worktree=true; stale_state=true; misleading_success_output=true; hung_command=false.

@@ -1,0 +1,14 @@
+{
+  "schema_version": 2,
+  "active_work_id": "wise-combine-test-0278669",
+  "works": {
+    "wise-combine-test-0278669": {
+      "work_id": "wise-combine-test-0278669",
+      "active_plan": ".omo/plans/wise-combine-test.md",
+      "plan_name": "wise-combine-test",
+      "session_ids": ["codex:01a06f81-b027-7f30-95fa-decf7b65e2d4"],
+      "status": "active",
+      "worktree_path": null
+    }
+  }
+}
