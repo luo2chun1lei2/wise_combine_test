@@ -6,13 +6,13 @@
 
 **What you'll get:** A Linux command-line combination-testing tool that reads a declarative state/function relationship specification, generates bounded deterministic flows, executes them through a safe adapter, and reports failures with reproducible traces. It will include tests, memory-safety checks, measurements, and user documentation.
 
-**Why this approach:** A typed layered core keeps specification validation, generation, execution, and evidence independently testable while a standard-library-first C++17/CMake baseline honors the repository's minimal-dependency requirement.
+**Why this approach:** A typed layered core keeps specification validation, generation, execution, and evidence independently testable while a standard-library-first C++20/CMake baseline honors the repository's minimal-dependency requirement.
 
 **What it will NOT do:** It will not implement parameter-sweeping completeness analysis, arbitrary unsafe in-process symbol calls, or unrequested GUI/network/distributed features.
 
 **Effort:** Large
 **Risk:** High - the repository has no implementation and relation semantics plus combinatorial bounds must be made precise.
-**Decisions I made for you:** C++17 standard-library-first core, CMake, versioned declarative JSON-like schema, explicit adapter/subprocess execution, deterministic seed and limits, sanitizer-first safety evidence, and optional Valgrind/coverage/CPU-memory hooks.
+**Decisions I made for you:** C++20 standard-library-first core, CMake, versioned declarative JSON-like schema, explicit adapter/subprocess execution, deterministic seed and limits, sanitizer-first safety evidence, and optional Valgrind/coverage/CPU-memory hooks.
 
 Your next move: run `$start-work wise-combine-test` in a worker session after this plan's mandatory review passes.
 
@@ -69,14 +69,14 @@ Your next move: run `$start-work wise-combine-test` in a worker session after th
 > Implementation + Test = ONE todo. Never separate.
 <!-- APPEND TASK BATCHES BELOW THIS LINE WITH edit/apply_patch - never rewrite the headers above. -->
 - [x] 1. Establish the CMake C++17 project skeleton and reproducible test harness
-  What to do / Must NOT do: Add `CMakeLists.txt`, `src/`, `tests/`, compiler-warning policy, CTest registration, sanitizer presets, and a minimal smoke executable; do not add runtime third-party dependencies or product features.
+  What to do / Must NOT do: Add `CMakeLists.txt`, `src/`, `tests/`, compiler-warning policy, CTest registration, sanitizer presets, and a minimal smoke executable using the approved C++20 baseline; do not add runtime third-party dependencies or product features.
   Parallelization: Wave 1 | Blocked by: none | Blocks: 2, 3
   References (executor has NO interview context - be exhaustive): `AGENTS.md:15-20,104-109`; `.gitignore:1-69`; planned `CMakeLists.txt`, `src/`, `tests/`
   Acceptance criteria (agent-executable): `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug` exits 0; `cmake --build build --parallel` exits 0; `(cd build && ctest --output-on-failure)` reports 1/1 smoke test passed on CTest 3.16; compiler warnings are enabled and no third-party package is required.
   QA scenarios (name the exact tool + invocation): happy `(cd build && ctest --output-on-failure)`; failure `cmake -S . -B /tmp/wise-combine-invalid -G 'DefinitelyNotAGenerator'` must exit non-zero and its diagnostic is captured in `.omo/evidence/wise-combine-test/task-1-wise-combine-test.log`; Evidence `.omo/evidence/wise-combine-test/task-1-wise-combine-test.log`
   Commit: Y | build(skeleton): add reproducible CMake and CTest baseline
 - [ ] 2. Implement typed state/function/relation domain model
-  What to do / Must NOT do: Add headers and sources under `src/model/` for states, transitions, functions, parameters, argument edges, ordering constraints, limits, and observed outcomes with explicit invariants and error types. State-transition self-loops and longer cycles are valid; relation/order self-edges and contradictory ordering are invalid. Do not parse files or invoke external code here.
+  What to do / Must NOT do: Add headers and sources under `src/model/` for states, transitions, functions, parameters, argument edges, ordering constraints, limits, and observed outcomes with explicit invariants and error types. State-transition self-loops and longer cycles are valid; relation/order self-edges and contradictory ordering are invalid. Use C++20; do not parse files or invoke external code here.
   Parallelization: Wave 1 | Blocked by: 1 | Blocks: 3
   References (executor has NO interview context - be exhaustive): `AGENTS.md:8-11`; planned `src/model/`; `.omo/drafts/wise-combine-test.md` Components/model and Decisions
   Acceptance criteria (agent-executable): model unit tests cover valid construction, valid state self-loop, duplicate states, unknown references, invalid relation/order self-edges, and contradictory ordering; all tests pass under Debug and sanitizer builds.
@@ -89,8 +89,8 @@ Your next move: run `$start-work wise-combine-test` in a worker session after th
   Acceptance criteria (agent-executable): valid fixture normalizes deterministically; malformed syntax, unsupported version, duplicate IDs, unknown endpoints, invalid argument bindings, and impossible order constraints are rejected with stable diagnostics and non-zero exit.
   QA scenarios (name the exact tool + invocation): happy `ctest --test-dir build -R spec_valid --output-on-failure`; failure `ctest --test-dir build -R spec_invalid --output-on-failure` verifies each negative fixture and diagnostic path; Evidence `.omo/evidence/wise-combine-test/task-3-wise-combine-test.json`
   Commit: Y | feat(spec): add versioned parser and semantic validation
-- [ ] 4. Build deterministic bounded state and relation flow generation
-  What to do / Must NOT do: Add `src/generate/` to enumerate legal state-transition paths and relation-respecting call flows using a seed, maximum path length, and global case count; use stable sorted choices, deduplicate identical flows, treat zero as no cases and one as at most one case, and report cycle/dead-end exhaustion; do not claim exhaustive coverage beyond limits or implement forbidden parameter sweeping.
+- [x] 4. Build deterministic bounded state and relation flow generation
+  What to do / Must NOT do: Add `src/generate/` to enumerate legal state-transition paths and relation-respecting call flows using a seed, maximum path length, and global case count; use stable sorted choices, deduplicate identical flows, treat zero as no cases and one as at most one case, and report cycle/dead-end exhaustion; compile as C++20; do not claim exhaustive coverage beyond limits or implement forbidden parameter sweeping.
   Parallelization: Wave 3 | Blocked by: 3 | Blocks: 5
   References (executor has NO interview context - be exhaustive): `AGENTS.md:8-11,37-42`; planned `src/generate/`; `.omo/drafts/wise-combine-test.md` generation policy and Scope OUT
   Acceptance criteria (agent-executable): same normalized spec/seed/limits produce byte-identical sequences; reference fixtures assert exact flow IDs/counts (linear=1, two-branch with `max_cases=2`=2, one valid self-loop with `max_steps=3` yields one length-3 flow, ordering cycle=validation error); generated flows never violate state or relation constraints; limit zero/one and cyclic/dead-end graphs terminate with explicit outcomes.

@@ -107,8 +107,9 @@ void Model::add_ordering_relation(OrderingRelation relation) {
 void Model::set_initial_state(std::string state_id) { initial_state_ = std::move(state_id); }
 
 void Model::set_limits(Limits limits) {
-  if (limits.max_cases == 0U || limits.max_steps == 0U || limits.max_subprocesses == 0U) {
-    throw ModelError(ModelError::Code::invalid_limits, "model limits must be positive");
+  if (limits.max_steps == 0U || limits.max_subprocesses == 0U) {
+    throw ModelError(ModelError::Code::invalid_limits,
+                     "model max_steps and max_subprocesses must be positive");
   }
   limits_ = limits;
 }

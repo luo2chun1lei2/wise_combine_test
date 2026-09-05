@@ -13,7 +13,7 @@ option(WISE_COMBINE_ENABLE_SANITIZERS
        "Enable AddressSanitizer, UndefinedBehaviorSanitizer, and LeakSanitizer"
        OFF)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -65,3 +65,12 @@ add_executable(wise-combine-spec-test tests/spec_test.cpp)
 target_link_libraries(wise-combine-spec-test PRIVATE wise-combine-spec)
 add_test(NAME spec_valid COMMAND wise-combine-spec-test)
 add_test(NAME spec_invalid COMMAND wise-combine-spec-test)
+
+add_library(wise-combine-generate src/generate/generate.cpp)
+target_include_directories(wise-combine-generate PUBLIC src)
+target_link_libraries(wise-combine-generate PUBLIC wise-combine-spec
+  wise-combine-compile-options)
+add_executable(wise-combine-generator-test tests/generator_test.cpp)
+target_link_libraries(wise-combine-generator-test PRIVATE wise-combine-generate)
+add_test(NAME generator_determinism COMMAND wise-combine-generator-test)
+add_test(NAME generator_limits COMMAND wise-combine-generator-test)

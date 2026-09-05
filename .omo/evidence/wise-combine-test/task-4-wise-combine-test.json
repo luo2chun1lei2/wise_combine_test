@@ -1,0 +1,40 @@
+{
+  "task": "4",
+  "status": "PASS",
+  "scenarios": [
+    {
+      "name": "Debug generator CTest",
+      "invocation": [
+        "cmake -S . -B /tmp/wct-generator-debug.7aIcKn -DCMAKE_BUILD_TYPE=Debug",
+        "cmake --build /tmp/wct-generator-debug.7aIcKn --parallel",
+        "(cd /tmp/wct-generator-debug.7aIcKn && ctest -R '^generator_(determinism|limits)$' --output-on-failure)"
+      ],
+      "observable": "CTest reported generator_determinism and generator_limits passed, 2/2 tests passed, exit 0",
+      "artifact": ".omo/evidence/wise-combine-test/task-4-wise-combine-test-run.log"
+    },
+    {
+      "name": "Sanitizer generator CTest",
+      "invocation": [
+        "cmake -S . -B /tmp/wct-generator-asan.e29CUK -DCMAKE_BUILD_TYPE=Debug -DWISE_COMBINE_ENABLE_SANITIZERS=ON",
+        "cmake --build /tmp/wct-generator-asan.e29CUK --parallel",
+        "(cd /tmp/wct-generator-asan.e29CUK && ASAN_OPTIONS=abort_on_error=1:detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 ctest -R '^generator_(determinism|limits)$' --output-on-failure)"
+      ],
+      "observable": "CTest reported generator_determinism and generator_limits passed, 2/2 tests passed, exit 0; no sanitizer diagnostics",
+      "artifact": ".omo/evidence/wise-combine-test/task-4-wise-combine-test-run.log"
+    }
+  ],
+  "contract": {
+    "model_set_limits": "max_cases may be zero; max_steps and max_subprocesses remain positive",
+    "spec_validation": "max_cases accepts non-negative integers while max_steps and max_subprocesses require positive integers",
+    "zero_case_assertion": "zero_cases_is_explicit sets max_cases=0 and observes case_limit with no flows"
+  },
+  "source_files": [
+    "src/generate/generate.hpp",
+    "src/generate/generate.cpp",
+    "tests/generator_test.cpp",
+    "src/model/model.cpp",
+    "src/spec/spec.cpp",
+    "CMakeLists.txt"
+  ],
+  "run_log": ".omo/evidence/wise-combine-test/task-4-wise-combine-test-run.log"
+}

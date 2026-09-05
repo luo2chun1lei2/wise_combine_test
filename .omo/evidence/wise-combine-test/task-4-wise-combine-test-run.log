@@ -1,0 +1,109 @@
+=== Debug generator validation (portable CTest invocation) ===
+build_dir=/tmp/wct-generator-debug.7aIcKn
+-- The CXX compiler identification is GNU 9.4.0
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /tmp/wct-generator-debug.7aIcKn
+Scanning dependencies of target wise-combine-smoke-test
+Scanning dependencies of target wise-combine-model
+Scanning dependencies of target wise-combine-smoke
+[  6%] Building CXX object CMakeFiles/wise-combine-smoke-test.dir/tests/smoke_test.cpp.o
+[ 12%] Building CXX object CMakeFiles/wise-combine-model.dir/src/model/model.cpp.o
+[ 18%] Building CXX object CMakeFiles/wise-combine-smoke.dir/src/smoke.cpp.o
+[ 25%] Linking CXX executable wise-combine-smoke-test
+[ 31%] Linking CXX executable wise-combine-smoke
+[ 31%] Built target wise-combine-smoke-test
+[ 31%] Built target wise-combine-smoke
+[ 37%] Linking CXX static library libwise-combine-model.a
+[ 37%] Built target wise-combine-model
+Scanning dependencies of target wise-combine-model-test
+Scanning dependencies of target wise-combine-spec
+[ 43%] Building CXX object CMakeFiles/wise-combine-model-test.dir/tests/model_test.cpp.o
+[ 50%] Building CXX object CMakeFiles/wise-combine-spec.dir/src/spec/spec.cpp.o
+[ 56%] Linking CXX executable wise-combine-model-test
+[ 56%] Built target wise-combine-model-test
+[ 62%] Linking CXX static library libwise-combine-spec.a
+[ 62%] Built target wise-combine-spec
+Scanning dependencies of target wise-combine-generate
+Scanning dependencies of target wise-combine-spec-test
+[ 68%] Building CXX object CMakeFiles/wise-combine-generate.dir/src/generate/generate.cpp.o
+[ 75%] Building CXX object CMakeFiles/wise-combine-spec-test.dir/tests/spec_test.cpp.o
+[ 81%] Linking CXX executable wise-combine-spec-test
+[ 81%] Built target wise-combine-spec-test
+[ 87%] Linking CXX static library libwise-combine-generate.a
+[ 87%] Built target wise-combine-generate
+Scanning dependencies of target wise-combine-generator-test
+[ 93%] Building CXX object CMakeFiles/wise-combine-generator-test.dir/tests/generator_test.cpp.o
+[100%] Linking CXX executable wise-combine-generator-test
+[100%] Built target wise-combine-generator-test
+Test project /tmp/wct-generator-debug.7aIcKn
+    Start 5: generator_determinism
+1/2 Test #5: generator_determinism ............   Passed    0.00 sec
+    Start 6: generator_limits
+2/2 Test #6: generator_limits .................   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =   0.01 sec
+debug_exit=0
+=== Sanitizer generator validation (portable CTest invocation) ===
+build_dir=/tmp/wct-generator-asan.e29CUK
+-- The CXX compiler identification is GNU 9.4.0
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /tmp/wct-generator-asan.e29CUK
+Scanning dependencies of target wise-combine-model
+Scanning dependencies of target wise-combine-smoke-test
+Scanning dependencies of target wise-combine-smoke
+[  6%] Building CXX object CMakeFiles/wise-combine-model.dir/src/model/model.cpp.o
+[ 12%] Building CXX object CMakeFiles/wise-combine-smoke-test.dir/tests/smoke_test.cpp.o
+[ 18%] Building CXX object CMakeFiles/wise-combine-smoke.dir/src/smoke.cpp.o
+[ 25%] Linking CXX executable wise-combine-smoke-test
+[ 31%] Linking CXX executable wise-combine-smoke
+[ 31%] Built target wise-combine-smoke-test
+[ 31%] Built target wise-combine-smoke
+[ 37%] Linking CXX static library libwise-combine-model.a
+[ 37%] Built target wise-combine-model
+Scanning dependencies of target wise-combine-model-test
+Scanning dependencies of target wise-combine-spec
+[ 43%] Building CXX object CMakeFiles/wise-combine-spec.dir/src/spec/spec.cpp.o
+[ 50%] Building CXX object CMakeFiles/wise-combine-model-test.dir/tests/model_test.cpp.o
+[ 56%] Linking CXX executable wise-combine-model-test
+[ 56%] Built target wise-combine-model-test
+[ 62%] Linking CXX static library libwise-combine-spec.a
+[ 62%] Built target wise-combine-spec
+Scanning dependencies of target wise-combine-generate
+Scanning dependencies of target wise-combine-spec-test
+[ 68%] Building CXX object CMakeFiles/wise-combine-generate.dir/src/generate/generate.cpp.o
+[ 75%] Building CXX object CMakeFiles/wise-combine-spec-test.dir/tests/spec_test.cpp.o
+[ 81%] Linking CXX executable wise-combine-spec-test
+[ 81%] Built target wise-combine-spec-test
+[ 87%] Linking CXX static library libwise-combine-generate.a
+[ 87%] Built target wise-combine-generate
+Scanning dependencies of target wise-combine-generator-test
+[ 93%] Building CXX object CMakeFiles/wise-combine-generator-test.dir/tests/generator_test.cpp.o
+[100%] Linking CXX executable wise-combine-generator-test
+[100%] Built target wise-combine-generator-test
+Test project /tmp/wct-generator-asan.e29CUK
+    Start 5: generator_determinism
+1/2 Test #5: generator_determinism ............   Passed    0.02 sec
+    Start 6: generator_limits
+2/2 Test #6: generator_limits .................   Passed    0.01 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =   0.03 sec
+sanitizer_exit=0
+pipeline_exit=0
