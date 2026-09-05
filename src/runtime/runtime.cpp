@@ -51,6 +51,32 @@ std::string request(const generate::Flow& flow, std::size_t step,
   return out.str() + "}}\n";
 }
 
+bool parse_scalar(const std::string& text, model::Scalar& value) {
+  if (text == "null") { value.kind = model::Scalar::Kind::null_value; return true; }
+  if (text == "true" || text == "false") { value.kind = model::Scalar::Kind::boolean; value.boolean_value = text == "true"; return true; }
+  if (text.size() >= 2U && text.front() == '"' && text.back() == '"') { value.kind = model::Scalar::Kind::string; value.string_value = text.substr(1, text.size() - 2U); return true; }
+  try { std::size_t used = 0; const auto integer = std::stoll(text, &used); if (used == text.size()) { value.kind = model::Scalar::Kind::integer; value.integer_value = integer; return true; } } catch (...) {}
+  try { std::size_t used = 0; const auto number = std::stod(text, &used); if (used == text.size()) { value.kind = model::Scalar::Kind::number; value.number_value = number; return true; } } catch (...) {}
+  return false;
+}
+
+bool parse_returns(const std::string& text, std::map<std::string, model::Scalar>& values) {
+  const auto marker = text.find("\"returns\":{"); if (marker == std::string::npos) return false;
+  const auto begin = marker + 11U; const auto end = text.find('}', begin); if (end == std::string::npos) return false;
+  std::size_t pos = begin;
+  while (pos < end) {
+    while (pos < end && (text[pos] == ',' || text[pos] == ' ')) ++pos;
+    if (pos == end) break;
+    if (text[pos] != '"') return false;
+    const auto key_end = text.find('"', pos + 1U); if (key_end == std::string::npos || key_end >= end) return false;
+    const auto colon = text.find(':', key_end + 1U); if (colon == std::string::npos || colon >= end) return false;
+    auto value_end = text.find(',', colon + 1U); if (value_end == std::string::npos || value_end > end) value_end = end;
+    model::Scalar value; if (!parse_scalar(text.substr(colon + 1U, value_end - colon - 1U), value)) return false;
+    values.emplace(text.substr(pos + 1U, key_end - pos - 1U), std::move(value)); pos = value_end;
+  }
+  return true;
+}
+
 bool field(const std::string& text, const std::string& key, std::string& value) {
   const auto needle = "\"" + key + "\":";
   const auto pos = text.find(needle);
@@ -118,7 +144,7 @@ StepResult run_step(const generate::Flow& flow, std::size_t index, const model::
   close(out_pipe[0]); close(err_pipe[0]); int status = 0; waitpid(pid, &status, 0); result.exit_status = WIFEXITED(status) ? WEXITSTATUS(status) : -1; result.stderr_text = errors;
   if (result.status == Status::passed || result.status == Status::launch_error) {
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) { result.status = Status::crashed; result.detail = "subprocess exit failure"; }
-    else { std::string protocol, state, response_status, returns, adapter_stderr; const auto first = output.find_first_not_of(" \t\r\n"); const auto last = output.find_last_not_of(" \t\r\n"); if (first == std::string::npos || output[first] != '{' || last == std::string::npos || output[last] != '}' || output.find("\"extra\"") != std::string::npos || !field(output, "protocol", protocol) || protocol != "1" || !field(output, "status", response_status) || !field(output, "observed_state", state) || output.find("\"returns\":") == std::string::npos || output.find("\"stderr\":") == std::string::npos) { result.status = Status::protocol_error; result.detail = "malformed adapter response"; } else { result.observed_state = state == "null" ? "" : state; result.status = response_status == "ok" ? Status::passed : Status::mismatch; const auto expected = transition.expect_present ? transition.expect : transition.to; if (result.status == Status::passed && !expected.empty() && result.observed_state != expected) { result.status = Status::mismatch; result.detail = "state mismatch: expected " + expected + ", observed " + result.observed_state; } else if (response_status != "ok") result.detail = "adapter reported " + response_status; } }
+    else { std::string protocol, state, response_status; const auto first = output.find_first_not_of(" \t\r\n"); const auto last = output.find_last_not_of(" \t\r\n"); if (first == std::string::npos || output[first] != '{' || last == std::string::npos || output[last] != '}' || output.find("\"extra\"") != std::string::npos || !field(output, "protocol", protocol) || protocol != "1" || !field(output, "status", response_status) || !field(output, "observed_state", state) || output.find("\"stderr\":") == std::string::npos || !parse_returns(output, result.returns)) { result.status = Status::protocol_error; result.detail = "malformed adapter response"; } else { result.observed_state = state == "null" ? "" : state; result.status = response_status == "ok" ? Status::passed : Status::mismatch; const auto expected = transition.expect_present ? transition.expect : transition.to; if (result.status == Status::passed && !expected.empty() && result.observed_state != expected) { result.status = Status::mismatch; result.detail = "state mismatch: expected " + expected + ", observed " + result.observed_state; } else if (response_status != "ok") result.detail = "adapter reported " + response_status; } }
   }
   return result;
 }
@@ -126,12 +152,23 @@ StepResult run_step(const generate::Flow& flow, std::size_t index, const model::
 
 RunResult execute(const model::Model& model, const generate::Flow& flow, const Options& options) {
   RunResult result; result.flow_id = flow.flow_id; const auto started = Clock::now();
-  if (!allowed_executable(options.executable)) { result.status = Status::launch_error; result.steps.push_back({Status::launch_error, 0, "", "", "", "", -1, "executable is not on the allowlist"}); return result; }
+  if (!allowed_executable(options.executable)) { result.status = Status::launch_error; result.steps.push_back({Status::launch_error, 0, "", "", "", {}, "", -1, "executable is not on the allowlist"}); return result; }
+  std::map<std::string, std::map<std::string, model::Scalar>> returned;
   for (std::size_t i = 0; i < flow.transition_ids.size(); ++i) {
     if (Clock::now() - started > std::chrono::milliseconds(options.total_timeout_ms)) { result.status = Status::timeout; break; }
     const auto* transition = find_transition(model, flow.transition_ids[i]);
-    if (transition == nullptr) { result.status = Status::protocol_error; result.steps.push_back({Status::protocol_error, i, flow.transition_ids[i], "", "", "", -1, "unknown transition"}); break; }
-    auto step = run_step(flow, i, *transition, options); result.steps.push_back(step); if (step.status != Status::passed) { result.status = step.status; break; }
+    if (transition == nullptr) { result.status = Status::protocol_error; result.steps.push_back({Status::protocol_error, i, flow.transition_ids[i], "", "", {}, "", -1, "unknown transition"}); break; }
+    model::Transition effective = *transition;
+    for (const auto& relation : model.argument_relations()) {
+      if (relation.consumer_transition != transition->id) continue;
+      const auto producer = returned.find(relation.producer_transition);
+      if (producer == returned.end()) { result.status = Status::protocol_error; result.steps.push_back({Status::protocol_error, i, transition->id, transition->function, "", {}, "", -1, "producer return is unavailable"}); return result; }
+      const auto value = producer->second.find(relation.producer_output);
+      if (value == producer->second.end()) { result.status = Status::protocol_error; result.steps.push_back({Status::protocol_error, i, transition->id, transition->function, "", {}, "", -1, "producer return is missing"}); return result; }
+      effective.args[relation.consumer_argument] = value->second;
+    }
+    auto step = run_step(flow, i, effective, options); result.steps.push_back(step); if (step.status != Status::passed) { result.status = step.status; break; }
+    returned[transition->id] = step.returns;
   }
   return result;
 }

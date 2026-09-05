@@ -4,6 +4,7 @@
 #include "model/model.hpp"
 
 #include <cstddef>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -17,6 +18,7 @@ struct StepResult {
   std::string transition;
   std::string function;
   std::string observed_state;
+  std::map<std::string, model::Scalar> returns;
   std::string stderr_text;
   int exit_status{-1};
   std::string detail;

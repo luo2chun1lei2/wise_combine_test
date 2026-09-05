@@ -101,6 +101,7 @@ add_test(NAME runtime_extra_json COMMAND wise-combine-runtime-test $<TARGET_FILE
 add_test(NAME runtime_timeout COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> timeout 100)
 add_test(NAME runtime_crash COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> crash)
 add_test(NAME runtime_output_cap COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> cap)
+add_test(NAME runtime_argument_relation COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> relation)
 set_tests_properties(runtime_timeout PROPERTIES TIMEOUT 5)
 
 add_test(NAME cli_validate COMMAND wise-combine validate

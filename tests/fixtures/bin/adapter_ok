@@ -1,7 +1,11 @@
 #!/bin/sh
-if grep -q '"function":"produce"' ; then
-  state=ready
+line=$(cat)
+if printf '%s' "$line" | grep -q '"function":"produce"' ; then
+  printf '{"protocol":1,"status":"ok","observed_state":"ready","returns":{"token":"from-producer"},"stderr":""}\n'
+elif printf '%s' "$line" | grep -q '"function":"consume"' && printf '%s' "$line" | grep -q '"input":"from-producer"' ; then
+  printf '{"protocol":1,"status":"ok","observed_state":"done","returns":{},"stderr":""}\n'
+elif printf '%s' "$line" | grep -q '"function":"consume"' ; then
+  printf '{"protocol":1,"status":"mismatch","observed_state":"wrong","returns":{},"stderr":"wrong consumer argument"}\n'
 else
-  state=done
+  printf '{"protocol":1,"status":"ok","observed_state":"done","returns":{},"stderr":""}\n'
 fi
-printf '{"protocol":1,"status":"ok","observed_state":"%s","returns":{},"stderr":""}\n' "$state"

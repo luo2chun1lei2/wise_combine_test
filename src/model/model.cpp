@@ -47,6 +47,14 @@ const T* named(const std::vector<T>& values, const std::string& name) {
   return it == values.end() ? nullptr : &*it;
 }
 
+bool scalar_matches_type(const Scalar& value, const std::string& type) {
+  if (type == "text" || type == "string") return value.kind == Scalar::Kind::string;
+  if (type == "boolean" || type == "bool") return value.kind == Scalar::Kind::boolean;
+  if (type == "integer" || type == "int") return value.kind == Scalar::Kind::integer;
+  if (type == "number" || type == "float") return value.kind == Scalar::Kind::integer || value.kind == Scalar::Kind::number;
+  return value.kind != Scalar::Kind::null_value;
+}
+
 }  // namespace
 
 ModelError::ModelError(Code code, const std::string& message)
@@ -124,7 +132,12 @@ void Model::validate() const {
       throw ModelError(ModelError::Code::unknown_reference,
                        "transition references unknown state: " + transition.id);
     }
-    static_cast<void>(function_for(functions_, transition.function));
+    const auto& function = function_for(functions_, transition.function);
+    for (const auto& [name, value] : transition.args) {
+      const auto* parameter = named(function.parameters, name);
+      if (parameter == nullptr) throw ModelError(ModelError::Code::unknown_reference, "transition argument is not a function parameter: " + name);
+      if (!scalar_matches_type(value, parameter->type)) throw ModelError(ModelError::Code::type_mismatch, "transition argument type does not match parameter: " + name);
+    }
   }
 
   std::unordered_set<std::string> bound_arguments;
