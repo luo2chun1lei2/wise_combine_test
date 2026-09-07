@@ -106,6 +106,14 @@ int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) {
             seterr(err, n, "empty call id");
             return -1;
         }
+        for (size_t j = 0; j < g->calls[i].argc; ++j) {
+            const char *arg = g->calls[i].args[j];
+            if (arg && arg[0] == '$' && arg[1] != '\0' &&
+                find_call(g, arg + 1) < 0) {
+                seterr(err, n, "call argument references unknown call");
+                return -1;
+            }
+        }
         for (size_t j = i + 1; j < g->call_count; j++) {
             if (!strcmp(g->calls[i].id, g->calls[j].id)) {
                 seterr(err, n, "duplicate call");
@@ -123,6 +131,13 @@ int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) {
         if (!strcmp(g->relations[i].from, g->relations[i].to)) {
             seterr(err, n, "relation cycle");
             return -1;
+        }
+        for (size_t j = 0; j < i; ++j) {
+            if (!strcmp(g->relations[i].from, g->relations[j].from) &&
+                !strcmp(g->relations[i].to, g->relations[j].to)) {
+                seterr(err, n, "duplicate relation");
+                return -1;
+            }
         }
     }
     size_t *ind = calloc(g->call_count ? g->call_count : 1, sizeof *ind);
