@@ -20,32 +20,30 @@ framework-free executable contract for the first release.
 
 `wct_validate_state` rejects a missing/unknown initial state, duplicate states,
 unknown transition endpoints, and duplicate transition IDs. `wct_run_state`
-computes states reachable from `initial`, invokes each reachable transition at
-most once, and stops at `limits.max_steps` (or its bounded default). The report
-contains the input seed, completed `steps`, covered edges, and an `uncovered`
-count for unreachable or limit-truncated edges. A callback error or expectation
-mismatch returns `-1`, increments `failures`, records `failed_step`,
-`scenario`, `expected`, and (when present) `actual`, and does not count the
-failed transition as completed or covered.
+computes reachability from `initial` and invokes each reachable transition at
+most once, in declaration order, stopping at `limits.max_steps` (or its bounded
+default). Edges whose source state cannot be reached are counted in
+`report.uncovered`. A callback error or expectation mismatch returns `-1`,
+records the failed step/scenario and expected/actual strings, and does not count
+the failed transition as a completed step or covered edge.
 
 ## Function relations
 
 `wct_validate_relation` rejects duplicate call IDs, unknown relation endpoints,
-self-relations, and cycles. `wct_run_relation` invokes calls only after all
-declared prerequisites complete, chooses otherwise-independent calls by
-lexical call ID, and stops at `limits.max_flows` (or the number of calls).
-Arguments are copied into an immutable callback view for each invocation. An
-argument written as `$call-id` is replaced by the completed result string from
-that prerequisite call; literal arguments are passed unchanged. The report
-records incomplete calls in `uncovered`. Callback failures return `-1`, record
-the failed step and scenario, and preserve the completed step count.
+self-relations, duplicate edges, unknown `$call` argument references, and
+cycles. `wct_run_relation` invokes calls only after all declared prerequisites
+complete, using lexicographic call-ID tie-breaking for otherwise independent
+calls, and stops at `limits.max_flows` (or the number of calls). A call argument
+beginning with `$` (for example `$fetch`) is replaced with the prior callback
+result from that call. Callback failures return `-1` with a diagnostic and
+preserve the completed step count; bounded runs expose incomplete calls in
+`report.uncovered`.
 
 ## Determinism and limits
 
 Given identical graph declarations, callback behavior, and limits, execution is
-deterministic. The current executor records `wct_limits.seed` in the report but
-does not randomize selection; lexical ID tie-breaking therefore remains stable
-across runs.
+deterministic. `wct_limits.seed` is copied into the report for trace metadata;
+the current bounded executor does not randomize declaration order.
 
 ## Fixtures and verification
 
