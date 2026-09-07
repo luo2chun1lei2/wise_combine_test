@@ -13,32 +13,39 @@ framework-free executable contract for the first release.
 - A callback allocates `actual`/`result` strings. The executor owns and frees
   each returned string after consuming it. Callback failures may leave the
   output pointer unset.
-- `wct_report_free` releases the diagnostic string and resets all counters.
+- `wct_report_free` releases the diagnostic string plus any `scenario`,
+  `expected`, and `actual` snapshots, then resets all counters and pointers.
 
 ## State graphs
 
 `wct_validate_state` rejects a missing/unknown initial state, duplicate states,
 unknown transition endpoints, and duplicate transition IDs. `wct_run_state`
-starts at `initial`, invokes each not-yet-covered outgoing transition, and
-stops at `limits.max_steps` (or its bounded default). A callback error or
-expectation mismatch returns `-1`, increments `failures`, and does not count
-the failed transition as a completed step or covered edge.
+computes states reachable from `initial`, invokes each reachable transition at
+most once, and stops at `limits.max_steps` (or its bounded default). The report
+contains the input seed, completed `steps`, covered edges, and an `uncovered`
+count for unreachable or limit-truncated edges. A callback error or expectation
+mismatch returns `-1`, increments `failures`, records `failed_step`,
+`scenario`, `expected`, and (when present) `actual`, and does not count the
+failed transition as completed or covered.
 
 ## Function relations
 
 `wct_validate_relation` rejects duplicate call IDs, unknown relation endpoints,
 self-relations, and cycles. `wct_run_relation` invokes calls only after all
-declared prerequisites complete, preserving declaration order for otherwise
-independent calls, and stops at `limits.max_flows` (or the number of calls).
-Callback failures return `-1` with a diagnostic and preserve the completed step
-count. Arguments are passed as the immutable `const char *const *` view from
-each call node.
+declared prerequisites complete, chooses otherwise-independent calls by
+lexical call ID, and stops at `limits.max_flows` (or the number of calls).
+Arguments are copied into an immutable callback view for each invocation. An
+argument written as `$call-id` is replaced by the completed result string from
+that prerequisite call; literal arguments are passed unchanged. The report
+records incomplete calls in `uncovered`. Callback failures return `-1`, record
+the failed step and scenario, and preserve the completed step count.
 
 ## Determinism and limits
 
 Given identical graph declarations, callback behavior, and limits, execution is
-deterministic. `wct_limits.seed` is reserved for future seed-driven sampling;
-the current bounded executor does not randomize declaration order.
+deterministic. The current executor records `wct_limits.seed` in the report but
+does not randomize selection; lexical ID tie-breaking therefore remains stable
+across runs.
 
 ## Fixtures and verification
 
