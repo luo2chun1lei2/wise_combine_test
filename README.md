@@ -38,3 +38,9 @@ errors return exit code 2.
 AddressSanitizer and UndefinedBehaviorSanitizer. `make valgrind` runs when
 Valgrind is installed and otherwise records an explicit skip. A measurement
 TSV can be generated with `make measure OUT=evidence/iter-0/measure.tsv`.
+
+The iteration gates and known I1-I3 gaps are tracked in
+[`docs/release-readiness.md`](docs/release-readiness.md). A green `make test`
+result covers the checked-in baseline; it is not, by itself, evidence of
+relation result binding, replay, fuzz, fork/timeout isolation, or release
+manifest completeness.
