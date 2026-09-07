@@ -106,8 +106,16 @@ int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) {
             seterr(err, n, "empty call id");
             return -1;
         }
+        if (g->calls[i].argc && !g->calls[i].args) {
+            seterr(err, n, "call arguments missing");
+            return -1;
+        }
         for (size_t j = 0; j < g->calls[i].argc; ++j) {
             const char *arg = g->calls[i].args[j];
+            if (!arg) {
+                seterr(err, n, "null call argument");
+                return -1;
+            }
             if (arg && arg[0] == '$' && arg[1] != '\0' &&
                 find_call(g, arg + 1) < 0) {
                 seterr(err, n, "call argument references unknown call");

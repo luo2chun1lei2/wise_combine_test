@@ -112,6 +112,33 @@ static void test_state_callback_failure(void)
     wct_state_graph_free(&graph);
 }
 
+static void test_state_branching_coverage(void)
+{
+    wct_state_graph graph = {0};
+    wct_report report;
+    state_context context = {0};
+    graph.id = copy_string("branch");
+    graph.initial = copy_string("idle");
+    graph.state_count = 3;
+    graph.states = calloc(graph.state_count, sizeof *graph.states);
+    graph.states[0] = copy_string("idle");
+    graph.states[1] = copy_string("left");
+    graph.states[2] = copy_string("right");
+    graph.transition_count = 2;
+    graph.transitions = calloc(graph.transition_count, sizeof *graph.transitions);
+    graph.transitions[0] = (wct_transition){copy_string("z-right"), copy_string("idle"),
+        copy_string("right"), copy_string("r"), copy_string("ok")};
+    graph.transitions[1] = (wct_transition){copy_string("a-left"), copy_string("idle"),
+        copy_string("left"), copy_string("l"), copy_string("ok")};
+    CHECK(wct_run_state(&graph, state_callback, &context,
+                        (wct_limits){.max_steps = 2, .seed = 7}, &report) == 0,
+          "branching state graph should cover both reachable edges");
+    CHECK(report.covered == 2 && report.uncovered == 0 && report.seed == 7,
+          "branching state graph should report complete coverage and seed");
+    wct_report_free(&report);
+    wct_state_graph_free(&graph);
+}
+
 static void test_state_validation_errors(void)
 {
     wct_state_graph graph;
@@ -251,10 +278,39 @@ static int relation_callback(const char *id, const char *const *args, size_t arg
         CHECK(argc == 1 && strcmp(args[0], "json") == 0, "transform arguments should be preserved");
     if (strcmp(id, "store") == 0)
         CHECK(argc == 1 && strcmp(args[0], "db") == 0, "store arguments should be preserved");
+    if (strcmp(id, "consume") == 0)
+        CHECK(argc == 1 && strcmp(args[0], "produce-result") == 0,
+              "prior call result should bind through a $ reference");
     if (context->fail_id != NULL && strcmp(id, context->fail_id) == 0)
         return -1;
-    *result = copy_string(id);
+    *result = copy_string(strcmp(id, "produce") == 0 ? "produce-result" : id);
     return *result == NULL ? -1 : 0;
+}
+
+static void test_relation_result_binding(void)
+{
+    wct_relation_graph graph = {0};
+    wct_report report;
+    relation_context context = {0};
+    graph.id = copy_string("binding");
+    graph.call_count = 2;
+    graph.calls = calloc(graph.call_count, sizeof *graph.calls);
+    graph.calls[0].id = copy_string("produce");
+    graph.calls[0].argc = 0;
+    graph.calls[1].id = copy_string("consume");
+    graph.calls[1].argc = 1;
+    graph.calls[1].args = calloc(1, sizeof(char *));
+    graph.calls[1].args[0] = copy_string("$produce");
+    graph.relation_count = 1;
+    graph.relations = calloc(1, sizeof *graph.relations);
+    graph.relations[0] = (wct_relation){copy_string("produce"), copy_string("consume")};
+    CHECK(wct_run_relation(&graph, relation_callback, &context,
+                           (wct_limits){.seed = 11}, &report) == 0,
+          "relation result binding should execute successfully");
+    CHECK(report.steps == 2 && report.uncovered == 0 && report.seed == 11,
+          "relation result binding should report complete deterministic flow");
+    wct_report_free(&report);
+    wct_relation_graph_free(&graph);
 }
 
 static void init_relation_graph(wct_relation_graph *graph)
@@ -387,11 +443,13 @@ int main(void)
 {
     test_state_success_and_limit();
     test_state_callback_failure();
+    test_state_branching_coverage();
     test_state_validation_errors();
     test_state_branching_and_unreachable();
     test_parser_diagnostics();
     test_empty_ids_rejected();
     test_relation_order_and_failure();
+    test_relation_result_binding();
     test_relation_cycle();
     test_relation_lexical_tie_break();
     test_parse_fixtures();
