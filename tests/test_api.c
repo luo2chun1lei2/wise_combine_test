@@ -136,6 +136,103 @@ static void test_state_validation_errors(void)
     wct_state_graph_free(&graph);
 }
 
+static void init_branching_state_graph(wct_state_graph *graph)
+{
+    memset(graph, 0, sizeof *graph);
+    graph->id = copy_string("branching");
+    graph->initial = copy_string("idle");
+    graph->state_count = 5;
+    graph->states = calloc(graph->state_count, sizeof *graph->states);
+    graph->states[0] = copy_string("idle");
+    graph->states[1] = copy_string("left");
+    graph->states[2] = copy_string("right");
+    graph->states[3] = copy_string("done");
+    graph->states[4] = copy_string("unreachable");
+    graph->transition_count = 5;
+    graph->transitions = calloc(graph->transition_count, sizeof *graph->transitions);
+    graph->transitions[0] = (wct_transition){
+        copy_string("to-left"), copy_string("idle"), copy_string("left"),
+        copy_string("left"), copy_string("ok")
+    };
+    graph->transitions[1] = (wct_transition){
+        copy_string("to-right"), copy_string("idle"), copy_string("right"),
+        copy_string("right"), copy_string("ok")
+    };
+    graph->transitions[2] = (wct_transition){
+        copy_string("left-done"), copy_string("left"), copy_string("done"),
+        copy_string("left-done"), copy_string("ok")
+    };
+    graph->transitions[3] = (wct_transition){
+        copy_string("right-done"), copy_string("right"), copy_string("done"),
+        copy_string("right-done"), copy_string("ok")
+    };
+    graph->transitions[4] = (wct_transition){
+        copy_string("never"), copy_string("unreachable"), copy_string("done"),
+        copy_string("never"), copy_string("ok")
+    };
+}
+
+static void test_state_branching_and_unreachable(void)
+{
+    wct_state_graph graph;
+    wct_report report;
+    state_context context = {0};
+    init_branching_state_graph(&graph);
+
+    CHECK(wct_validate_state(&graph, NULL, 0) == 0,
+          "branching state graph should validate before execution");
+    CHECK(wct_run_state(&graph, state_callback, &context,
+                        (wct_limits){.max_steps = 16, .seed = 7}, &report) == -1,
+          "unreachable declared edge should make the run incomplete");
+    CHECK(report.covered == 4 && report.uncovered == 1 && report.failures == 0,
+          "state execution should cover both reachable branches and report one unreachable edge");
+    wct_report_free(&report);
+    wct_state_graph_free(&graph);
+}
+
+static void test_parser_diagnostics(void)
+{
+    const char *path = "/tmp/wct-malformed.model";
+    FILE *file = fopen(path, "w");
+    wct_state_graph state = {0};
+    wct_relation_graph relation = {0};
+    char error[128] = {0};
+    CHECK(file != NULL, "malformed fixture should be writable");
+    if (file == NULL)
+        return;
+    fputs("schema 1\nstate_graph bad idle\nstate idle\ntransition only two\n", file);
+    fclose(file);
+    CHECK(wct_parse_file(path, &state, &relation, error, sizeof error) == -1,
+          "malformed transition should be rejected");
+    CHECK(strstr(error, "line") != NULL,
+          "malformed transition diagnostic should include a line number");
+    wct_state_graph_free(&state);
+    wct_relation_graph_free(&relation);
+    remove(path);
+}
+
+static void test_empty_ids_rejected(void)
+{
+    wct_state_graph state = {0};
+    wct_relation_graph relation = {0};
+    char error[64] = {0};
+    state.initial = copy_string("");
+    state.state_count = 1;
+    state.states = calloc(1, sizeof *state.states);
+    state.states[0] = copy_string("idle");
+    CHECK(wct_validate_state(&state, error, sizeof error) == -1,
+          "empty initial state should be rejected");
+    wct_state_graph_free(&state);
+
+    relation.call_count = 1;
+    relation.calls = calloc(1, sizeof *relation.calls);
+    relation.calls[0].id = copy_string("");
+    memset(error, 0, sizeof error);
+    CHECK(wct_validate_relation(&relation, error, sizeof error) == -1,
+          "empty call ID should be rejected");
+    wct_relation_graph_free(&relation);
+}
+
 typedef struct {
     const char *ids[8];
     size_t count;
@@ -230,6 +327,31 @@ static void test_relation_cycle(void)
     wct_relation_graph_free(&graph);
 }
 
+static void test_relation_lexical_tie_break(void)
+{
+    wct_relation_graph graph = {0};
+    wct_report report;
+    relation_context context = {0};
+    graph.id = copy_string("tie-break");
+    graph.call_count = 3;
+    graph.calls = calloc(graph.call_count, sizeof *graph.calls);
+    graph.calls[0].id = copy_string("zeta");
+    graph.calls[1].id = copy_string("alpha");
+    graph.calls[2].id = copy_string("middle");
+
+    CHECK(wct_validate_relation(&graph, NULL, 0) == 0,
+          "independent calls should validate");
+    CHECK(wct_run_relation(&graph, relation_callback, &context,
+                           (wct_limits){.max_flows = 3, .seed = 11}, &report) == 0,
+          "independent calls should execute");
+    CHECK(context.count == 3 && strcmp(context.ids[0], "alpha") == 0 &&
+              strcmp(context.ids[1], "middle") == 0 &&
+              strcmp(context.ids[2], "zeta") == 0,
+          "independent relation calls should use stable lexical ID order");
+    wct_report_free(&report);
+    wct_relation_graph_free(&graph);
+}
+
 static void test_parse_fixtures(void)
 {
     wct_state_graph state = {0};
@@ -266,8 +388,12 @@ int main(void)
     test_state_success_and_limit();
     test_state_callback_failure();
     test_state_validation_errors();
+    test_state_branching_and_unreachable();
+    test_parser_diagnostics();
+    test_empty_ids_rejected();
     test_relation_order_and_failure();
     test_relation_cycle();
+    test_relation_lexical_tie_break();
     test_parse_fixtures();
     if (failures != 0) {
         fprintf(stderr, "%d API contract test(s) failed\n", failures);
