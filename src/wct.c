@@ -63,7 +63,9 @@ fail: fclose(f); wct_state_graph_free(s); wct_relation_graph_free(r); return -1;
 }
 
 int wct_validate_state(const wct_state_graph *g, char *err, size_t n) {
-    if (!g || !g->initial || find_state(g, g->initial) < 0) {
+    if (!g || (g->state_count && !g->states) ||
+        (g->transition_count && !g->transitions) || !g->initial ||
+        find_state(g, g->initial) < 0) {
         seterr(err, n, "unknown initial state");
         return -1;
     }
@@ -100,7 +102,10 @@ int wct_validate_state(const wct_state_graph *g, char *err, size_t n) {
 }
 
 int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) {
-    if (!g) { seterr(err, n, "null relation graph"); return -1; }
+    if (!g || (g->call_count && !g->calls) ||
+        (g->relation_count && !g->relations)) {
+        seterr(err, n, "null relation graph"); return -1;
+    }
     for (size_t i = 0; i < g->call_count; i++) {
         if (!g->calls[i].id || !*g->calls[i].id) {
             seterr(err, n, "empty call id");
