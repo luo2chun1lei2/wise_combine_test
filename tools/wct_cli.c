@@ -12,6 +12,7 @@ static char *copy_string(const char *value) {
 
 static void usage(FILE *out) {
     fprintf(out, "Usage: wise-combine-test --model FILE [--mode state|relation]\n");
+    fprintf(out, "       [--seed N] [--max-steps N] [--max-flows N]\n");
     fprintf(out, "       wise-combine-test --help | --version\n");
 }
 
@@ -33,11 +34,25 @@ static int relation_callback(const char *id, const char *const *args, size_t arg
 
 int main(int argc, char **argv) {
     const char *model = NULL, *mode = "state";
+    wct_limits limits = {0};
     for (int i = 1; i < argc; ++i) {
         if (!strcmp(argv[i], "--help")) { usage(stdout); return 0; }
         if (!strcmp(argv[i], "--version")) { puts("wise-combine-test 0.1.0 schema 1"); return 0; }
         if (!strcmp(argv[i], "--model") && i + 1 < argc) { model = argv[++i]; continue; }
         if (!strcmp(argv[i], "--mode") && i + 1 < argc) { mode = argv[++i]; continue; }
+        if ((!strcmp(argv[i], "--seed") || !strcmp(argv[i], "--max-steps") ||
+             !strcmp(argv[i], "--max-flows")) && i + 1 < argc) {
+            char *end = NULL;
+            unsigned long value = strtoul(argv[++i], &end, 10);
+            if (!*argv[i] || *end || value > (unsigned long)SIZE_MAX) {
+                fprintf(stderr, "error: numeric option requires a non-negative integer\n");
+                return 2;
+            }
+            if (!strcmp(argv[i - 1], "--seed")) limits.seed = (unsigned)value;
+            else if (!strcmp(argv[i - 1], "--max-steps")) limits.max_steps = (size_t)value;
+            else limits.max_flows = (size_t)value;
+            continue;
+        }
         fprintf(stderr, "error: unknown or incomplete option '%s'\n", argv[i]);
         usage(stderr);
         return 2;
@@ -55,15 +70,17 @@ int main(int argc, char **argv) {
         return 1;
     }
     wct_report report = {0};
-    wct_limits limits = {.max_steps = 0, .max_flows = 0, .seed = 0};
     int rc;
     if (!strcmp(mode, "state")) {
         rc = wct_run_state(&state, state_callback, NULL, limits, &report);
     } else {
         rc = wct_run_relation(&relation, relation_callback, NULL, limits, &report);
     }
-    printf("steps=%zu covered=%zu failures=%zu\n", report.steps, report.covered, report.failures);
+    printf("steps=%zu covered=%zu failures=%zu uncovered=%zu seed=%u\n",
+           report.steps, report.covered, report.failures, report.uncovered, report.seed);
     if (report.error) fprintf(stderr, "error: %s\n", report.error);
+    if (report.scenario)
+        fprintf(stderr, "scenario=%s step=%zu\n", report.scenario, report.failed_step);
     wct_report_free(&report);
     wct_state_graph_free(&state);
     wct_relation_graph_free(&relation);
