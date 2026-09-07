@@ -3,5 +3,5 @@ state_graph session idle
 state idle
 state running
 state done
-transition start idle running begin ok
-transition finish running done finish ok
+transition start idle running begin begin
+transition finish running done finish finish
