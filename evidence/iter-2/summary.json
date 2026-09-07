@@ -1,0 +1,18 @@
+{
+  "iteration": "I2",
+  "status": "BLOCKED",
+  "scope": "relation DAG ordering and result-to-argument binding",
+  "implementation": "integrated",
+  "checks": {
+    "gcc_make_test": "PASS",
+    "clang_make_test": "PASS",
+    "asan_ubsan": "PASS",
+    "valgrind": "SKIP: valgrind not installed",
+    "relation_measurement": "PASS"
+  },
+  "blockers": [
+    "trace schema/replay hashes and seed-driven sampling are not implemented",
+    "fork/waitpid timeout isolation and typed arity validation are not implemented"
+  ],
+  "next_step": "implement trace/replay and relation edge coverage before advancing to release hardening"
+}
