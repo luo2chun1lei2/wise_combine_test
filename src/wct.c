@@ -151,6 +151,7 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
                   wct_limits lim, wct_report *r) {
     if (!r) return -1;
     memset(r, 0, sizeof *r);
+    r->seed = lim.seed;
     char err[128];
     if (wct_validate_state(g, err, sizeof err)) {
         r->error = dupstr(err);
