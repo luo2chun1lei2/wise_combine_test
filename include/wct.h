@@ -27,6 +27,11 @@ typedef struct {
     size_t covered;
     size_t failures;
     size_t uncovered;
+    size_t failed_step;
+    unsigned seed;
+    char *scenario;
+    char *expected;
+    char *actual;
     char *error;
 } wct_report;
 

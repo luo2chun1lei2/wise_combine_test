@@ -26,7 +26,15 @@ static int find_call(const wct_relation_graph *g, const char *id) { for (size_t 
 
 void wct_state_graph_free(wct_state_graph *g) { if (!g) return; free(g->id); free(g->initial); for(size_t i=0;i<g->state_count;i++) free(g->states[i]); free(g->states); for(size_t i=0;i<g->transition_count;i++){free(g->transitions[i].id);free(g->transitions[i].from);free(g->transitions[i].to);free(g->transitions[i].input);free(g->transitions[i].expect);} free(g->transitions); memset(g,0,sizeof *g); }
 void wct_relation_graph_free(wct_relation_graph *g) { if (!g) return; free(g->id); for(size_t i=0;i<g->call_count;i++){free(g->calls[i].id);for(size_t j=0;j<g->calls[i].argc;j++)free(g->calls[i].args[j]);free(g->calls[i].args);} free(g->calls); for(size_t i=0;i<g->relation_count;i++){free(g->relations[i].from);free(g->relations[i].to);} free(g->relations); memset(g,0,sizeof *g); }
-void wct_report_free(wct_report *r) { if (r) { free(r->error); memset(r,0,sizeof *r); } }
+void wct_report_free(wct_report *r) {
+    if (r) {
+        free(r->error);
+        free(r->scenario);
+        free(r->expected);
+        free(r->actual);
+        memset(r,0,sizeof *r);
+    }
+}
 
 int wct_parse_file(const char *path, wct_state_graph *s, wct_relation_graph *r, char *err, size_t errlen) {
     memset(s,0,sizeof *s); memset(r,0,sizeof *r);
@@ -148,35 +156,134 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
         r->error = dupstr(err);
         return -1;
     }
-    size_t max = lim.max_steps ? lim.max_steps : g->transition_count * 2 + 1;
-    char *state = dupstr(g->initial);
+    size_t max = lim.max_steps ? lim.max_steps : g->transition_count;
     unsigned char *seen = calloc(g->transition_count ? g->transition_count : 1, 1);
-    if (!state || !seen) {
-        free(state); free(seen); r->error = dupstr("out of memory"); return -1;
+    unsigned char *reachable = calloc(g->state_count ? g->state_count : 1, 1);
+    size_t *queue = calloc(g->state_count ? g->state_count : 1, sizeof *queue);
+    if (!seen || !reachable || !queue) {
+        free(seen); free(reachable); free(queue);
+        r->error = dupstr("out of memory"); return -1;
+    }
+    int initial = find_state(g, g->initial);
+    size_t qhead = 0, qtail = 0;
+    reachable[(size_t)initial] = 1;
+    queue[qtail++] = (size_t)initial;
+    while (qhead < qtail) {
+        size_t state = queue[qhead++];
+        for (size_t i = 0; i < g->transition_count; ++i) {
+            const wct_transition *t = &g->transitions[i];
+            if (find_state(g, t->from) == (int)state) {
+                int target = find_state(g, t->to);
+                if (target >= 0 && !reachable[(size_t)target]) {
+                    reachable[(size_t)target] = 1;
+                    if (qtail < g->state_count) queue[qtail++] = (size_t)target;
+                }
+            }
+        }
     }
     for (size_t step = 0; step < max; step++) {
         int picked = -1;
-        for (size_t i = 0; i < g->transition_count; i++)
-            if (!seen[i] && !strcmp(g->transitions[i].from, state)) { picked = (int)i; break; }
+        for (size_t i = 0; i < g->transition_count; i++) {
+            const wct_transition *candidate = &g->transitions[i];
+            int source = find_state(g, candidate->from);
+            if (!seen[i] && source >= 0 && reachable[(size_t)source]) {
+                picked = (int)i;
+                break;
+            }
+        }
         if (picked < 0) break;
-        wct_transition *t = &g->transitions[(size_t)picked];
+        const wct_transition *t = &g->transitions[(size_t)picked];
         char *actual = NULL;
         int rc = fn ? fn(t->input, &actual, ctx) : 0;
         if (rc || !actual || strcmp(actual, t->expect)) {
             r->failures++;
+            r->failed_step = step + 1;
+            r->scenario = dupstr(t->id);
+            r->expected = dupstr(t->expect);
+            r->actual = actual ? dupstr(actual) : NULL;
             r->error = dupstr(rc ? "transition callback failed" : "transition expectation failed");
             free(actual);
             break;
         }
         free(actual);
-        char *next = dupstr(t->to);
-        if (!next) { r->failures++; r->error = dupstr("out of memory"); break; }
-        free(state); state = next; seen[(size_t)picked] = 1; r->steps++; r->covered++;
+        seen[(size_t)picked] = 1;
+        r->steps++;
+        r->covered++;
     }
-    for (size_t i = 0; i < g->transition_count; i++) if (!seen[i]) r->uncovered++;
-    free(state); free(seen);
+    for (size_t i = 0; i < g->transition_count; i++) {
+        int source = find_state(g, g->transitions[i].from);
+        if (source < 0 || !reachable[(size_t)source] || !seen[i]) r->uncovered++;
+    }
+    free(queue); free(reachable); free(seen);
     if (!r->failures && r->uncovered) { r->error = dupstr("uncovered transition"); return -1; }
     return r->failures ? -1 : 0;
 }
 
-int wct_run_relation(const wct_relation_graph *g,wct_call_fn fn,void *ctx,wct_limits lim,wct_report *r){memset(r,0,sizeof*r);char err[128];if(wct_validate_relation(g,err,sizeof err)){r->error=dupstr(err);return -1;}size_t n=g->call_count,max=lim.max_flows?lim.max_flows:n;unsigned char*done=calloc(n,1);char**res=calloc(n,sizeof*res);for(size_t step=0;step<max;step++){int pick=-1;for(size_t i=0;i<n;i++)if(!done[i]){int ready=1;for(size_t j=0;j<g->relation_count;j++)if(find_call(g,g->relations[j].to)==(int)i&&!done[find_call(g,g->relations[j].from)])ready=0;if(ready){pick=(int)i;break;}}if(pick<0)break;wct_call*c=&g->calls[pick];const char**args=(const char**)c->args;char*out=NULL;int rc=fn?fn(c->id,args,c->argc,&out,ctx):0;if(rc){r->failures++;r->error=dupstr("call callback failed");free(out);break;}res[pick]=out;done[pick]=1;r->steps++;r->covered++;}for(size_t i=0;i<n;i++)free(res[i]);free(res);free(done);return r->failures?-1:0;}
+int wct_run_relation(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
+                    wct_limits lim, wct_report *r) {
+    if (!r) return -1;
+    memset(r, 0, sizeof *r);
+    r->seed = lim.seed;
+    char err[128];
+    if (wct_validate_relation(g, err, sizeof err)) {
+        r->error = dupstr(err);
+        return -1;
+    }
+    size_t n = g->call_count;
+    size_t max = lim.max_flows ? lim.max_flows : n;
+    unsigned char *done = calloc(n ? n : 1, 1);
+    char **res = calloc(n ? n : 1, sizeof *res);
+    if (!done || !res) {
+        free(done); free(res); r->error = dupstr("out of memory"); return -1;
+    }
+    for (size_t step = 0; step < max; step++) {
+        int pick = -1;
+        for (size_t i = 0; i < n; i++) {
+            if (done[i]) continue;
+            int ready = 1;
+            for (size_t j = 0; j < g->relation_count; j++) {
+                int target = find_call(g, g->relations[j].to);
+                if (target == (int)i) {
+                    int source = find_call(g, g->relations[j].from);
+                    if (source < 0 || !done[(size_t)source]) ready = 0;
+                }
+            }
+            if (!ready) continue;
+            if (pick < 0 || strcmp(g->calls[i].id, g->calls[(size_t)pick].id) < 0)
+                pick = (int)i;
+        }
+        if (pick < 0) break;
+        const wct_call *c = &g->calls[(size_t)pick];
+        const char **args = calloc(c->argc ? c->argc : 1, sizeof *args);
+        if (!args) { r->failures++; r->error = dupstr("out of memory"); break; }
+        for (size_t i = 0; i < c->argc; ++i) {
+            const char *arg = c->args[i];
+            if (arg && arg[0] == '$') {
+                const char *name = arg + 1;
+                int source = find_call(g, name);
+                if (source >= 0 && done[(size_t)source]) arg = res[(size_t)source];
+            }
+            args[i] = arg;
+        }
+        char *out = NULL;
+        int rc = fn ? fn(c->id, args, c->argc, &out, ctx) : 0;
+        free(args);
+        if (rc || !out) {
+            r->failures++;
+            r->failed_step = step + 1;
+            r->scenario = dupstr(c->id);
+            r->error = dupstr(rc ? "call callback failed" : "call callback returned no result");
+            free(out);
+            break;
+        }
+        res[(size_t)pick] = out;
+        done[(size_t)pick] = 1;
+        r->steps++;
+        r->covered++;
+    }
+    for (size_t i = 0; i < n; i++) if (!done[i]) r->uncovered++;
+    for (size_t i = 0; i < n; i++) free(res[i]);
+    free(res);
+    free(done);
+    return r->failures ? -1 : 0;
+}
