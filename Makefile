@@ -41,7 +41,7 @@ measure: all
 	@test -n "$(OUT)" || (echo 'OUT is required, e.g. make measure OUT=evidence/iter-0/measure.tsv'; exit 2)
 	@mkdir -p "$$(dirname '$(OUT)')"
 	@printf 'command\twall_seconds\tmax_rss_kb\n' > '$(OUT)'
-	@/usr/bin/time -f './bin/wise-combine-test --model $(or $(FIXTURE),fixtures/smoke.model) --mode state\t%e\t%M' -o '$(OUT).tmp' ./bin/wise-combine-test --model $(or $(FIXTURE),fixtures/smoke.model) --mode state >/dev/null
+	@/usr/bin/time -f './bin/wise-combine-test --model $(or $(FIXTURE),fixtures/smoke.model) --mode $(or $(MODE),state)\t%e\t%M' -o '$(OUT).tmp' ./bin/wise-combine-test --model $(or $(FIXTURE),fixtures/smoke.model) --mode $(or $(MODE),state) >/dev/null
 	@cat '$(OUT).tmp' >> '$(OUT)'; rm -f '$(OUT).tmp'
 
 clean:
