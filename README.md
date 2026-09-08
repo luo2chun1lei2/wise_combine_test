@@ -9,6 +9,14 @@ process and writes reproducible failure reports.
 The implementation uses C++20 and the standard library plus POSIX process APIs.
 There is no runtime third-party dependency.
 
+## Documentation sync
+
+This repository maintains English and Chinese usage documentation in
+`README.md` and `README.zh.md`. Whenever build, CLI, specification, adapter,
+report, exit-code, safety, or measurement usage changes, update both files in
+the same commit. Keep commands, JSON fields, limits, and behavioral guarantees
+aligned; only the explanatory language should differ.
+
 ## Build and test
 
 ```sh
