@@ -1,0 +1,13 @@
+# 状态图示例：连接对象的生命周期
+object connection {
+  state IDLE initial
+  state READY
+  state BUSY
+  state DONE final
+  state ERROR final
+
+  transition IDLE -> READY by init()
+  transition READY -> BUSY by start()
+  transition BUSY -> DONE by finish() guard return==0
+  transition BUSY -> ERROR by fail() guard return!=0
+}
