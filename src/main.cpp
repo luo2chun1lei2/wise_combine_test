@@ -36,6 +36,40 @@ void ensure_dir(const std::string& path) {
     mkdir(path.c_str(), 0755);
 }
 
+std::string dir_name(const std::string& path) {
+    const std::size_t slash = path.find_last_of('/');
+    if (slash == std::string::npos) {
+        return ".";
+    }
+    if (slash == 0) {
+        return "/";
+    }
+    return path.substr(0, slash);
+}
+
+std::string base_name(const std::string& path) {
+    const std::size_t slash = path.find_last_of('/');
+    return slash == std::string::npos ? path : path.substr(slash + 1);
+}
+
+std::string lib_link_name(const std::string& path) {
+    std::string base = base_name(path);
+    if (base.rfind("lib", 0) == 0) {
+        base = base.substr(3);
+    }
+    if (base.size() > 3 && base.substr(base.size() - 3) == ".so") {
+        base = base.substr(0, base.size() - 3);
+    }
+    return base;
+}
+
+std::string rpath_expr(const std::string& dir) {
+    if (dir.empty() || dir[0] == '/') {
+        return dir;
+    }
+    return "$ORIGIN/../" + dir;
+}
+
 std::size_t parse_size(const std::string& s, const std::string& opt) {
     try {
         return static_cast<std::size_t>(std::stoull(s));
@@ -159,6 +193,28 @@ int main(int argc, char** argv) {
             logger.log("info", "main", "ALL",
                        "standalone source written to " + out_file);
             std::cout << "standalone source written to " << out_file << "\n";
+            const std::string lib_dir = o.lib_path.empty()
+                                            ? "<lib_dir>"
+                                            : dir_name(o.lib_path);
+            const std::string lib_name = o.lib_path.empty()
+                                             ? "<lib_name>"
+                                             : lib_link_name(o.lib_path);
+            const std::string rpath = o.lib_path.empty()
+                                          ? "<lib_dir>"
+                                          : rpath_expr(lib_dir);
+            std::cout << "\n编译并运行示例（请把被测库链接进来）：\n";
+            std::cout << "  g++ -std=c++17 " << out_file << " -L" << lib_dir
+                      << " -l" << lib_name << " -Wl,-rpath," << rpath
+                      << " -o build/wise_standalone\n";
+            std::cout << "  ./build/wise_standalone\n";
+            std::cout << "\n使用 ASan 编译运行：\n";
+            std::cout << "  g++ -std=c++17 -O1 -g -fsanitize=address "
+                         "-fno-omit-frame-pointer "
+                      << out_file << " -L" << lib_dir << " -l" << lib_name
+                      << " -Wl,-rpath," << rpath
+                      << " -o build/wise_standalone_asan\n";
+            std::cout << "  ASAN_OPTIONS=detect_leaks=1 "
+                         "./build/wise_standalone_asan\n";
             return 0;
         }
 

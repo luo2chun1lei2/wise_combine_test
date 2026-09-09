@@ -28,3 +28,5 @@
 {"session_id":"01a0842c-d325-7661-9961-fea221d1a508","ts":1788936131,"text":"wise_standalone.cpp 是做什么的？ 为什么没有放在 src 中？"}
 {"session_id":"01a0842c-d325-7661-9961-fea221d1a508","ts":1788936272,"text":"也就是说这个文件是自动生成的？ 还有 wise_combine_test.log 也是?"}
 {"session_id":"01a0842c-d325-7661-9961-fea221d1a508","ts":1788936400,"text":"请将这些文件移动到 build 中。 另外在此目录加入 Makefile，通过调用子目录下的Makefile，可以用于编译和验证整个系统。"}
+{"session_id":"01a0842c-d325-7661-9961-fea221d1a508","ts":1788936800,"text":"ASan 是干什么用的？"}
+{"session_id":"01a0842c-d325-7661-9961-fea221d1a508","ts":1788937836,"text":"生成的  build/wise_standalone.cpp 没有编译的命令和方法，怎么用或者测试？"}

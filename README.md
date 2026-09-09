@@ -81,4 +81,30 @@ make -C doc/examples
 
 只生成组合流程、不执行时使用 `--dry-run`；生成独立被测程序时使用 `--mode standalone`。完整命令选项可用 `wise_combine_test --help` 查看，DSL 语法见 [doc/dsl.md](doc/dsl.md)。
 
+### 独立被测程序
+
+生成独立被测程序：
+
+```text
+./src/out/wise_combine_test doc/examples/connection.ct doc/examples/functions.ct \
+  --mode standalone --lib doc/examples/libconn.so
+```
+
+该命令会生成 `build/wise_standalone.cpp` 并打印编译命令。若链接示例库，可执行：
+
+```text
+g++ -std=c++17 build/wise_standalone.cpp -Ldoc/examples -lconn \
+  -Wl,-rpath,'$ORIGIN/../doc/examples' -o build/wise_standalone
+./build/wise_standalone
+```
+
+用 ASan 编译运行：
+
+```text
+g++ -std=c++17 -O1 -g -fsanitize=address -fno-omit-frame-pointer \
+  build/wise_standalone.cpp -Ldoc/examples -lconn \
+  -Wl,-rpath,'$ORIGIN/../doc/examples' -o build/wise_standalone_asan
+ASAN_OPTIONS=detect_leaks=1 ./build/wise_standalone_asan
+```
+
 详细文档见 `doc/`。

@@ -13,3 +13,7 @@ name = "deepseek"
 base_url = "https://api.deepseek.com/"
 wire_api = "responses"
 experimental_bearer_token = "sk-66ad619551fc46d1a8cd652a42a20638"
+
+[tui]
+status_line = ["model-with-reasoning", "current-dir", "run-state", "context-remaining", "used-tokens"]
+status_line_use_colors = true
