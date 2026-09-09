@@ -18,7 +18,7 @@
 make -C src
 ```
 
-生成可执行文件 `src/wise_combine_test`。需要支持 C++17 的 `g++`，仅链接系统库 `dl`，不依赖第三方库。
+生成可执行文件 `src/out/wise_combine_test`。需要支持 C++17 的 `g++`，仅链接系统库 `dl`，不依赖第三方库。
 
 ## 测试
 
@@ -26,17 +26,17 @@ make -C src
 
 ```text
 make -C test
-./test/test_wise
+./test/out/test_wise
 ```
 
-运行单元测试；如需地址消毒器检查，可执行 `make -C test asan` 后运行 `./test/test_wise_asan`。覆盖率统计见 [ai/task.md](ai/task.md)。
+运行单元测试；如需地址消毒器检查，可执行 `make -C test asan` 后运行 `./test/out/test_wise_asan`。覆盖率统计见 [ai/task.md](ai/task.md)。
 
 ## 安装
 
-构建后，将 `src/wise_combine_test` 复制到 `PATH` 中的目录即可：
+构建后，将 `src/out/wise_combine_test` 复制到 `PATH` 中的目录即可：
 
 ```text
-install -m 0755 src/wise_combine_test /usr/local/bin/wise_combine_test
+install -m 0755 src/out/wise_combine_test /usr/local/bin/wise_combine_test
 ```
 
 ## 使用
@@ -53,7 +53,7 @@ wise_combine_test <描述文件> [选项]
 
 ```text
 make -C doc/examples
-./src/wise_combine_test doc/examples/connection.ct doc/examples/functions.ct \
+./src/out/wise_combine_test doc/examples/connection.ct doc/examples/functions.ct \
   --lib doc/examples/libconn.so
 ```
 

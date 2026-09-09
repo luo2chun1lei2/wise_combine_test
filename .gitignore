@@ -64,14 +64,11 @@ vcpkg_installed/
 *.dwo
 
 # wise_combine_test generated artifacts
+src/out/
+test/out/
 wise_standalone
 wise_standalone_asan
 wise_standalone.cpp
-src/wise_combine_test
-src/wise_combine_test_asan
-test/test_wise
-test/test_wise_asan
-test/test_wise_cov
 *.gcov
 *.gcno
 *.gcda

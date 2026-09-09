@@ -6,8 +6,8 @@
 
 ```text
 make -C test coverage
-./test/test_wise_cov
-cd test && gcov -b -c wise.cpp
+./test/out/test_wise_cov
+cd test/out && gcov -b -c wise_cov.gcno test_wise_cov.gcno
 ```
 
 ## 结果

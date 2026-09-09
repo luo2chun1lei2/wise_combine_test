@@ -201,7 +201,7 @@ int main() {
     }
 
     {
-        wct::Runner runner({"test/libtest.so", false, 10});
+        wct::Runner runner({"test/out/libtest.so", false, 10});
         const auto results = runner.run({{"f", "g"}, {"h"}, {"f", "h"}});
         assert(results.size() == 3);
         assert(results[0].status == "passed");
@@ -217,7 +217,7 @@ int main() {
     }
 
     {
-        wct::Runner runner({"test/libtest.so", false, 10});
+        wct::Runner runner({"test/out/libtest.so", false, 10});
         const auto results = runner.run({{"missing_symbol"}});
         assert(results.size() == 1);
         assert(results[0].status == "failed");

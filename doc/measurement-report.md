@@ -5,7 +5,7 @@
 使用 `doc/examples/many.ct`（7 个无顺序约束的函数）测量不同组合规模下工具的资源消耗。测量命令：
 
 ```text
-/usr/bin/time -v ./src/wise_combine_test doc/examples/many.ct --dry-run \
+/usr/bin/time -v ./src/out/wise_combine_test doc/examples/many.ct --dry-run \
   --max-flows <n> --report text >/dev/null
 ```
 
