@@ -5,3 +5,6 @@ prefix_rule(pattern=["/bin/bash", "-lc", "ssh -T -o StrictHostKeyChecking=accept
 prefix_rule(pattern=["/bin/bash", "-lc", "GIT_SSH_COMMAND=\"ssh -o CheckHostIP=no\" git push origin plan_goal"], decision="allow")
 prefix_rule(pattern=["git", "add", "ai/proposal.md"], decision="allow")
 prefix_rule(pattern=["/bin/bash", "-lc", "/bin/bash -lc \"GIT_SSH_COMMAND=\\\"ssh -o CheckHostIP=no\\\" git push origin plan_goal\""], decision="allow")
+prefix_rule(pattern=["/bin/bash", "-lc", "ASAN_OPTIONS=detect_leaks=1 ./src/wise_combine_test_asan doc/examples/connection.ct doc/examples/functions.ct --dry-run --report text >/dev/null"], decision="allow")
+prefix_rule(pattern=["/bin/bash", "-lc", "ASAN_OPTIONS=detect_leaks=1 ./test/test_wise_asan"], decision="allow")
+prefix_rule(pattern=["/bin/bash", "-lc", "g++ -std=c++17 -O1 -g -fsanitize=address -fno-omit-frame-pointer wise_standalone.cpp -Ldoc/examples -lconn -Wl,-rpath,'$ORIGIN/doc/examples' -o wise_standalone_asan && ASAN_OPTIONS=detect_leaks=1 ./wise_standalone_asan >/tmp/standalone_asan.out 2>/tmp/standalone_asan.err; echo \"exit=$?\"; cat /tmp/standalone_asan.err"], decision="allow")

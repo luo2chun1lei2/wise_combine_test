@@ -15,12 +15,12 @@ make -C src asan
 make -C test asan
 ```
 
-运行环境为受限沙箱，LeakSanitizer 因 ptrace 限制无法启用，因此运行时设置 `ASAN_OPTIONS=detect_leaks=0`，但仍启用地址越界、释放后使用等检查。
+运行时启用 LeakSanitizer（`ASAN_OPTIONS=detect_leaks=1`）进行内存泄露与越界检查。
 
 ## 结果
 
-- `src/wise_combine_test_asan` 解析示例并 `--dry-run`：退出码 0，无 ASan 报错。
-- `test/test_wise_asan`：全部单元测试通过，退出码 0，无 ASan 报错。
-- `wise_standalone_asan`（链接示例库）：组合流程按预置问题返回非零，无 ASan 报错。
+- `src/wise_combine_test_asan` 解析示例并 `--dry-run`：退出码 0，无 ASan / LeakSanitizer 报错。
+- `test/test_wise_asan`：全部单元测试通过，退出码 0，无 ASan / LeakSanitizer 报错。
+- `wise_standalone_asan`（链接示例库）：组合流程按预置问题返回非零，无 ASan / LeakSanitizer 报错。
 
-Valgrind 在当前环境未安装，未能执行 Valgrind 检查。工具及生成代码未使用手动 `new`/`delete`，资源由 RAII 与标准库容器管理，内存越界风险通过单元测试与 ASan 覆盖。
+Valgrind 在当前环境未安装，未能执行 Valgrind 检查；ASan 与 LeakSanitizer 已覆盖内存泄露与越界访问。工具及生成代码未使用手动 `new`/`delete`，资源由 RAII 与标准库容器管理。
