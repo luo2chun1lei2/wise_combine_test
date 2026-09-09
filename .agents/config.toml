@@ -1,0 +1,15 @@
+model = "deepseek-v4-pro"
+model_provider = "deepseek"
+preferred_auth_method = "apikey"
+forced_login_method = "api"
+model_reasoning_effort = "high"
+model_catalog_json = "/home/workspace_data/works/myprojects/wise_combine_test.plan_goal/.agents/models.json"
+
+[projects."/home/workspace_data/works/myprojects/wise_combine_test.plan_goal"]
+trust_level = "trusted"
+
+[model_providers.deepseek]
+name = "deepseek"
+base_url = "https://api.deepseek.com/"
+wire_api = "responses"
+experimental_bearer_token = "sk-66ad619551fc46d1a8cd652a42a20638"
