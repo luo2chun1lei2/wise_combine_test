@@ -31,3 +31,5 @@
 {"session_id":"01a0842c-d325-7661-9961-fea221d1a508","ts":1788936800,"text":"ASan 是干什么用的？"}
 {"session_id":"01a0842c-d325-7661-9961-fea221d1a508","ts":1788937836,"text":"生成的  build/wise_standalone.cpp 没有编译的命令和方法，怎么用或者测试？"}
 {"session_id":"01a0842c-d325-7661-9961-fea221d1a508","ts":1788938075,"text":"可以将编译和验证这个 wise_standalone.cpp 的命令放到 Makefile 中。"}
+{"session_id":"01a0842c-d325-7661-9961-fea221d1a508","ts":1788938304,"text":"运行 wise_standalone 时，显示日志从第二个开始就是 failed，这个是怎么回事？"}
+{"session_id":"01a0842c-d325-7661-9961-fea221d1a508","ts":1788938627,"text":"这个fail容易让使用者理解测试失败，请将解释等放入到 README.md 的说明中。"}

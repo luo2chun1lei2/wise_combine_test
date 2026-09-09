@@ -119,4 +119,17 @@ g++ -std=c++17 -O1 -g -fsanitize=address -fno-omit-frame-pointer \
 ASAN_OPTIONS=detect_leaks=1 ./build/wise_standalone_asan
 ```
 
+### 关于示例中的 `fail`
+
+示例库 [doc/examples/libconn.cpp](doc/examples/libconn.cpp) 中的 `fail()` 被故意写成返回非零：
+
+```cpp
+extern "C" int fail() {
+    // 预置问题：组合流程一旦触发失败路径，就返回非零。
+    return 1;
+}
+```
+
+这是为了演示组合测试如何发现预置问题。运行示例时，只有不包含 `fail()` 的流程会通过，其余包含 `fail()` 的流程会被判定为失败。因此看到大部分流程 `failed` 是预期现象，不代表工具本身出错。
+
 详细文档见 `doc/`。
