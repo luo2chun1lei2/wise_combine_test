@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <sys/stat.h>
 
 namespace {
 
@@ -25,10 +26,14 @@ void print_usage(std::ostream& out) {
     out << "  --dry-run                 只生成流程，不执行\n";
     out << "  --max-depth <n>           最大路径步数（默认 32）\n";
     out << "  --max-flows <n>           最大调用流程数量（默认 1000）\n";
-    out << "  --log-file <path>         日志文件（默认 wise_combine_test.log）\n";
+    out << "  --log-file <path>         日志文件（默认 build/wise_combine_test.log）\n";
     out << "  --log-max-size <bytes>    日志文件大小上限（默认 10485760）\n";
     out << "  --log-rotate-count <n>    保留日志文件数量（默认 5）\n";
     out << "  --report text|json        报告格式（默认 text）\n";
+}
+
+void ensure_dir(const std::string& path) {
+    mkdir(path.c_str(), 0755);
 }
 
 std::size_t parse_size(const std::string& s, const std::string& opt) {
@@ -98,7 +103,7 @@ CliOptions parse_args(int argc, char** argv) {
         throw std::runtime_error("at least one description file is required");
     }
     if (o.log.file.empty()) {
-        o.log.file = "wise_combine_test.log";
+        o.log.file = "build/wise_combine_test.log";
     }
     return o;
 }
@@ -108,6 +113,7 @@ CliOptions parse_args(int argc, char** argv) {
 int main(int argc, char** argv) {
     try {
         const CliOptions o = parse_args(argc, argv);
+        ensure_dir("build");
         wct::Spec spec;
         for (const auto& file : o.files) {
             wct::Parser parser(file);
@@ -143,7 +149,7 @@ int main(int argc, char** argv) {
         if (o.mode == "standalone") {
             wct::Runner runner({o.lib_path, true, 10});
             const std::string source = runner.generate_standalone(flows);
-            const std::string out_file = "wise_standalone.cpp";
+            const std::string out_file = "build/wise_standalone.cpp";
             std::ofstream fout(out_file);
             if (!fout) {
                 throw std::runtime_error("cannot write " + out_file);

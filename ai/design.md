@@ -207,6 +207,8 @@ mutex start finish
 
 生成的被测程序固定调用约定，并提供简单的状态与返回值检查逻辑。
 
+生成的源文件默认输出到 `build/wise_standalone.cpp`。
+
 ### 6.3 问题判定标准
 
 每个组合调用流程执行后，按以下信号判定为通过或失败：
@@ -232,7 +234,7 @@ mutex start finish
 
 日志记录到标准错误或指定文件，包含时间戳、日志级别、模块、调用流程标识与详细信息。日志级别可配置为 error、warning、info、debug，默认级别为 info。
 
-日志默认输出到当前工作目录下的 `wise_combine_test.log`，可通过 `--log-file` 指定其他位置。为支持日志大小上限、轮转与清理：
+日志默认输出到当前工作目录下的 `build/wise_combine_test.log`，可通过 `--log-file` 指定其他位置。为支持日志大小上限、轮转与清理：
 
 - 单个日志文件达到 `--log-max-size`（默认 10 MiB）后进行轮转；
 - 保留最近 `--log-rotate-count`（默认 5）个日志文件，超出部分删除或覆盖。
@@ -268,7 +270,7 @@ wise_combine_test <描述文件> [选项]
 - `--log-rotate-count <n>`：设置保留的历史日志文件数量。
 - `--report <text|json>`：指定报告格式。
 
-未指定参数时使用默认值：`--mode direct`、`--max-depth 32`、`--max-flows 1000`、`--log-file wise_combine_test.log`、`--log-max-size 10485760`（10 MiB）、`--log-rotate-count 5`、`--report text`。
+未指定参数时使用默认值：`--mode direct`、`--max-depth 32`、`--max-flows 1000`、`--log-file build/wise_combine_test.log`、`--log-max-size 10485760`（10 MiB）、`--log-rotate-count 5`、`--report text`。
 
 ## 10. 测试与测量
 

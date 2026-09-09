@@ -12,24 +12,46 @@
 
 ## 编译
 
-构建脚本位于 `src/`。在项目根目录执行：
+在项目根目录执行 `make` 可一次性编译工具、测试和示例库：
+
+```text
+make
+```
+
+也可以只构建工具源码：
 
 ```text
 make -C src
 ```
 
-生成可执行文件 `src/out/wise_combine_test`。需要支持 C++17 的 `g++`，仅链接系统库 `dl`，不依赖第三方库。
+生成的工具位于 `src/out/wise_combine_test`。
 
-## 测试
+## 验证
 
-测试代码与构建脚本位于 `test/`。执行：
+在项目根目录执行：
+
+```text
+make check
+```
+
+该命令会编译整个系统、运行单元测试、执行示例组合测试，并生成独立被测程序。也可以单独构建和运行测试：
 
 ```text
 make -C test
 ./test/out/test_wise
 ```
 
-运行单元测试；如需地址消毒器检查，可执行 `make -C test asan` 后运行 `./test/out/test_wise_asan`。覆盖率统计见 [ai/task.md](ai/task.md)。
+运行地址消毒器检查：
+
+```text
+make asan
+```
+
+清理所有生成物：
+
+```text
+make clean
+```
 
 ## 安装
 
