@@ -1,4 +1,4 @@
-.PHONY: all check asan clean
+.PHONY: all check standalone standalone-asan asan clean
 
 all:
 	$(MAKE) -C src all
@@ -11,7 +11,24 @@ check: all
 	./src/out/wise_combine_test doc/examples/connection.ct doc/examples/functions.ct \
 		--lib doc/examples/libconn.so --report text > build/example-report.txt
 	./src/out/wise_combine_test doc/examples/connection.ct doc/examples/functions.ct \
-		--mode standalone --report text
+		--mode standalone --lib doc/examples/libconn.so --report text
+	g++ -std=c++17 build/wise_standalone.cpp -Ldoc/examples -lconn \
+		-Wl,-rpath,'$$ORIGIN/../doc/examples' -o build/wise_standalone
+	-./build/wise_standalone
+
+standalone: all
+	./src/out/wise_combine_test doc/examples/connection.ct doc/examples/functions.ct \
+		--mode standalone --lib doc/examples/libconn.so --report text
+	g++ -std=c++17 build/wise_standalone.cpp -Ldoc/examples -lconn \
+		-Wl,-rpath,'$$ORIGIN/../doc/examples' -o build/wise_standalone
+
+standalone-asan: all
+	./src/out/wise_combine_test doc/examples/connection.ct doc/examples/functions.ct \
+		--mode standalone --lib doc/examples/libconn.so --report text
+	g++ -std=c++17 -O1 -g -fsanitize=address -fno-omit-frame-pointer \
+		build/wise_standalone.cpp -Ldoc/examples -lconn \
+		-Wl,-rpath,'$$ORIGIN/../doc/examples' -o build/wise_standalone_asan
+	-ASAN_OPTIONS=detect_leaks=1 ./build/wise_standalone_asan
 
 asan:
 	$(MAKE) -C src asan

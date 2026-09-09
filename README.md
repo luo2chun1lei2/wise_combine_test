@@ -53,6 +53,18 @@ make asan
 make clean
 ```
 
+单独生成并编译独立被测程序：
+
+```text
+make standalone
+```
+
+生成并用 ASan 编译运行独立被测程序：
+
+```text
+make standalone-asan
+```
+
 ## 安装
 
 构建后，将 `src/out/wise_combine_test` 复制到 `PATH` 中的目录即可：
