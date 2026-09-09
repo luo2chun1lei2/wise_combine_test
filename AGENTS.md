@@ -11,6 +11,7 @@
 - [ai/task.md](ai/task.md)：任务计划。
 
 项目工作流程：先建立 ai/proposal.md，再建立设计文档 ai/design.md，最后生成计划文档 ai/task.md。
+每次修改了 ai/*.md 文档后，需要找对应的 *-check-list.md 进行审核。
 
 ## 文件夹布局
 
