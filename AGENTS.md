@@ -13,6 +13,11 @@
 项目工作流程：先建立 ai/proposal.md，再建立设计文档 ai/design.md，最后生成计划文档 ai/task.md。
 每次修改了 ai/*.md 文档后，需要找对应的 *-check-list.md 进行审核。
 
+## 提交规则
+
+- 禁止将 `.agents`、`.omo` 等 AI 本地状态目录提交或推送到 git 服务器；它们已经由 `.gitignore` 忽略。
+- 编译和测试产生的二进制文件、构建目录等同样不提交。
+
 ## 文件夹布局
 
 - `ai/`：存放 AI 与项目相关文件，包括 `proposal.md`、`design.md`、`task.md`。以后 AI 和项目相关的文件都放在这里。

@@ -73,3 +73,5 @@ test/out/
 # test output & cache
 Testing/
 .cache/
+
+.agents/

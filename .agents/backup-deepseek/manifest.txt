@@ -1,8 +1,0 @@
-script_version=1.2.0
-installed_at=2026-09-09 10:26:25
-original_config_existed=1
-model_slug=deepseek-v4-pro
-base_url=https://api.deepseek.com/
-catalog_value=/home/workspace_data/works/myprojects/wise_combine_test.plan_goal/.agents/models.json
-codex_home=/home/workspace_data/works/myprojects/wise_combine_test.plan_goal/.agents
---- 对 config.toml 的改动 ---
