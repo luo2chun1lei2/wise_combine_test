@@ -1,0 +1,10 @@
+object machine {
+  state A initial
+  state B final
+  transition A -> B by f()
+}
+
+function f() -> r
+function g()
+
+order f before g

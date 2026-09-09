@@ -1,0 +1,4 @@
+function f()
+function g()
+
+constraint count(f) == 0

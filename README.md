@@ -12,15 +12,32 @@
 
 ## 编译
 
-构建脚本位于 `src/`。实现完成后，在项目根目录执行构建脚本即可生成可执行文件 `wise_combine_test`。当前开发状态见 [ai/task.md](ai/task.md)。
+构建脚本位于 `src/`。在项目根目录执行：
+
+```text
+make -C src
+```
+
+生成可执行文件 `src/wise_combine_test`。需要支持 C++17 的 `g++`，仅链接系统库 `dl`，不依赖第三方库。
 
 ## 测试
 
-测试代码与构建脚本位于 `test/`。实现完成后，运行测试脚本执行单元测试、覆盖率统计和内存检查。测试与测量要求见 [ai/proposal.md](ai/proposal.md)。
+测试代码与构建脚本位于 `test/`。执行：
+
+```text
+make -C test
+./test/test_wise
+```
+
+运行单元测试；如需地址消毒器检查，可执行 `make -C test asan` 后运行 `./test/test_wise_asan`。覆盖率统计见 [ai/task.md](ai/task.md)。
 
 ## 安装
 
-实现完成后，将生成的可执行文件 `wise_combine_test` 安装到 `PATH` 中即可使用。具体安装方式以 `src/` 中的构建脚本为准。
+构建后，将 `src/wise_combine_test` 复制到 `PATH` 中的目录即可：
+
+```text
+install -m 0755 src/wise_combine_test /usr/local/bin/wise_combine_test
+```
 
 ## 使用
 
@@ -32,6 +49,14 @@
 wise_combine_test <描述文件> [选项]
 ```
 
-命令选项的详细说明见 [doc/dsl.md](doc/dsl.md) 及后续使用文档。
+例如，使用提供的示例描述和示例动态库：
+
+```text
+make -C doc/examples
+./src/wise_combine_test doc/examples/connection.ct doc/examples/functions.ct \
+  --lib doc/examples/libconn.so
+```
+
+只生成组合流程、不执行时使用 `--dry-run`；生成独立被测程序时使用 `--mode standalone`。完整命令选项可用 `wise_combine_test --help` 查看，DSL 语法见 [doc/dsl.md](doc/dsl.md)。
 
 详细文档见 `doc/`。

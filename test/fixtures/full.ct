@@ -1,0 +1,15 @@
+object conn {
+  state IDLE initial
+  state READY
+  state DONE final
+  transition IDLE -> READY by init()
+  transition READY -> DONE by close()
+}
+
+function init() -> handle
+function close(handle h) -> status
+
+parameter close.h = init.handle
+order init before close
+mutex init close
+constraint count(init) == 1

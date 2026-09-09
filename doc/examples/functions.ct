@@ -2,12 +2,14 @@
 function init() -> handle
 function start(handle h, config c)
 function finish(handle h) -> status
-function free(handle h)
+function fail(handle h) -> status
+function release(handle h)
 
 parameter start.h = init.handle
 parameter finish.h = init.handle
-parameter free.h = init.handle
+parameter fail.h = init.handle
+parameter release.h = init.handle
 
 order init before start
 order init before finish
-order finish before free
+order finish before release

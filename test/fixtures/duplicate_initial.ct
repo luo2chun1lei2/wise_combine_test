@@ -1,0 +1,7 @@
+object machine {
+  state A initial
+  state B initial
+  transition A -> B by f()
+}
+
+function f()
