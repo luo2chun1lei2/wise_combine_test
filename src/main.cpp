@@ -36,7 +36,33 @@ std::string firstKeyword(const std::string &s) {
   return {};
 }
 
-int runFunction(const std::string &text, int maxLength, unsigned seed) {
+std::string jsonEscape(const std::string &s) {
+  std::string out;
+  for (char c : s) {
+    switch (c) {
+      case '"': out += "\\\""; break;
+      case '\\': out += "\\\\"; break;
+      case '\n': out += "\\n"; break;
+      case '\r': out += "\\r"; break;
+      case '\t': out += "\\t"; break;
+      default: out += c;
+    }
+  }
+  return out;
+}
+
+void printJsonStrings(const std::vector<std::string> &items) {
+  std::cout << "[";
+  for (std::size_t i = 0; i < items.size(); ++i) {
+    if (i > 0) {
+      std::cout << ",";
+    }
+    std::cout << "\"" << jsonEscape(items[i]) << "\"";
+  }
+  std::cout << "]";
+}
+
+int runFunction(const std::string &text, int maxLength, unsigned seed, bool json) {
   antlr4::ANTLRInputStream input(text);
   FunctionDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -50,6 +76,27 @@ int runFunction(const std::string &text, int maxLength, unsigned seed) {
 
   FunctionModelBuilder builder;
   model::Model m = builder.build(tree);
+  gen::SequenceGenerator generator(m, maxLength, seed);
+  std::vector<gen::Sequence> sequences = generator.generate();
+
+  if (json) {
+    std::vector<std::string> seqTexts;
+    seqTexts.reserve(sequences.size());
+    for (const auto &seq : sequences) {
+      seqTexts.push_back(seq.text());
+    }
+    std::cout << "{\"kind\":\"function\"";
+    std::cout << ",\"types\":" << m.typeMap.size();
+    std::cout << ",\"values\":" << m.values.size();
+    std::cout << ",\"resources\":" << m.resources.size();
+    std::cout << ",\"functions\":" << m.functions.size();
+    std::cout << ",\"sequences\":";
+    printJsonStrings(seqTexts);
+    std::cout << ",\"errors\":";
+    printJsonStrings(m.errors);
+    std::cout << "}" << std::endl;
+    return m.errors.empty() ? 0 : 1;
+  }
 
   std::cout << "types: " << m.typeMap.size() << std::endl;
   std::cout << "values: " << m.values.size() << std::endl;
@@ -64,9 +111,6 @@ int runFunction(const std::string &text, int maxLength, unsigned seed) {
     return 1;
   }
 
-  gen::SequenceGenerator generator(m, maxLength, seed);
-  std::vector<gen::Sequence> sequences = generator.generate();
-
   std::cout << "sequences: " << sequences.size() << std::endl;
   for (const auto &seq : sequences) {
     std::cout << "  " << seq.text() << std::endl;
@@ -75,7 +119,7 @@ int runFunction(const std::string &text, int maxLength, unsigned seed) {
   return 0;
 }
 
-int runStateMachine(const std::string &text, int maxLength) {
+int runStateMachine(const std::string &text, int maxLength, bool json) {
   antlr4::ANTLRInputStream input(text);
   StateMachineDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -89,6 +133,27 @@ int runStateMachine(const std::string &text, int maxLength) {
 
   StateMachineBuilder builder;
   smodel::StateMachine m = builder.build(tree);
+  spath::StateMachinePathGenerator generator(m, maxLength);
+  std::vector<spath::Path> paths = generator.generate();
+
+  if (json) {
+    std::vector<std::string> pathTexts;
+    pathTexts.reserve(paths.size());
+    for (const auto &path : paths) {
+      pathTexts.push_back(path.text());
+    }
+    std::cout << "{\"kind\":\"state_machine\"";
+    std::cout << ",\"machine\":\"" << jsonEscape(m.name) << "\"";
+    std::cout << ",\"states\":" << m.states.size();
+    std::cout << ",\"events\":" << m.events.size();
+    std::cout << ",\"transitions\":" << m.transitions.size();
+    std::cout << ",\"paths\":";
+    printJsonStrings(pathTexts);
+    std::cout << ",\"errors\":";
+    printJsonStrings(m.errors);
+    std::cout << "}" << std::endl;
+    return m.errors.empty() ? 0 : 1;
+  }
 
   std::cout << "machine: " << m.name << std::endl;
   std::cout << "states: " << m.states.size() << std::endl;
@@ -103,9 +168,6 @@ int runStateMachine(const std::string &text, int maxLength) {
     return 1;
   }
 
-  spath::StateMachinePathGenerator generator(m, maxLength);
-  std::vector<spath::Path> paths = generator.generate();
-
   std::cout << "paths: " << paths.size() << std::endl;
   for (const auto &path : paths) {
     std::cout << "  " << path.text() << std::endl;
@@ -118,7 +180,7 @@ int runStateMachine(const std::string &text, int maxLength) {
 
 int main(int argc, char **argv) {
   if (argc < 2) {
-    std::cerr << "usage: " << argv[0] << " <model.dsl> [max_length] [seed]" << std::endl;
+    std::cerr << "usage: " << argv[0] << " <model.dsl> [max_length] [seed] [json]" << std::endl;
     return 2;
   }
 
@@ -130,6 +192,7 @@ int main(int argc, char **argv) {
   if (argc >= 4) {
     seed = static_cast<unsigned>(std::stoul(argv[3]));
   }
+  bool json = (argc >= 5 && std::string(argv[4]) == "json");
 
   std::ifstream in(argv[1]);
   if (!in) {
@@ -143,9 +206,9 @@ int main(int argc, char **argv) {
 
   try {
     if (firstKeyword(text) == "machine") {
-      return runStateMachine(text, maxLength);
+      return runStateMachine(text, maxLength, json);
     }
-    return runFunction(text, maxLength, seed);
+    return runFunction(text, maxLength, seed, json);
   } catch (const std::exception &e) {
     std::cerr << "exception: " << e.what() << std::endl;
     return 3;
