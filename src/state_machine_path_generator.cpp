@@ -4,6 +4,14 @@
 
 namespace spath {
 
+namespace {
+
+std::string transitionKey(const smodel::Transition &transition) {
+  return transition.from + " -" + transition.event + "-> " + transition.to;
+}
+
+}  // namespace
+
 std::string Path::text() const {
   std::string out;
   for (std::size_t i = 0; i < steps.size(); ++i) {
@@ -59,6 +67,50 @@ std::vector<Path> StateMachinePathGenerator::generateRandom(unsigned seed, int c
     if (!path.steps.empty() && seen.insert(path.text()).second) {
       out.push_back(path);
     }
+  }
+  return out;
+}
+
+std::vector<Path> StateMachinePathGenerator::generateTour() {
+  std::vector<Path> out;
+  if (machine_.transitions.empty()) {
+    return out;
+  }
+
+  Path path;
+  std::string state = machine_.initial;
+  std::set<std::string> covered;
+  const std::size_t maxSteps = machine_.transitions.size() * 32 + 64;
+
+  while (covered.size() < machine_.transitions.size() && path.steps.size() < maxSteps) {
+    const smodel::Transition *pick = nullptr;
+    for (const auto &transition : machine_.transitions) {
+      if (transition.from == state &&
+          covered.find(transitionKey(transition)) == covered.end()) {
+        pick = &transition;
+        break;
+      }
+    }
+    if (pick == nullptr) {
+      for (const auto &transition : machine_.transitions) {
+        if (transition.from == state) {
+          pick = &transition;
+          break;
+        }
+      }
+    }
+    if (pick == nullptr) {
+      break;
+    }
+    Step step;
+    step.transition = *pick;
+    path.steps.push_back(step);
+    covered.insert(transitionKey(*pick));
+    state = pick->to;
+  }
+
+  if (!path.steps.empty()) {
+    out.push_back(path);
   }
   return out;
 }

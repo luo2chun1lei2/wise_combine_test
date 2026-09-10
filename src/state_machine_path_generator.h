@@ -22,6 +22,7 @@ class StateMachinePathGenerator {
   StateMachinePathGenerator(const smodel::StateMachine &machine, int maxLength);
   std::vector<Path> generate();
   std::vector<Path> generateRandom(unsigned seed, int count);
+  std::vector<Path> generateTour();
 
  private:
   const smodel::StateMachine &machine_;
