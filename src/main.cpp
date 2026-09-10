@@ -89,7 +89,7 @@ std::string transitionKey(const smodel::Transition &t) {
 
 int runFunction(const std::string &text, int maxLength, unsigned seed, bool json, bool negative,
                 int maxCases, bool coverage, bool harness, bool dylib, bool randomAlgorithm,
-                bool cover) {
+                bool cover, int replayIndex) {
   antlr4::ANTLRInputStream input(text);
   FunctionDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -107,6 +107,16 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
   std::vector<gen::Sequence> sequences =
       randomAlgorithm ? generator.generateRandom(seed, maxCases) : generator.generate();
   const std::vector<gen::Sequence> &negativeSequences = generator.negativeSequences();
+
+  if (replayIndex >= 0) {
+    if (replayIndex >= static_cast<int>(sequences.size())) {
+      std::cerr << "replay index out of range: " << replayIndex << std::endl;
+      return 1;
+    }
+    std::vector<gen::Sequence> one{sequences[replayIndex]};
+    std::cout << harness::generate(m, one, false);
+    return 0;
+  }
 
   if (harness) {
     std::cout << harness::generate(m, sequences, dylib);
@@ -228,7 +238,7 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
 
 int runStateMachine(const std::string &text, int maxLength, bool json, bool coverage, bool cover,
                     bool randomAlgorithm, bool tourAlgorithm, unsigned seed, int maxCases,
-                    const std::string &events) {
+                    const std::string &events, int replayIndex) {
   antlr4::ANTLRInputStream input(text);
   StateMachineDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -300,6 +310,23 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
     }
     std::cout << "final: " << current << std::endl;
     std::cout << "OK" << std::endl;
+    return 0;
+  }
+
+  if (replayIndex >= 0) {
+    if (replayIndex >= static_cast<int>(paths.size())) {
+      std::cerr << "replay index out of range: " << replayIndex << std::endl;
+      return 1;
+    }
+    std::cout << paths[replayIndex].text() << std::endl;
+    std::string csv;
+    for (std::size_t i = 0; i < paths[replayIndex].steps.size(); ++i) {
+      if (i > 0) {
+        csv += ",";
+      }
+      csv += paths[replayIndex].steps[i].transition.event;
+    }
+    std::cout << "replay-events: " << csv << std::endl;
     return 0;
   }
 
@@ -386,7 +413,7 @@ int main(int argc, char **argv) {
     std::cerr << "usage: " << argv[0]
               << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--coverage]"
               << " [--cover] [--algorithm random] [--harness] [--dylib] [--events e1,e2,...]"
-              << " [--max-cases N]"
+              << " [--replay N] [--max-cases N]"
               << std::endl;
     return 2;
   }
@@ -402,6 +429,7 @@ int main(int argc, char **argv) {
   bool randomAlgorithm = false;
   bool tourAlgorithm = false;
   int maxCases = 0;
+  int replayIndex = -1;
   std::string events;
   std::string modelPath;
 
@@ -432,6 +460,8 @@ int main(int argc, char **argv) {
       seed = static_cast<unsigned>(std::stoul(argv[++i]));
     } else if (arg == "--max-cases" && i + 1 < argc) {
       maxCases = std::stoi(argv[++i]);
+    } else if (arg == "--replay" && i + 1 < argc) {
+      replayIndex = std::stoi(argv[++i]);
     } else if (modelPath.empty()) {
       modelPath = arg;
     } else {
@@ -458,10 +488,10 @@ int main(int argc, char **argv) {
   try {
     if (firstKeyword(text) == "machine") {
       return runStateMachine(text, maxLength, json, coverage, cover, randomAlgorithm, tourAlgorithm,
-                             seed, maxCases, events);
+                             seed, maxCases, events, replayIndex);
     }
     return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness, dylib,
-                       randomAlgorithm, cover);
+                       randomAlgorithm, cover, replayIndex);
   } catch (const std::exception &e) {
     std::cerr << "exception: " << e.what() << std::endl;
     return 3;
