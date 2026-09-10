@@ -25,7 +25,7 @@ func strlen(s: string from strings) -> usize {
   success: result >= 0
 }
 
-func strcpy(dest: cstring, src: string from strings) -> cstring {
+func strcpy(out dest: cstring, src: string from strings) -> cstring {
   symbol: "strcpy"
   signature: "char* strcpy(char *, const char *)"
   requires:
@@ -33,7 +33,7 @@ func strcpy(dest: cstring, src: string from strings) -> cstring {
   success: result == dest
 }
 
-func strcat(dest: cstring, src: string from strings) -> cstring {
+func strcat(out dest: cstring, src: string from strings) -> cstring {
   symbol: "strcat"
   signature: "char* strcat(char *, const char *)"
   requires:

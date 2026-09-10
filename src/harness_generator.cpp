@@ -91,6 +91,7 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
 
       std::map<std::string, std::string> paramExpr;
       std::vector<std::string> args;
+      std::vector<std::string> decls;
       for (std::size_t i = 0; i < fn.params.size(); ++i) {
         const model::Param &param = fn.params[i];
         std::string expr;
@@ -98,7 +99,10 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
           expr = "h" + std::to_string(call.resourceArgs[i]);
         } else {
           const std::string cType = cTypeOf(model, param.type);
-          if (isVoidPointer(cType)) {
+          if (param.out && isStringPointer(cType)) {
+            expr = "out_" + param.name;
+            decls.push_back("char " + expr + "[256] = {0};");
+          } else if (isVoidPointer(cType)) {
             expr = "buf";
           } else if (isStringPointer(cType)) {
             expr = "\"" + escapeCString(call.values[i]) + "\"";
@@ -131,6 +135,9 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
         callStmt += args[i];
       }
       callStmt += ");";
+      for (const auto &decl : decls) {
+        out << "  " << decl << "\n";
+      }
       out << "  " << callStmt << "\n";
 
       std::string success;

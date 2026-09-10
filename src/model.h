@@ -25,6 +25,7 @@ struct Param {
   std::string name;
   std::string type;
   std::string valueSource;
+  bool out = false;
 };
 
 struct Cond {

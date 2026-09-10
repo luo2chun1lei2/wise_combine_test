@@ -82,6 +82,7 @@ std::any FunctionModelBuilder::visitFuncBlock(FunctionDslParser::FuncBlockContex
       model::Param param;
       param.name = paramCtx->ID(0)->getText();
       param.type = paramCtx->typeName()->ID()->getText();
+      param.out = paramCtx->getText().rfind("out", 0) == 0;
       if (paramCtx->ID().size() > 1) {
         param.valueSource = paramCtx->ID(1)->getText();
       }

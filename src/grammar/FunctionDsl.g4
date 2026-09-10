@@ -19,7 +19,7 @@ initialDecl: 'initial' ':' ID;
 
 funcBlock: 'func' ID '(' params? ')' ('->' typeName)? '{' funcMember* '}';
 params: param (',' param)*;
-param: ID ':' typeName ('from' ID)?;
+param: 'out'? ID ':' typeName ('from' ID)?;
 typeName: ID;
 
 funcMember: symbolDecl | signatureDecl | requiresDecl | effectsDecl | successDecl;
