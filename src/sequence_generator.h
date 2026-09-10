@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <random>
 #include <set>
 #include <string>
 #include <vector>
@@ -12,6 +13,7 @@ namespace gen {
 struct Call {
   std::string function;
   std::vector<int> resourceArgs;  // 实例编号；值参数用 -1 占位
+  std::vector<std::string> values;  // 值参数的具体取值；资源参数为空
 };
 
 struct Sequence {
@@ -21,7 +23,7 @@ struct Sequence {
 
 class SequenceGenerator {
  public:
-  SequenceGenerator(const model::Model &model, int maxLength);
+  SequenceGenerator(const model::Model &model, int maxLength, unsigned seed = 0);
   std::vector<Sequence> generate();
 
  private:
@@ -33,10 +35,12 @@ class SequenceGenerator {
 
   const model::Model &model_;
   int maxLength_ = 0;
+  std::mt19937 rng_;
   std::vector<Sequence> results_;
   std::set<std::string> seen_;
 
   void dfs(std::vector<Instance> &env, Sequence &seq, int nextId);
+  std::string sampleValue(const model::ValueSource &source);
   bool satisfies(const model::Function &fn, const std::vector<int> &bindings,
                  const std::vector<Instance> &env) const;
   void apply(const model::Function &fn, const std::vector<int> &bindings,

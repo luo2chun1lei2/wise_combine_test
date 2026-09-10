@@ -10,13 +10,17 @@
 
 int main(int argc, char **argv) {
   if (argc < 2) {
-    std::cerr << "usage: " << argv[0] << " <model.dsl> [max_length]" << std::endl;
+    std::cerr << "usage: " << argv[0] << " <model.dsl> [max_length] [seed]" << std::endl;
     return 2;
   }
 
   int maxLength = 3;
   if (argc >= 3) {
     maxLength = std::stoi(argv[2]);
+  }
+  unsigned seed = 0;
+  if (argc >= 4) {
+    seed = static_cast<unsigned>(std::stoul(argv[3]));
   }
 
   try {
@@ -58,7 +62,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    gen::SequenceGenerator generator(m, maxLength);
+    gen::SequenceGenerator generator(m, maxLength, seed);
     std::vector<gen::Sequence> sequences = generator.generate();
 
     std::cout << "sequences: " << sequences.size() << std::endl;

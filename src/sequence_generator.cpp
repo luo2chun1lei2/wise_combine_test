@@ -36,15 +36,21 @@ std::string Sequence::text() const {
       if (j > 0) {
         out += ", ";
       }
-      out += calls[i].resourceArgs[j] >= 0 ? std::to_string(calls[i].resourceArgs[j]) : "_";
+      if (calls[i].resourceArgs[j] >= 0) {
+        out += std::to_string(calls[i].resourceArgs[j]);
+      } else if (!calls[i].values[j].empty()) {
+        out += calls[i].values[j];
+      } else {
+        out += "_";
+      }
     }
     out += ")";
   }
   return out;
 }
 
-SequenceGenerator::SequenceGenerator(const model::Model &model, int maxLength)
-    : model_(model), maxLength_(maxLength) {}
+SequenceGenerator::SequenceGenerator(const model::Model &model, int maxLength, unsigned seed)
+    : model_(model), maxLength_(maxLength), rng_(seed) {}
 
 std::vector<Sequence> SequenceGenerator::generate() {
   results_.clear();
@@ -72,8 +78,16 @@ void SequenceGenerator::dfs(std::vector<Instance> &env, Sequence &seq, int nextI
       for (std::size_t i = 0; i < function.params.size(); ++i) {
         if (bound[i] >= 0) {
           call.resourceArgs.push_back(env[bound[i]].id);
+          call.values.push_back("");
         } else {
           call.resourceArgs.push_back(-1);
+          const std::string &sourceName = function.params[i].valueSource;
+          auto it = model_.values.find(sourceName);
+          if (it != model_.values.end()) {
+            call.values.push_back(sampleValue(it->second));
+          } else {
+            call.values.push_back("");
+          }
         }
       }
       next.calls.push_back(call);
@@ -89,6 +103,20 @@ void SequenceGenerator::dfs(std::vector<Instance> &env, Sequence &seq, int nextI
       }
     });
   }
+}
+
+std::string SequenceGenerator::sampleValue(const model::ValueSource &source) {
+  if (source.isRange) {
+    const int span = source.hi - source.lo + 1;
+    if (span <= 0) {
+      return std::to_string(source.lo);
+    }
+    return std::to_string(source.lo + static_cast<int>(rng_() % static_cast<unsigned>(span)));
+  }
+  if (source.items.empty()) {
+    return {};
+  }
+  return source.items[rng_() % source.items.size()];
 }
 
 void SequenceGenerator::enumerateBindings(
