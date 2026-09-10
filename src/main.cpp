@@ -6,11 +6,17 @@
 #include "FunctionDslParser.h"
 #include "antlr4-runtime.h"
 #include "function_model_builder.h"
+#include "sequence_generator.h"
 
 int main(int argc, char **argv) {
   if (argc < 2) {
-    std::cerr << "usage: " << argv[0] << " <model.dsl>" << std::endl;
+    std::cerr << "usage: " << argv[0] << " <model.dsl> [max_length]" << std::endl;
     return 2;
+  }
+
+  int maxLength = 3;
+  if (argc >= 3) {
+    maxLength = std::stoi(argv[2]);
   }
 
   try {
@@ -52,6 +58,13 @@ int main(int argc, char **argv) {
       return 1;
     }
 
+    gen::SequenceGenerator generator(m, maxLength);
+    std::vector<gen::Sequence> sequences = generator.generate();
+
+    std::cout << "sequences: " << sequences.size() << std::endl;
+    for (const auto &seq : sequences) {
+      std::cout << "  " << seq.text() << std::endl;
+    }
     std::cout << "OK" << std::endl;
     return 0;
   } catch (const std::exception &e) {
