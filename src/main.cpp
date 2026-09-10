@@ -174,7 +174,7 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
 }
 
 int runStateMachine(const std::string &text, int maxLength, bool json, bool coverage, bool cover,
-                    const std::string &events) {
+                    bool randomAlgorithm, unsigned seed, int maxCases, const std::string &events) {
   antlr4::ANTLRInputStream input(text);
   StateMachineDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -189,7 +189,8 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
   StateMachineBuilder builder;
   smodel::StateMachine m = builder.build(tree);
   spath::StateMachinePathGenerator generator(m, maxLength);
-  std::vector<spath::Path> paths = generator.generate();
+  std::vector<spath::Path> paths =
+      randomAlgorithm ? generator.generateRandom(seed, maxCases) : generator.generate();
 
   if (json) {
     std::vector<std::string> pathTexts;
@@ -324,7 +325,8 @@ int main(int argc, char **argv) {
   if (argc < 2) {
     std::cerr << "usage: " << argv[0]
               << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--coverage]"
-              << " [--cover] [--harness] [--dylib] [--events e1,e2,...] [--max-cases N]"
+              << " [--cover] [--algorithm random] [--harness] [--dylib] [--events e1,e2,...]"
+              << " [--max-cases N]"
               << std::endl;
     return 2;
   }
@@ -337,6 +339,7 @@ int main(int argc, char **argv) {
   bool cover = false;
   bool harness = false;
   bool dylib = false;
+  bool randomAlgorithm = false;
   int maxCases = 0;
   std::string events;
   std::string modelPath;
@@ -351,6 +354,8 @@ int main(int argc, char **argv) {
       coverage = true;
     } else if (arg == "--cover") {
       cover = true;
+    } else if (arg == "--algorithm" && i + 1 < argc) {
+      randomAlgorithm = (std::string(argv[++i]) == "random");
     } else if (arg == "--harness") {
       harness = true;
     } else if (arg == "--dylib") {
@@ -389,7 +394,8 @@ int main(int argc, char **argv) {
 
   try {
     if (firstKeyword(text) == "machine") {
-      return runStateMachine(text, maxLength, json, coverage, cover, events);
+      return runStateMachine(text, maxLength, json, coverage, cover, randomAlgorithm, seed,
+                             maxCases, events);
     }
     return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness, dylib);
   } catch (const std::exception &e) {

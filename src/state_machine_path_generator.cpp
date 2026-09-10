@@ -1,5 +1,7 @@
 #include "state_machine_path_generator.h"
 
+#include <random>
+
 namespace spath {
 
 std::string Path::text() const {
@@ -27,6 +29,38 @@ std::vector<Path> StateMachinePathGenerator::generate() {
   Path path;
   dfs(machine_.initial, path);
   return results_;
+}
+
+std::vector<Path> StateMachinePathGenerator::generateRandom(unsigned seed, int count) {
+  std::vector<Path> out;
+  std::set<std::string> seen;
+  std::mt19937 rng(seed);
+  const int attempts = (count <= 0) ? 20 : count;
+
+  for (int i = 0; i < attempts; ++i) {
+    Path path;
+    std::string state = machine_.initial;
+    while (static_cast<int>(path.steps.size()) < maxLength_) {
+      std::vector<const smodel::Transition *> outgoing;
+      for (const auto &transition : machine_.transitions) {
+        if (transition.from == state) {
+          outgoing.push_back(&transition);
+        }
+      }
+      if (outgoing.empty()) {
+        break;
+      }
+      const smodel::Transition *transition = outgoing[rng() % outgoing.size()];
+      Step step;
+      step.transition = *transition;
+      path.steps.push_back(step);
+      state = transition->to;
+    }
+    if (!path.steps.empty() && seen.insert(path.text()).second) {
+      out.push_back(path);
+    }
+  }
+  return out;
 }
 
 void StateMachinePathGenerator::dfs(const std::string &state, Path &path) {
