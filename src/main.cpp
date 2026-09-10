@@ -83,6 +83,10 @@ std::vector<std::string> splitCsv(const std::string &s) {
   return out;
 }
 
+std::string transitionKey(const smodel::Transition &t) {
+  return t.from + " -" + t.event + "-> " + t.to;
+}
+
 int runFunction(const std::string &text, int maxLength, unsigned seed, bool json, bool negative,
                 int maxCases, bool coverage, bool harness, bool dylib) {
   antlr4::ANTLRInputStream input(text);
@@ -169,7 +173,7 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
   return 0;
 }
 
-int runStateMachine(const std::string &text, int maxLength, bool json, bool coverage,
+int runStateMachine(const std::string &text, int maxLength, bool json, bool coverage, bool cover,
                     const std::string &events) {
   antlr4::ANTLRInputStream input(text);
   StateMachineDslLexer lexer(&input);
@@ -238,6 +242,59 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
     return 0;
   }
 
+  if (cover) {
+    std::set<std::string> allTransitions;
+    for (const auto &transition : m.transitions) {
+      allTransitions.insert(transitionKey(transition));
+    }
+    std::vector<std::set<std::string>> pathTransitions(paths.size());
+    for (std::size_t i = 0; i < paths.size(); ++i) {
+      for (const auto &step : paths[i].steps) {
+        pathTransitions[i].insert(transitionKey(step.transition));
+      }
+    }
+
+    std::set<std::string> uncovered = allTransitions;
+    std::vector<std::size_t> selected;
+    std::vector<bool> used(paths.size(), false);
+    while (!uncovered.empty()) {
+      std::size_t best = paths.size();
+      std::size_t bestCount = 0;
+      for (std::size_t i = 0; i < paths.size(); ++i) {
+        if (used[i]) {
+          continue;
+        }
+        std::size_t count = 0;
+        for (const auto &key : pathTransitions[i]) {
+          if (uncovered.count(key)) {
+            ++count;
+          }
+        }
+        if (count > bestCount) {
+          best = i;
+          bestCount = count;
+        }
+      }
+      if (best == paths.size()) {
+        break;
+      }
+      selected.push_back(best);
+      used[best] = true;
+      for (const auto &key : pathTransitions[best]) {
+        uncovered.erase(key);
+      }
+    }
+
+    std::cout << "covering paths: " << selected.size() << "/" << paths.size() << std::endl;
+    for (const auto index : selected) {
+      std::cout << "  " << paths[index].text() << std::endl;
+    }
+    std::cout << "covered transitions: " << (allTransitions.size() - uncovered.size()) << "/"
+              << allTransitions.size() << std::endl;
+    std::cout << "OK" << std::endl;
+    return 0;
+  }
+
   std::cout << "paths: " << paths.size() << std::endl;
   for (const auto &path : paths) {
     std::cout << "  " << path.text() << std::endl;
@@ -267,7 +324,7 @@ int main(int argc, char **argv) {
   if (argc < 2) {
     std::cerr << "usage: " << argv[0]
               << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--coverage]"
-              << " [--harness] [--dylib] [--events e1,e2,...] [--max-cases N]"
+              << " [--cover] [--harness] [--dylib] [--events e1,e2,...] [--max-cases N]"
               << std::endl;
     return 2;
   }
@@ -277,6 +334,7 @@ int main(int argc, char **argv) {
   bool json = false;
   bool negative = false;
   bool coverage = false;
+  bool cover = false;
   bool harness = false;
   bool dylib = false;
   int maxCases = 0;
@@ -291,6 +349,8 @@ int main(int argc, char **argv) {
       negative = true;
     } else if (arg == "--coverage") {
       coverage = true;
+    } else if (arg == "--cover") {
+      cover = true;
     } else if (arg == "--harness") {
       harness = true;
     } else if (arg == "--dylib") {
@@ -329,7 +389,7 @@ int main(int argc, char **argv) {
 
   try {
     if (firstKeyword(text) == "machine") {
-      return runStateMachine(text, maxLength, json, coverage, events);
+      return runStateMachine(text, maxLength, json, coverage, cover, events);
     }
     return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness, dylib);
   } catch (const std::exception &e) {
