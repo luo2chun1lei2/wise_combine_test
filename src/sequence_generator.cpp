@@ -49,12 +49,19 @@ std::string Sequence::text() const {
   return out;
 }
 
-SequenceGenerator::SequenceGenerator(const model::Model &model, int maxLength, unsigned seed)
-    : model_(model), maxLength_(maxLength), rng_(seed) {}
+SequenceGenerator::SequenceGenerator(const model::Model &model, int maxLength, unsigned seed,
+                                    bool negative, int maxCases)
+    : model_(model),
+      maxLength_(maxLength),
+      negative_(negative),
+      maxCases_(maxCases),
+      rng_(seed) {}
 
 std::vector<Sequence> SequenceGenerator::generate() {
   results_.clear();
   seen_.clear();
+  negativeResults_.clear();
+  negativeSeen_.clear();
 
   std::vector<Instance> env;
   Sequence seq;
@@ -62,15 +69,46 @@ std::vector<Sequence> SequenceGenerator::generate() {
   return results_;
 }
 
+const std::vector<Sequence> &SequenceGenerator::negativeSequences() const {
+  return negativeResults_;
+}
+
 void SequenceGenerator::dfs(std::vector<Instance> &env, Sequence &seq, int nextId) {
-  if (static_cast<int>(seq.calls.size()) >= maxLength_) {
+  if (reachedLimit() || static_cast<int>(seq.calls.size()) >= maxLength_) {
     return;
   }
 
   for (const auto &function : model_.functions) {
-    std::vector<int> bindings(function.params.size(), -1);
-    std::vector<bool> used(env.size(), false);
+    if (reachedLimit()) {
+      return;
+    }
 
+    std::vector<bool> used(env.size(), false);
+    const bool applicable = hasAnyBinding(function, env, 0, used);
+
+    if (negative_ && !applicable) {
+      Call call;
+      call.function = function.name;
+      for (std::size_t i = 0; i < function.params.size(); ++i) {
+        call.resourceArgs.push_back(-1);
+        const std::string &sourceName = function.params[i].valueSource;
+        auto it = model_.values.find(sourceName);
+        if (it != model_.values.end()) {
+          call.values.push_back(sampleValue(it->second));
+        } else {
+          call.values.push_back("");
+        }
+      }
+      Sequence negative = seq;
+      negative.calls.push_back(call);
+      if (negativeSeen_.insert(negative.text()).second) {
+        negativeResults_.push_back(negative);
+      }
+      continue;
+    }
+
+    std::vector<int> bindings(function.params.size(), -1);
+    used.assign(env.size(), false);
     enumerateBindings(function, env, 0, bindings, used, [&](const std::vector<int> &bound) {
       Sequence next = seq;
       Call call;
@@ -103,6 +141,47 @@ void SequenceGenerator::dfs(std::vector<Instance> &env, Sequence &seq, int nextI
       }
     });
   }
+}
+
+bool SequenceGenerator::hasAnyBinding(const model::Function &fn, const std::vector<Instance> &env,
+                                      std::size_t paramIndex, std::vector<bool> &used) const {
+  if (paramIndex == fn.params.size()) {
+    return true;
+  }
+
+  const model::Param &param = fn.params[paramIndex];
+  if (!isResourceType(model_, param.type)) {
+    return hasAnyBinding(fn, env, paramIndex + 1, used);
+  }
+
+  for (std::size_t j = 0; j < env.size(); ++j) {
+    if (used[j] || env[j].type != param.type) {
+      continue;
+    }
+
+    bool ok = true;
+    for (const auto &cond : fn.requiresConds) {
+      if (cond.param == param.name && env[j].state != cond.state) {
+        ok = false;
+        break;
+      }
+    }
+    if (!ok) {
+      continue;
+    }
+
+    used[j] = true;
+    if (hasAnyBinding(fn, env, paramIndex + 1, used)) {
+      return true;
+    }
+    used[j] = false;
+  }
+  return false;
+}
+
+bool SequenceGenerator::reachedLimit() const {
+  return maxCases_ > 0 &&
+         static_cast<int>(results_.size() + negativeResults_.size()) >= maxCases_;
 }
 
 std::string SequenceGenerator::sampleValue(const model::ValueSource &source) {

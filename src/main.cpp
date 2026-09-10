@@ -62,7 +62,8 @@ void printJsonStrings(const std::vector<std::string> &items) {
   std::cout << "]";
 }
 
-int runFunction(const std::string &text, int maxLength, unsigned seed, bool json) {
+int runFunction(const std::string &text, int maxLength, unsigned seed, bool json, bool negative,
+                int maxCases) {
   antlr4::ANTLRInputStream input(text);
   FunctionDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -76,14 +77,20 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
 
   FunctionModelBuilder builder;
   model::Model m = builder.build(tree);
-  gen::SequenceGenerator generator(m, maxLength, seed);
+  gen::SequenceGenerator generator(m, maxLength, seed, negative, maxCases);
   std::vector<gen::Sequence> sequences = generator.generate();
+  const std::vector<gen::Sequence> &negativeSequences = generator.negativeSequences();
 
   if (json) {
     std::vector<std::string> seqTexts;
     seqTexts.reserve(sequences.size());
     for (const auto &seq : sequences) {
       seqTexts.push_back(seq.text());
+    }
+    std::vector<std::string> negTexts;
+    negTexts.reserve(negativeSequences.size());
+    for (const auto &seq : negativeSequences) {
+      negTexts.push_back(seq.text());
     }
     std::cout << "{\"kind\":\"function\"";
     std::cout << ",\"types\":" << m.typeMap.size();
@@ -92,6 +99,8 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
     std::cout << ",\"functions\":" << m.functions.size();
     std::cout << ",\"sequences\":";
     printJsonStrings(seqTexts);
+    std::cout << ",\"negative_sequences\":";
+    printJsonStrings(negTexts);
     std::cout << ",\"errors\":";
     printJsonStrings(m.errors);
     std::cout << "}" << std::endl;
@@ -114,6 +123,12 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
   std::cout << "sequences: " << sequences.size() << std::endl;
   for (const auto &seq : sequences) {
     std::cout << "  " << seq.text() << std::endl;
+  }
+  if (negative) {
+    std::cout << "negative: " << negativeSequences.size() << std::endl;
+    for (const auto &seq : negativeSequences) {
+      std::cout << "  " << seq.text() << std::endl;
+    }
   }
   std::cout << "OK" << std::endl;
   return 0;
@@ -180,23 +195,47 @@ int runStateMachine(const std::string &text, int maxLength, bool json) {
 
 int main(int argc, char **argv) {
   if (argc < 2) {
-    std::cerr << "usage: " << argv[0] << " <model.dsl> [max_length] [seed] [json]" << std::endl;
+    std::cerr << "usage: " << argv[0]
+              << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--max-cases N]"
+              << std::endl;
     return 2;
   }
 
   int maxLength = 3;
-  if (argc >= 3) {
-    maxLength = std::stoi(argv[2]);
-  }
   unsigned seed = 0;
-  if (argc >= 4) {
-    seed = static_cast<unsigned>(std::stoul(argv[3]));
-  }
-  bool json = (argc >= 5 && std::string(argv[4]) == "json");
+  bool json = false;
+  bool negative = false;
+  int maxCases = 0;
+  std::string modelPath;
 
-  std::ifstream in(argv[1]);
+  for (int i = 1; i < argc; ++i) {
+    const std::string arg = argv[i];
+    if (arg == "--json") {
+      json = true;
+    } else if (arg == "--negative") {
+      negative = true;
+    } else if (arg == "--max-length" && i + 1 < argc) {
+      maxLength = std::stoi(argv[++i]);
+    } else if (arg == "--seed" && i + 1 < argc) {
+      seed = static_cast<unsigned>(std::stoul(argv[++i]));
+    } else if (arg == "--max-cases" && i + 1 < argc) {
+      maxCases = std::stoi(argv[++i]);
+    } else if (modelPath.empty()) {
+      modelPath = arg;
+    } else {
+      std::cerr << "unknown argument: " << arg << std::endl;
+      return 2;
+    }
+  }
+
+  if (modelPath.empty()) {
+    std::cerr << "missing model file" << std::endl;
+    return 2;
+  }
+
+  std::ifstream in(modelPath);
   if (!in) {
-    std::cerr << "cannot open " << argv[1] << std::endl;
+    std::cerr << "cannot open " << modelPath << std::endl;
     return 2;
   }
 
@@ -208,7 +247,7 @@ int main(int argc, char **argv) {
     if (firstKeyword(text) == "machine") {
       return runStateMachine(text, maxLength, json);
     }
-    return runFunction(text, maxLength, seed, json);
+    return runFunction(text, maxLength, seed, json, negative, maxCases);
   } catch (const std::exception &e) {
     std::cerr << "exception: " << e.what() << std::endl;
     return 3;

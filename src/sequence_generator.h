@@ -23,8 +23,10 @@ struct Sequence {
 
 class SequenceGenerator {
  public:
-  SequenceGenerator(const model::Model &model, int maxLength, unsigned seed = 0);
+  SequenceGenerator(const model::Model &model, int maxLength, unsigned seed = 0,
+                    bool negative = false, int maxCases = 0);
   std::vector<Sequence> generate();
+  const std::vector<Sequence> &negativeSequences() const;
 
  private:
   struct Instance {
@@ -35,12 +37,19 @@ class SequenceGenerator {
 
   const model::Model &model_;
   int maxLength_ = 0;
+  bool negative_ = false;
+  int maxCases_ = 0;
   std::mt19937 rng_;
   std::vector<Sequence> results_;
   std::set<std::string> seen_;
+  std::vector<Sequence> negativeResults_;
+  std::set<std::string> negativeSeen_;
 
   void dfs(std::vector<Instance> &env, Sequence &seq, int nextId);
   std::string sampleValue(const model::ValueSource &source);
+  bool hasAnyBinding(const model::Function &fn, const std::vector<Instance> &env,
+                     std::size_t paramIndex, std::vector<bool> &used) const;
+  bool reachedLimit() const;
   bool satisfies(const model::Function &fn, const std::vector<int> &bindings,
                  const std::vector<Instance> &env) const;
   void apply(const model::Function &fn, const std::vector<int> &bindings,

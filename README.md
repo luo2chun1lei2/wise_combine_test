@@ -36,14 +36,14 @@ make test
 ## 使用
 
 ```sh
-./build/wise_combine_test <模型文件> [最大长度] [随机种子] [json]
+./build/wise_combine_test <模型文件> [--max-length N] [--seed N] [--json] [--negative] [--max-cases N]
 ```
 
 示例：
 
 ```sh
-./build/wise_combine_test doc/examples/file-functions.dsl 3 0
-./build/wise_combine_test doc/examples/connection.dsl 3
+./build/wise_combine_test doc/examples/file-functions.dsl --max-length 3 --seed 0
+./build/wise_combine_test doc/examples/connection.dsl --max-length 3
 ```
 
 模型文件是两类 DSL 之一：
