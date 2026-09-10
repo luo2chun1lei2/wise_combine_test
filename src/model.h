@@ -1,0 +1,67 @@
+#pragma once
+
+#include <map>
+#include <string>
+#include <vector>
+
+namespace model {
+
+struct ValueSource {
+  std::string name;
+  bool isRange = false;
+  std::vector<std::string> items;
+  int lo = 0;
+  int hi = 0;
+};
+
+struct Resource {
+  std::string name;
+  std::string ctype;
+  std::vector<std::string> states;
+  std::string initial;
+};
+
+struct Param {
+  std::string name;
+  std::string type;
+  std::string valueSource;
+};
+
+struct Cond {
+  std::string param;
+  std::string state;
+};
+
+struct Effect {
+  std::string target;
+  std::string state;
+};
+
+struct SuccessExpr {
+  enum class Kind { True, False, Compare };
+  Kind kind = Kind::True;
+  std::string lhs;
+  std::string op;
+  std::string rhs;
+};
+
+struct Function {
+  std::string name;
+  std::vector<Param> params;
+  std::string returnType;
+  std::string symbol;
+  std::string signature;
+  std::vector<Cond> requiresConds;
+  std::vector<Effect> effects;
+  SuccessExpr success;
+};
+
+struct Model {
+  std::map<std::string, std::string> typeMap;
+  std::map<std::string, ValueSource> values;
+  std::map<std::string, Resource> resources;
+  std::vector<Function> functions;
+  std::vector<std::string> errors;
+};
+
+}  // namespace model
