@@ -10,6 +10,7 @@
 #include "StateMachineDslParser.h"
 #include "antlr4-runtime.h"
 #include "function_model_builder.h"
+#include "harness_generator.h"
 #include "sequence_generator.h"
 #include "state_machine_builder.h"
 #include "state_machine_path_generator.h"
@@ -64,7 +65,7 @@ void printJsonStrings(const std::vector<std::string> &items) {
 }
 
 int runFunction(const std::string &text, int maxLength, unsigned seed, bool json, bool negative,
-                int maxCases, bool coverage) {
+                int maxCases, bool coverage, bool harness) {
   antlr4::ANTLRInputStream input(text);
   FunctionDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -81,6 +82,11 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
   gen::SequenceGenerator generator(m, maxLength, seed, negative, maxCases);
   std::vector<gen::Sequence> sequences = generator.generate();
   const std::vector<gen::Sequence> &negativeSequences = generator.negativeSequences();
+
+  if (harness) {
+    std::cout << harness::generate(m, sequences);
+    return 0;
+  }
 
   if (json) {
     std::vector<std::string> seqTexts;
@@ -222,7 +228,7 @@ int main(int argc, char **argv) {
   if (argc < 2) {
     std::cerr << "usage: " << argv[0]
               << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--coverage]"
-              << " [--max-cases N]"
+              << " [--harness] [--max-cases N]"
               << std::endl;
     return 2;
   }
@@ -232,6 +238,7 @@ int main(int argc, char **argv) {
   bool json = false;
   bool negative = false;
   bool coverage = false;
+  bool harness = false;
   int maxCases = 0;
   std::string modelPath;
 
@@ -243,6 +250,8 @@ int main(int argc, char **argv) {
       negative = true;
     } else if (arg == "--coverage") {
       coverage = true;
+    } else if (arg == "--harness") {
+      harness = true;
     } else if (arg == "--max-length" && i + 1 < argc) {
       maxLength = std::stoi(argv[++i]);
     } else if (arg == "--seed" && i + 1 < argc) {
@@ -276,7 +285,7 @@ int main(int argc, char **argv) {
     if (firstKeyword(text) == "machine") {
       return runStateMachine(text, maxLength, json, coverage);
     }
-    return runFunction(text, maxLength, seed, json, negative, maxCases, coverage);
+    return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness);
   } catch (const std::exception &e) {
     std::cerr << "exception: " << e.what() << std::endl;
     return 3;
