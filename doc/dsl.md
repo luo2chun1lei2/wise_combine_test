@@ -23,9 +23,9 @@
 
 ```
 types {
-  string -> const char*
-  int -> int
-  bool -> int
+  string -> "const char*"
+  int -> "int"
+  bool -> "int"
 }
 ```
 
@@ -49,7 +49,7 @@ values {
 
 ```
 resource FileHandle {
-  ctype: int
+  ctype: "int"
   states: CLOSED, OPEN
   initial: CLOSED
 }
@@ -111,9 +111,9 @@ func 函数名(参数, ...) -> 返回类型 {
 
 ```
 types {
-  string -> const char*
-  int -> int
-  bool -> int
+  string -> "const char*"
+  int -> "int"
+  bool -> "int"
 }
 
 values {
@@ -122,7 +122,7 @@ values {
 }
 
 resource FileHandle {
-  ctype: int
+  ctype: "int"
   states: CLOSED, OPEN
   initial: CLOSED
 }

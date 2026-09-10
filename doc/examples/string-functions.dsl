@@ -7,10 +7,10 @@
 # 3. 这些函数没有句柄生命周期，属于“无资源函数”，需要确认 DSL 是否支持。
 
 types {
-  string -> const char*
-  cstring -> char*
-  usize -> size_t
-  int -> int
+  string -> "const char*"
+  cstring -> "char*"
+  usize -> "size_t"
+  int -> "int"
 }
 
 values {

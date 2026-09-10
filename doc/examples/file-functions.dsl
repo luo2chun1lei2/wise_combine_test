@@ -7,10 +7,10 @@
 # 3. fread/fwrite 的缓冲区参数在 DSL 中暂按普通输入值参数处理。
 
 types {
-  string -> const char*
-  int -> int
-  usize -> size_t
-  buffer -> void*
+  string -> "const char*"
+  int -> "int"
+  usize -> "size_t"
+  buffer -> "void*"
 }
 
 values {
@@ -20,7 +20,7 @@ values {
 }
 
 resource File {
-  ctype: FILE*
+  ctype: "FILE*"
   states: CLOSED, OPEN
   initial: CLOSED
 }
