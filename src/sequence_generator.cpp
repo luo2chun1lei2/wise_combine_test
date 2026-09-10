@@ -73,6 +73,69 @@ const std::vector<Sequence> &SequenceGenerator::negativeSequences() const {
   return negativeResults_;
 }
 
+std::vector<Sequence> SequenceGenerator::generateRandom(unsigned seed, int count) {
+  std::vector<Sequence> out;
+  std::set<std::string> seen;
+  std::mt19937 rng(seed);
+  const int attempts = (count <= 0) ? 20 : count;
+
+  for (int attempt = 0; attempt < attempts; ++attempt) {
+    std::vector<Instance> env;
+    Sequence seq;
+    int nextId = 0;
+
+    while (static_cast<int>(seq.calls.size()) < maxLength_) {
+      std::vector<const model::Function *> applicable;
+      for (const auto &function : model_.functions) {
+        std::vector<bool> used(env.size(), false);
+        if (hasAnyBinding(function, env, 0, used)) {
+          applicable.push_back(&function);
+        }
+      }
+      if (applicable.empty()) {
+        break;
+      }
+
+      const model::Function *fn = applicable[rng() % applicable.size()];
+      std::vector<int> bindings(fn->params.size(), -1);
+      std::vector<bool> used(env.size(), false);
+      std::vector<std::vector<int>> candidates;
+      enumerateBindings(*fn, env, 0, bindings, used,
+                        [&](const std::vector<int> &bound) { candidates.push_back(bound); });
+      if (candidates.empty()) {
+        break;
+      }
+      const std::vector<int> &bound = candidates[rng() % candidates.size()];
+
+      Call call;
+      call.function = fn->name;
+      for (std::size_t i = 0; i < fn->params.size(); ++i) {
+        if (bound[i] >= 0) {
+          call.resourceArgs.push_back(env[bound[i]].id);
+          call.values.push_back("");
+        } else {
+          call.resourceArgs.push_back(-1);
+          const std::string &sourceName = fn->params[i].valueSource;
+          auto it = model_.values.find(sourceName);
+          if (it != model_.values.end()) {
+            call.values.push_back(sampleValue(it->second));
+          } else {
+            call.values.push_back("");
+          }
+        }
+      }
+
+      seq.calls.push_back(call);
+      apply(*fn, bound, env, nextId);
+    }
+
+    if (!seq.calls.empty() && seen.insert(seq.text()).second) {
+      out.push_back(seq);
+    }
+  }
+  return out;
+}
+
 void SequenceGenerator::dfs(std::vector<Instance> &env, Sequence &seq, int nextId) {
   if (reachedLimit() || static_cast<int>(seq.calls.size()) >= maxLength_) {
     return;

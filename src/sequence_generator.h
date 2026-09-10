@@ -26,6 +26,7 @@ class SequenceGenerator {
   SequenceGenerator(const model::Model &model, int maxLength, unsigned seed = 0,
                     bool negative = false, int maxCases = 0);
   std::vector<Sequence> generate();
+  std::vector<Sequence> generateRandom(unsigned seed, int count);
   const std::vector<Sequence> &negativeSequences() const;
 
  private:

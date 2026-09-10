@@ -88,7 +88,8 @@ std::string transitionKey(const smodel::Transition &t) {
 }
 
 int runFunction(const std::string &text, int maxLength, unsigned seed, bool json, bool negative,
-                int maxCases, bool coverage, bool harness, bool dylib) {
+                int maxCases, bool coverage, bool harness, bool dylib, bool randomAlgorithm,
+                bool cover) {
   antlr4::ANTLRInputStream input(text);
   FunctionDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -103,7 +104,8 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
   FunctionModelBuilder builder;
   model::Model m = builder.build(tree);
   gen::SequenceGenerator generator(m, maxLength, seed, negative, maxCases);
-  std::vector<gen::Sequence> sequences = generator.generate();
+  std::vector<gen::Sequence> sequences =
+      randomAlgorithm ? generator.generateRandom(seed, maxCases) : generator.generate();
   const std::vector<gen::Sequence> &negativeSequences = generator.negativeSequences();
 
   if (harness) {
@@ -148,6 +150,57 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
       std::cerr << "  " << e << std::endl;
     }
     return 1;
+  }
+
+  if (cover) {
+    std::set<std::string> allFunctions;
+    for (const auto &function : m.functions) {
+      allFunctions.insert(function.name);
+    }
+    std::vector<std::set<std::string>> seqFunctions(sequences.size());
+    for (std::size_t i = 0; i < sequences.size(); ++i) {
+      for (const auto &call : sequences[i].calls) {
+        seqFunctions[i].insert(call.function);
+      }
+    }
+    std::set<std::string> uncovered = allFunctions;
+    std::vector<std::size_t> selected;
+    std::vector<bool> used(sequences.size(), false);
+    while (!uncovered.empty()) {
+      std::size_t best = sequences.size();
+      std::size_t bestCount = 0;
+      for (std::size_t i = 0; i < sequences.size(); ++i) {
+        if (used[i]) {
+          continue;
+        }
+        std::size_t count = 0;
+        for (const auto &name : seqFunctions[i]) {
+          if (uncovered.count(name)) {
+            ++count;
+          }
+        }
+        if (count > bestCount) {
+          best = i;
+          bestCount = count;
+        }
+      }
+      if (best == sequences.size()) {
+        break;
+      }
+      selected.push_back(best);
+      used[best] = true;
+      for (const auto &name : seqFunctions[best]) {
+        uncovered.erase(name);
+      }
+    }
+    std::cout << "covering sequences: " << selected.size() << "/" << sequences.size() << std::endl;
+    for (const auto index : selected) {
+      std::cout << "  " << sequences[index].text() << std::endl;
+    }
+    std::cout << "covered functions: " << (allFunctions.size() - uncovered.size()) << "/"
+              << allFunctions.size() << std::endl;
+    std::cout << "OK" << std::endl;
+    return 0;
   }
 
   std::cout << "sequences: " << sequences.size() << std::endl;
@@ -397,7 +450,8 @@ int main(int argc, char **argv) {
       return runStateMachine(text, maxLength, json, coverage, cover, randomAlgorithm, seed,
                              maxCases, events);
     }
-    return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness, dylib);
+    return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness, dylib,
+                       randomAlgorithm, cover);
   } catch (const std::exception &e) {
     std::cerr << "exception: " << e.what() << std::endl;
     return 3;
