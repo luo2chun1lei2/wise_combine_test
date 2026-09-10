@@ -12,6 +12,9 @@ echo "$string_out" | grep -q 'OK'
 machine_out="$("$BIN" doc/examples/connection.dsl --max-length 3)"
 echo "$machine_out" | grep -q 'paths: 7'
 
+events_out="$("$BIN" doc/examples/connection.dsl --events connect,connected_ok,disconnect,close)"
+echo "$events_out" | grep -q 'final: CLOSED'
+
 harness_c="$("$BIN" doc/examples/file-functions.dsl --max-length 2 --seed 42 --max-cases 3 --harness)"
 echo "$harness_c" | gcc -x c - -o /tmp/wise_harness
 (

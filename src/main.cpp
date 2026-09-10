@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <set>
@@ -62,6 +63,24 @@ void printJsonStrings(const std::vector<std::string> &items) {
     std::cout << "\"" << jsonEscape(items[i]) << "\"";
   }
   std::cout << "]";
+}
+
+std::vector<std::string> splitCsv(const std::string &s) {
+  std::vector<std::string> out;
+  std::size_t start = 0;
+  while (start <= s.size()) {
+    const std::size_t comma = s.find(',', start);
+    const std::size_t end = (comma == std::string::npos) ? s.size() : comma;
+    const std::string part = s.substr(start, end - start);
+    if (!part.empty()) {
+      out.push_back(part);
+    }
+    if (comma == std::string::npos) {
+      break;
+    }
+    start = comma + 1;
+  }
+  return out;
 }
 
 int runFunction(const std::string &text, int maxLength, unsigned seed, bool json, bool negative,
@@ -150,7 +169,8 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
   return 0;
 }
 
-int runStateMachine(const std::string &text, int maxLength, bool json, bool coverage) {
+int runStateMachine(const std::string &text, int maxLength, bool json, bool coverage,
+                    const std::string &events) {
   antlr4::ANTLRInputStream input(text);
   StateMachineDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -199,6 +219,25 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
     return 1;
   }
 
+  if (!events.empty()) {
+    std::string current = m.initial;
+    for (const auto &event : splitCsv(events)) {
+      const auto it =
+          std::find_if(m.transitions.begin(), m.transitions.end(), [&](const smodel::Transition &t) {
+            return t.from == current && t.event == event;
+          });
+      if (it == m.transitions.end()) {
+        std::cout << "FAIL: state " << current << " has no event " << event << std::endl;
+        return 1;
+      }
+      std::cout << current << " -" << event << "-> " << it->to << std::endl;
+      current = it->to;
+    }
+    std::cout << "final: " << current << std::endl;
+    std::cout << "OK" << std::endl;
+    return 0;
+  }
+
   std::cout << "paths: " << paths.size() << std::endl;
   for (const auto &path : paths) {
     std::cout << "  " << path.text() << std::endl;
@@ -228,7 +267,7 @@ int main(int argc, char **argv) {
   if (argc < 2) {
     std::cerr << "usage: " << argv[0]
               << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--coverage]"
-              << " [--harness] [--max-cases N]"
+              << " [--harness] [--events e1,e2,...] [--max-cases N]"
               << std::endl;
     return 2;
   }
@@ -240,6 +279,7 @@ int main(int argc, char **argv) {
   bool coverage = false;
   bool harness = false;
   int maxCases = 0;
+  std::string events;
   std::string modelPath;
 
   for (int i = 1; i < argc; ++i) {
@@ -252,6 +292,8 @@ int main(int argc, char **argv) {
       coverage = true;
     } else if (arg == "--harness") {
       harness = true;
+    } else if (arg == "--events" && i + 1 < argc) {
+      events = argv[++i];
     } else if (arg == "--max-length" && i + 1 < argc) {
       maxLength = std::stoi(argv[++i]);
     } else if (arg == "--seed" && i + 1 < argc) {
@@ -283,7 +325,7 @@ int main(int argc, char **argv) {
 
   try {
     if (firstKeyword(text) == "machine") {
-      return runStateMachine(text, maxLength, json, coverage);
+      return runStateMachine(text, maxLength, json, coverage, events);
     }
     return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness);
   } catch (const std::exception &e) {

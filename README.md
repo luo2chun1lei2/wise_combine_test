@@ -36,7 +36,7 @@ make test
 ## 使用
 
 ```sh
-./build/wise_combine_test <模型文件> [--max-length N] [--seed N] [--json] [--negative] [--coverage] [--harness] [--max-cases N]
+./build/wise_combine_test <模型文件> [--max-length N] [--seed N] [--json] [--negative] [--coverage] [--harness] [--events e1,e2,...] [--max-cases N]
 ```
 
 示例：
