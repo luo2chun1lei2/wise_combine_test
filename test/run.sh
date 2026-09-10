@@ -28,4 +28,10 @@ echo "$observed_c" | gcc -x c - test/observed_sut.c -o /tmp/observed_harness
 /tmp/observed_harness | grep -q 'ALL PASS'
 rm -f /tmp/observed_harness
 
+gcc -shared -fPIC test/observed_sut.c -o /tmp/observed.so
+dylib_c="$("$BIN" doc/examples/observed.dsl --max-length 2 --seed 0 --max-cases 4 --dylib)"
+echo "$dylib_c" | gcc -x c - -ldl -o /tmp/observed_dylib
+/tmp/observed_dylib /tmp/observed.so | grep -q 'ALL PASS'
+rm -f /tmp/observed.so /tmp/observed_dylib
+
 echo "PASS"

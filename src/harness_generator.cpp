@@ -58,6 +58,23 @@ std::string observeOf(const model::Model &model, const std::string &type) {
   return {};
 }
 
+struct SigParts {
+  std::string ret;
+  std::string params;
+};
+
+SigParts parseSig(const std::string &signature) {
+  const std::size_t paren = signature.find('(');
+  std::string left = signature.substr(0, paren);
+  const std::string params = signature.substr(paren);
+  while (!left.empty() && (left.back() == ' ' || left.back() == '\t')) {
+    left.pop_back();
+  }
+  const std::size_t space = left.find_last_of(" \t");
+  std::string ret = (space == std::string::npos) ? "" : left.substr(0, space);
+  return {ret, params};
+}
+
 std::string operandExpr(const model::Model &model, const model::Function &fn,
                         const std::map<std::string, std::string> &paramExpr,
                         const std::string &returnVar, const std::string &operand) {
@@ -76,21 +93,41 @@ std::string operandExpr(const model::Model &model, const model::Function &fn,
 
 }  // namespace
 
-std::string generate(const model::Model &model, const std::vector<gen::Sequence> &sequences) {
+std::string generate(const model::Model &model, const std::vector<gen::Sequence> &sequences,
+                     bool dylib) {
   std::ostringstream out;
   out << "#include <stddef.h>\n";
   out << "#include <stdio.h>\n";
-  out << "#include <string.h>\n\n";
-
-  for (const auto &[name, resource] : model.resources) {
-    (void)name;
-    if (!resource.observe.empty()) {
-      out << "const char* " << resource.observe << "(" << resource.ctype << ");\n";
-    }
+  out << "#include <string.h>\n";
+  if (dylib) {
+    out << "#include <dlfcn.h>\n";
   }
-  for (const auto &function : model.functions) {
-    if (!function.signature.empty()) {
-      out << function.signature << ";\n";
+  out << "\n";
+
+  if (dylib) {
+    for (const auto &[name, resource] : model.resources) {
+      (void)name;
+      if (!resource.observe.empty()) {
+        out << "static const char* (*" << resource.observe << "_p)(" << resource.ctype << ");\n";
+      }
+    }
+    for (const auto &function : model.functions) {
+      if (!function.signature.empty()) {
+        const SigParts sig = parseSig(function.signature);
+        out << "static " << sig.ret << " (*" << function.symbol << "_p)" << sig.params << ";\n";
+      }
+    }
+  } else {
+    for (const auto &[name, resource] : model.resources) {
+      (void)name;
+      if (!resource.observe.empty()) {
+        out << "const char* " << resource.observe << "(" << resource.ctype << ");\n";
+      }
+    }
+    for (const auto &function : model.functions) {
+      if (!function.signature.empty()) {
+        out << function.signature << ";\n";
+      }
     }
   }
   out << "\n";
@@ -138,15 +175,16 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
       const bool resourceReturn = isResource(model, fn.returnType);
       std::string returnVar;
       std::string callStmt;
+      const std::string symbol = dylib ? fn.symbol + "_p" : fn.symbol;
 
       if (resourceReturn) {
         returnVar = "h" + std::to_string(nextHandle++);
-        callStmt = cTypeOf(model, fn.returnType) + " " + returnVar + " = " + fn.symbol + "(";
+        callStmt = cTypeOf(model, fn.returnType) + " " + returnVar + " = " + symbol + "(";
       } else if (!fn.returnType.empty()) {
         returnVar = "r" + std::to_string(c);
-        callStmt = cTypeOf(model, fn.returnType) + " " + returnVar + " = " + fn.symbol + "(";
+        callStmt = cTypeOf(model, fn.returnType) + " " + returnVar + " = " + symbol + "(";
       } else {
-        callStmt = fn.symbol + "(";
+        callStmt = symbol + "(";
       }
 
       for (std::size_t i = 0; i < args.size(); ++i) {
@@ -192,7 +230,8 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
         }
         const std::string observe = observeOf(model, type);
         if (!observe.empty() && !handleExpr.empty()) {
-          out << "  if (strcmp(" << observe << "(" << handleExpr << "), \"" << effect.state
+          const std::string observeFn = dylib ? observe + "_p" : observe;
+          out << "  if (strcmp(" << observeFn << "(" << handleExpr << "), \"" << effect.state
               << "\") != 0) { printf(\"FAIL " << s << " " << fn.name << " state\\n\"); return 1; }\n";
         }
       }
@@ -202,10 +241,38 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
     out << "}\n\n";
   }
 
-  out << "int main(void) {\n";
+  if (dylib) {
+    out << "int main(int argc, char** argv) {\n";
+    out << "  if (argc < 2) { printf(\"usage: %s <lib>\\n\", argv[0]); return 2; }\n";
+    out << "  void* lib = dlopen(argv[1], RTLD_LAZY);\n";
+    out << "  if (!lib) { printf(\"dlopen: %s\\n\", dlerror()); return 2; }\n";
+    for (const auto &[name, resource] : model.resources) {
+      (void)name;
+      if (!resource.observe.empty()) {
+        out << "  *(void**)(&" << resource.observe << "_p) = dlsym(lib, \"" << resource.observe
+            << "\");\n";
+        out << "  if (!" << resource.observe << "_p) { printf(\"missing " << resource.observe
+            << "\\n\"); return 2; }\n";
+      }
+    }
+    for (const auto &function : model.functions) {
+      if (!function.signature.empty()) {
+        out << "  *(void**)(&" << function.symbol << "_p) = dlsym(lib, \"" << function.symbol
+            << "\");\n";
+        out << "  if (!" << function.symbol << "_p) { printf(\"missing " << function.symbol
+            << "\\n\"); return 2; }\n";
+      }
+    }
+  } else {
+    out << "int main(void) {\n";
+  }
+
   out << "  int failed = 0;\n";
   for (std::size_t s = 0; s < sequences.size(); ++s) {
     out << "  failed += test_" << s << "();\n";
+  }
+  if (dylib) {
+    out << "  dlclose(lib);\n";
   }
   out << "  if (failed) { printf(\"FAILED %d\\n\", failed); return 1; }\n";
   out << "  printf(\"ALL PASS\\n\");\n";

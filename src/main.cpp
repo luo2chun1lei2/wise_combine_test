@@ -84,7 +84,7 @@ std::vector<std::string> splitCsv(const std::string &s) {
 }
 
 int runFunction(const std::string &text, int maxLength, unsigned seed, bool json, bool negative,
-                int maxCases, bool coverage, bool harness) {
+                int maxCases, bool coverage, bool harness, bool dylib) {
   antlr4::ANTLRInputStream input(text);
   FunctionDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -103,7 +103,7 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
   const std::vector<gen::Sequence> &negativeSequences = generator.negativeSequences();
 
   if (harness) {
-    std::cout << harness::generate(m, sequences);
+    std::cout << harness::generate(m, sequences, dylib);
     return 0;
   }
 
@@ -267,7 +267,7 @@ int main(int argc, char **argv) {
   if (argc < 2) {
     std::cerr << "usage: " << argv[0]
               << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--coverage]"
-              << " [--harness] [--events e1,e2,...] [--max-cases N]"
+              << " [--harness] [--dylib] [--events e1,e2,...] [--max-cases N]"
               << std::endl;
     return 2;
   }
@@ -278,6 +278,7 @@ int main(int argc, char **argv) {
   bool negative = false;
   bool coverage = false;
   bool harness = false;
+  bool dylib = false;
   int maxCases = 0;
   std::string events;
   std::string modelPath;
@@ -292,6 +293,9 @@ int main(int argc, char **argv) {
       coverage = true;
     } else if (arg == "--harness") {
       harness = true;
+    } else if (arg == "--dylib") {
+      harness = true;
+      dylib = true;
     } else if (arg == "--events" && i + 1 < argc) {
       events = argv[++i];
     } else if (arg == "--max-length" && i + 1 < argc) {
@@ -327,7 +331,7 @@ int main(int argc, char **argv) {
     if (firstKeyword(text) == "machine") {
       return runStateMachine(text, maxLength, json, coverage, events);
     }
-    return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness);
+    return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness, dylib);
   } catch (const std::exception &e) {
     std::cerr << "exception: " << e.what() << std::endl;
     return 3;
