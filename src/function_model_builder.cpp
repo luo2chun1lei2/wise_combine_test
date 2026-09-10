@@ -68,6 +68,9 @@ std::any FunctionModelBuilder::visitResourceBlock(FunctionDslParser::ResourceBlo
   for (auto *decl : ctx->initialDecl()) {
     resource.initial = decl->ID()->getText();
   }
+  for (auto *decl : ctx->observeDecl()) {
+    resource.observe = decl->ID()->getText();
+  }
 
   model_.resources[resource.name] = resource;
   return nullptr;

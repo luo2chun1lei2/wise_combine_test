@@ -50,6 +50,14 @@ bool isStringPointer(const std::string &cType) {
   return cType.find("char") != std::string::npos;
 }
 
+std::string observeOf(const model::Model &model, const std::string &type) {
+  auto it = model.resources.find(type);
+  if (it != model.resources.end()) {
+    return it->second.observe;
+  }
+  return {};
+}
+
 std::string operandExpr(const model::Model &model, const model::Function &fn,
                         const std::map<std::string, std::string> &paramExpr,
                         const std::string &returnVar, const std::string &operand) {
@@ -73,6 +81,19 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
   out << "#include <stddef.h>\n";
   out << "#include <stdio.h>\n";
   out << "#include <string.h>\n\n";
+
+  for (const auto &[name, resource] : model.resources) {
+    (void)name;
+    if (!resource.observe.empty()) {
+      out << "const char* " << resource.observe << "(" << resource.ctype << ");\n";
+    }
+  }
+  for (const auto &function : model.functions) {
+    if (!function.signature.empty()) {
+      out << function.signature << ";\n";
+    }
+  }
+  out << "\n";
 
   for (std::size_t s = 0; s < sequences.size(); ++s) {
     const gen::Sequence &seq = sequences[s];
@@ -153,6 +174,28 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
 
       out << "  if (!(" << success << ")) { printf(\"FAIL " << s << " " << fn.name
           << "\\n\"); return 1; }\n";
+
+      for (const auto &effect : fn.effects) {
+        std::string type;
+        std::string handleExpr;
+        if (effect.target == "result") {
+          type = fn.returnType;
+          handleExpr = returnVar;
+        } else {
+          for (const auto &param : fn.params) {
+            if (param.name == effect.target) {
+              type = param.type;
+              handleExpr = paramExpr[param.name];
+              break;
+            }
+          }
+        }
+        const std::string observe = observeOf(model, type);
+        if (!observe.empty() && !handleExpr.empty()) {
+          out << "  if (strcmp(" << observe << "(" << handleExpr << "), \"" << effect.state
+              << "\") != 0) { printf(\"FAIL " << s << " " << fn.name << " state\\n\"); return 1; }\n";
+        }
+      }
     }
 
     out << "  return 0;\n";

@@ -19,6 +19,7 @@ struct Resource {
   std::string ctype;
   std::vector<std::string> states;
   std::string initial;
+  std::string observe;
 };
 
 struct Param {

@@ -58,6 +58,7 @@ resource FileHandle {
 - `ctype`：该资源类型在 C 中的类型。
 - `states`：资源的所有状态。
 - `initial`：资源的初始状态。
+- `observe`：可选，一个返回状态名字符串的 C 函数，用于在每次状态变化后校验实际状态。
 
 ## 6. func：函数
 

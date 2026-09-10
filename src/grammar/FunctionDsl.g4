@@ -12,10 +12,11 @@ valueSource: ID ':' (list | range);
 list: '[' (STRING (',' STRING)*)? ']';
 range: INT '..' INT;
 
-resourceBlock: 'resource' ID '{' (ctypeDecl | statesDecl | initialDecl)* '}';
+resourceBlock: 'resource' ID '{' (ctypeDecl | statesDecl | initialDecl | observeDecl)* '}';
 ctypeDecl: 'ctype' ':' STRING;
 statesDecl: 'states' ':' ID (',' ID)*;
 initialDecl: 'initial' ':' ID;
+observeDecl: 'observe' ':' ID;
 
 funcBlock: 'func' ID '(' params? ')' ('->' typeName)? '{' funcMember* '}';
 params: param (',' param)*;
