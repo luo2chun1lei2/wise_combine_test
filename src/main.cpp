@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <set>
 #include <sstream>
 #include <string>
 
@@ -63,7 +64,7 @@ void printJsonStrings(const std::vector<std::string> &items) {
 }
 
 int runFunction(const std::string &text, int maxLength, unsigned seed, bool json, bool negative,
-                int maxCases) {
+                int maxCases, bool coverage) {
   antlr4::ANTLRInputStream input(text);
   FunctionDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -130,11 +131,20 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
       std::cout << "  " << seq.text() << std::endl;
     }
   }
+  if (coverage) {
+    std::set<std::string> covered;
+    for (const auto &seq : sequences) {
+      for (const auto &call : seq.calls) {
+        covered.insert(call.function);
+      }
+    }
+    std::cout << "covered_functions: " << covered.size() << "/" << m.functions.size() << std::endl;
+  }
   std::cout << "OK" << std::endl;
   return 0;
 }
 
-int runStateMachine(const std::string &text, int maxLength, bool json) {
+int runStateMachine(const std::string &text, int maxLength, bool json, bool coverage) {
   antlr4::ANTLRInputStream input(text);
   StateMachineDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -187,6 +197,21 @@ int runStateMachine(const std::string &text, int maxLength, bool json) {
   for (const auto &path : paths) {
     std::cout << "  " << path.text() << std::endl;
   }
+  if (coverage) {
+    std::set<std::string> coveredStates;
+    std::set<std::string> coveredTransitions;
+    for (const auto &path : paths) {
+      for (const auto &step : path.steps) {
+        coveredStates.insert(step.transition.from);
+        coveredStates.insert(step.transition.to);
+        coveredTransitions.insert(step.transition.from + " -" + step.transition.event + "-> " +
+                                  step.transition.to);
+      }
+    }
+    std::cout << "covered_states: " << coveredStates.size() << "/" << m.states.size() << std::endl;
+    std::cout << "covered_transitions: " << coveredTransitions.size() << "/" << m.transitions.size()
+              << std::endl;
+  }
   std::cout << "OK" << std::endl;
   return 0;
 }
@@ -196,7 +221,8 @@ int runStateMachine(const std::string &text, int maxLength, bool json) {
 int main(int argc, char **argv) {
   if (argc < 2) {
     std::cerr << "usage: " << argv[0]
-              << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--max-cases N]"
+              << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--coverage]"
+              << " [--max-cases N]"
               << std::endl;
     return 2;
   }
@@ -205,6 +231,7 @@ int main(int argc, char **argv) {
   unsigned seed = 0;
   bool json = false;
   bool negative = false;
+  bool coverage = false;
   int maxCases = 0;
   std::string modelPath;
 
@@ -214,6 +241,8 @@ int main(int argc, char **argv) {
       json = true;
     } else if (arg == "--negative") {
       negative = true;
+    } else if (arg == "--coverage") {
+      coverage = true;
     } else if (arg == "--max-length" && i + 1 < argc) {
       maxLength = std::stoi(argv[++i]);
     } else if (arg == "--seed" && i + 1 < argc) {
@@ -245,9 +274,9 @@ int main(int argc, char **argv) {
 
   try {
     if (firstKeyword(text) == "machine") {
-      return runStateMachine(text, maxLength, json);
+      return runStateMachine(text, maxLength, json, coverage);
     }
-    return runFunction(text, maxLength, seed, json, negative, maxCases);
+    return runFunction(text, maxLength, seed, json, negative, maxCases, coverage);
   } catch (const std::exception &e) {
     std::cerr << "exception: " << e.what() << std::endl;
     return 3;
