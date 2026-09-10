@@ -9,4 +9,7 @@ echo "$file_out" | grep -q 'sequences: 21'
 string_out="$("$BIN" doc/examples/string-functions.dsl 2 0)"
 echo "$string_out" | grep -q 'OK'
 
+machine_out="$("$BIN" doc/examples/connection.dsl 3)"
+echo "$machine_out" | grep -q 'paths: 7'
+
 echo "PASS"
