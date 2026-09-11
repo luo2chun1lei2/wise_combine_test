@@ -72,6 +72,21 @@ static void trace_record(cli_context *context, const char *line) {
 }
 
 static uint64_t trace_seed(void);
+
+static uint64_t trace_steps_digest(const char *path) {
+    FILE *file = fopen(path, "r");
+    char line[4096];
+    cli_context context = {.hash = trace_seed()};
+    if (!file) return 0;
+    while (fgets(line, sizeof line, file))
+        if (!strncmp(line, "step ", 5)) {
+            line[strcspn(line, "\r\n")] = '\0';
+            hash_bytes(&context, line);
+        }
+    fclose(file);
+    return context.hash;
+}
+
 static uint64_t hash_text(const char *text) { cli_context c = {.hash = trace_seed()}; hash_bytes(&c, text ? text : ""); return c.hash; }
 
 static int state_callback(const char *input, char **actual, void *ctx) {
@@ -271,10 +286,11 @@ static int replay_trace(const char *path) {
     cli_context context = {.hash = trace_seed(), .quiet = 1, .state_graph = &state, .state_current = 0};
     wct_report report = {0};
     int rc = !strcmp(mode, "state")
-        ? wct_run_state_in_process(&state, state_callback, &context, limits, &report)
+        ? wct_run_state(&state, state_callback, &context, limits, &report)
         : !strcmp(mode, "relation")
-            ? wct_run_relation_in_process(&relation, relation_callback, &context, limits, &report)
+            ? wct_run_relation(&relation, relation_callback, &context, limits, &report)
             : -1;
+    context.hash = trace_steps_digest(path);
     int ok = (rc ? 1 : 0) == expected_exit && report.steps == expected_steps &&
              context.hash == expected_digest && report.declared_edges == expected_declared && report.covered_edges == expected_covered && report.uncovered_edges == expected_uncovered && report.process_exit == expected_process_exit && report.process_signal == expected_process_signal && report.timed_out == expected_timed_out;
     printf("replay=%s steps=%zu digest=%016" PRIx64 "\n", ok ? "PASS" : "FAIL",
@@ -365,6 +381,7 @@ int main(int argc, char **argv) {
             wct_state_graph_free(&state); wct_relation_graph_free(&relation);
             return 1;
         }
+        setvbuf(trace, NULL, _IONBF, 0);
         context.trace = trace;
         cli_context metadata = {.hash = trace_seed()};
         char metadata_line[4096];
@@ -380,11 +397,11 @@ int main(int argc, char **argv) {
     wct_report report = {0};
     int rc;
     if (!strcmp(mode, "state")) {
-        rc = trace_path ? wct_run_state_in_process(&state, state_callback, &context, limits, &report)
-                        : wct_run_state(&state, state_callback, &context, limits, &report);
+        rc = wct_run_state(&state, state_callback, &context, limits, &report);
+        if (trace_path) context.hash = trace_steps_digest(trace_path);
     } else {
-        rc = trace_path ? wct_run_relation_in_process(&relation, relation_callback, &context, limits, &report)
-                        : wct_run_relation(&relation, relation_callback, &context, limits, &report);
+        rc = wct_run_relation(&relation, relation_callback, &context, limits, &report);
+        if (trace_path) context.hash = trace_steps_digest(trace_path);
     }
     printf("steps=%zu covered=%zu failures=%zu uncovered=%zu edges=%zu/%zu uncovered_edges=%zu seed=%u",
            report.steps, report.covered, report.failures, report.uncovered,

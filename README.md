@@ -56,12 +56,13 @@ Production users should provide callbacks through the C API rather than
 relying on these example callbacks. Invalid models and callback failures
 return exit code 1; CLI usage errors return exit code 2.
 
-The CLI isolates each complete scenario in a POSIX child by default. Use
-`--isolate --timeout-ms N` to make the deadline explicit and terminate a
-scenario that exceeds it. Isolation status is
+The CLI isolates each complete scenario in a POSIX child by default, including
+trace capture and replay. Use `--isolate --timeout-ms N` to make the deadline
+explicit and terminate a scenario that exceeds it. Isolation status is
 included in the report (`process_exit`, `process_signal`, `timed_out`). Trace
-capture is intentionally mutually exclusive with isolation because callback
-side effects and child-process output are not replayable in the parent.
+capture writes unbuffered child output and recomputes the step digest from the
+trace file, so callback side effects remain isolated while replay stays
+deterministic.
 
 State isolation is transactional and scenario-scoped: the parent owns state
 snapshots, and a successful state child commits its serialized post-state;
