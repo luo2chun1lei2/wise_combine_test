@@ -57,8 +57,10 @@ runs expose incomplete calls in `report.uncovered` and return `-1`.
 ## Determinism and limits
 
 Given identical graph declarations, callback behavior, and limits, execution is
-deterministic. `wct_limits.seed` is copied into the report for trace metadata;
-the current bounded executor does not randomize declaration order.
+deterministic. With `seed == 0`, independent calls use lexicographic ID order;
+with a non-zero `wct_limits.seed`, the executor uses deterministic xorshift
+sampling among ready calls. The seed is copied into the report for trace
+metadata, so seeded alternatives remain reproducible.
 
 ## Fixtures and verification
 
