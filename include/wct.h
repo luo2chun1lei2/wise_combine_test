@@ -14,6 +14,7 @@ typedef struct {
 
 typedef struct { char *id; char *from; char *to; char *input; char *expect; } wct_transition;
 typedef int (*wct_transition_fn)(const char *input, char **actual, void *ctx);
+typedef void (*wct_transition_observer_fn)(const char *id, void *ctx);
 /* Optional hook invoked before replaying a state scenario from the initial state. */
 typedef int (*wct_state_reset_fn)(void *ctx);
 /* Optional transactional hooks. snapshot allocates an opaque copy that the
@@ -46,6 +47,7 @@ typedef struct {
     wct_state_reset_fn state_reset;
     wct_state_snapshot_fn state_snapshot;
     wct_state_restore_fn state_restore;
+    wct_transition_observer_fn transition_observer;
 } wct_limits;
 typedef struct {
     size_t steps;

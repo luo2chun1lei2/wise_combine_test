@@ -28,6 +28,7 @@ typedef struct {
     int quiet;
     const wct_state_graph *state_graph;
     int state_current;
+    const char *current_edge_id;
 } cli_context;
 
 static void hash_bytes(cli_context *context, const char *text) {
@@ -70,7 +71,7 @@ static int state_callback(const char *input, char **actual, void *ctx) {
     if (*actual && context) {
         char line[2048];
         context->step++;
-        const char *edge_id = "?";
+        const char *edge_id = context->current_edge_id ? context->current_edge_id : "?";
         if (context->state_graph) {
             for (size_t i = 0; i < context->state_graph->transition_count; ++i) {
                 const wct_transition *t = &context->state_graph->transitions[i];
@@ -107,6 +108,7 @@ static int relation_callback(const char *id, const char *const *args, size_t arg
 
 static uint64_t trace_seed(void) { return UINT64_C(1469598103934665603); }
 static int state_reset(void *ctx) { (void)ctx; return 0; }
+static void state_observer(const char *id, void *ctx) { cli_context *c = ctx; if (c) c->current_edge_id = id; }
 
 static void hash_field(cli_context *c, const char *s) {
     uint64_t n = s ? strlen(s) : 0;
@@ -228,6 +230,7 @@ static int replay_trace(const char *path) {
         return 1;
     }
     limits.state_reset = state_reset;
+    limits.transition_observer = state_observer;
     if (hash_file(model) != expected_model_digest) {
         fprintf(stderr, "error: trace model checksum mismatch\n");
         return 1;
@@ -305,6 +308,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "error: --mode must be state or relation\n"); return 2;
     }
     limits.state_reset = state_reset;
+    limits.transition_observer = state_observer;
     if (trace_path && limits.isolate) {
         fprintf(stderr, "error: --trace cannot be combined with --isolate; replay the isolated run separately\n");
         return 2;
