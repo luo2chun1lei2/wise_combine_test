@@ -1,0 +1,11 @@
+object conn {
+  state IDLE initial
+  state DONE final
+  transition IDLE -> DONE by init() expect_output "init ok"
+}
+
+function init() -> handle
+function start(handle h) -> status
+
+parameter start.h = init.handle
+order init before start

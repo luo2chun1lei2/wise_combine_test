@@ -610,6 +610,46 @@ int main() {
     }
 
     {
+        wct::Parser parser("test/fixtures/adapter.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::RunnerOptions opts;
+        opts.adapter_path = "test/fixtures/adapter_ok.sh";
+        opts.spec = &model.spec();
+        for (const auto& object : model.spec().objects) {
+            for (const auto& tr : object.transitions) {
+                if (tr.expect_output_present) {
+                    opts.expected_outputs[tr.func] = tr.expect_output;
+                }
+            }
+        }
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"init"}, {"init", "start"}});
+        assert(results.size() == 2);
+        assert(results[0].status == "passed");
+        assert(results[1].status == "passed");
+        assert(results[1].bindings.find("start.h = init.handle") !=
+               std::string::npos);
+    }
+
+    {
+        wct::Parser parser("test/fixtures/adapter.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::RunnerOptions opts;
+        opts.adapter_path = "test/fixtures/adapter_ok.sh";
+        opts.spec = &model.spec();
+        opts.expected_outputs["init"] = "wrong";
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"init"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "failed");
+        assert(results[0].detail.find("output mismatch") != std::string::npos);
+    }
+
+    {
         const std::string path = write_tmp(
             "function a() -> t\n"
             "function b(t x)\n"

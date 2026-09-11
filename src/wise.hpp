@@ -41,6 +41,8 @@ struct TransitionDecl {
     std::string guard;
     bool expect_present = false;
     long expect_return = 0;
+    bool expect_output_present = false;
+    std::string expect_output;
     int line = 0;
 };
 
@@ -227,6 +229,9 @@ struct RunnerOptions {
     int timeout_seconds = 10;
     std::unordered_map<std::string, GuardExpr> guards = {};
     std::unordered_map<std::string, std::optional<long>> expected_returns = {};
+    std::unordered_map<std::string, std::string> expected_outputs = {};
+    std::string adapter_path = {};
+    std::vector<std::string> adapter_args = {};
     const Spec* spec = nullptr;
 };
 
@@ -239,6 +244,7 @@ public:
 private:
     RunnerOptions options_;
     FlowResult run_direct(const Flow& flow) const;
+    FlowResult run_adapter(const Flow& flow) const;
     FlowResult run_not_executed(const Flow& flow) const;
     std::string flow_bindings(const Flow& flow) const;
 };

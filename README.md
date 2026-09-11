@@ -91,6 +91,15 @@ make -C doc/examples
   --lib doc/examples/libconn.so
 ```
 
+也可以使用 adapter 进程执行，并通过 JSON 协议进行真实的参数传递和标准输出校验：
+
+```text
+./src/out/wise_combine_test test/fixtures/adapter.ct \
+  --adapter test/fixtures/adapter_ok.sh --report text
+```
+
+adapter 从标准输入读取一行 JSON 调用请求，执行对应函数后向标准输出写回一行 JSON 响应。响应需要包含 `status`、`returns`、`stdout` 字段；`returns` 中的前序函数返回值会按 `parameter` 关系传给后续函数。
+
 只生成组合流程、不执行时使用 `--dry-run`；生成独立被测程序时使用 `--mode standalone`。完整命令选项可用 `wise_combine_test --help` 查看，DSL 语法见 [doc/dsl.md](doc/dsl.md)。
 
 ### 独立被测程序

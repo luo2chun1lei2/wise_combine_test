@@ -8,9 +8,11 @@
 #include <cstdlib>
 #include <cstring>
 #include <dlfcn.h>
+#include <fcntl.h>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <poll.h>
 #include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -148,6 +150,149 @@ std::string now_string() {
     localtime_r(&tt, &tm);
     std::ostringstream out;
     out << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
+    return out.str();
+}
+
+std::string json_escape(const std::string& s) {
+    std::ostringstream out;
+    for (const unsigned char c : s) {
+        switch (c) {
+            case '"':
+                out << "\\\"";
+                break;
+            case '\\':
+                out << "\\\\";
+                break;
+            case '\n':
+                out << "\\n";
+                break;
+            case '\r':
+                out << "\\r";
+                break;
+            case '\t':
+                out << "\\t";
+                break;
+            default:
+                if (c < 0x20U) {
+                    out << "\\u00" << std::hex << std::setw(2)
+                        << std::setfill('0') << static_cast<int>(c) << std::dec;
+                } else {
+                    out << static_cast<char>(c);
+                }
+        }
+    }
+    return out.str();
+}
+
+bool json_string_field(const std::string& text, const std::string& key,
+                       std::string& value) {
+    const std::string needle = "\"" + key + "\":\"";
+    const std::size_t pos = text.find(needle);
+    if (pos == std::string::npos) {
+        return false;
+    }
+    std::size_t i = pos + needle.size();
+    std::string parsed;
+    while (i < text.size()) {
+        const char c = text[i];
+        if (c == '"') {
+            value = parsed;
+            return true;
+        }
+        if (c == '\\' && i + 1 < text.size()) {
+            const char n = text[++i];
+            switch (n) {
+                case '"':
+                    parsed += '"';
+                    break;
+                case '\\':
+                    parsed += '\\';
+                    break;
+                case 'n':
+                    parsed += '\n';
+                    break;
+                case 'r':
+                    parsed += '\r';
+                    break;
+                case 't':
+                    parsed += '\t';
+                    break;
+                default:
+                    return false;
+            }
+        } else {
+            parsed += c;
+        }
+        ++i;
+    }
+    return false;
+}
+
+bool parse_returns_json(const std::string& text,
+                        std::map<std::string, std::string>& values) {
+    const std::string marker = "\"returns\":{";
+    const std::size_t begin = text.find(marker);
+    if (begin == std::string::npos) {
+        return false;
+    }
+    const std::size_t start = begin + marker.size();
+    const std::size_t end = text.find('}', start);
+    if (end == std::string::npos) {
+        return false;
+    }
+    std::size_t pos = start;
+    while (pos < end) {
+        while (pos < end && (text[pos] == ',' || text[pos] == ' ')) {
+            ++pos;
+        }
+        if (pos >= end) {
+            break;
+        }
+        if (text[pos] != '"') {
+            return false;
+        }
+        const std::size_t key_end = text.find('"', pos + 1);
+        if (key_end == std::string::npos || key_end >= end) {
+            return false;
+        }
+        const std::string key = text.substr(pos + 1, key_end - pos - 1);
+        const std::size_t colon = text.find(':', key_end + 1);
+        if (colon == std::string::npos || colon >= end) {
+            return false;
+        }
+        std::size_t value_start = colon + 1;
+        while (value_start < end && text[value_start] == ' ') {
+            ++value_start;
+        }
+        if (value_start >= end || text[value_start] != '"') {
+            return false;
+        }
+        const std::size_t value_end = text.find('"', value_start + 1);
+        if (value_end == std::string::npos || value_end > end) {
+            return false;
+        }
+        values[key] = text.substr(value_start + 1, value_end - value_start - 1);
+        pos = value_end + 1;
+    }
+    return true;
+}
+
+std::string make_adapter_request(
+    const std::string& flow_id, std::size_t step, const std::string& function,
+    const std::map<std::string, std::string>& args) {
+    std::ostringstream out;
+    out << "{\"protocol\":1,\"flow_id\":\"" << json_escape(flow_id)
+        << "\",\"step\":" << step << ",\"function\":\"" << json_escape(function)
+        << "\",\"args\":{";
+    bool first = true;
+    for (const auto& [name, value] : args) {
+        if (!first) {
+            out << ',';
+        }
+        first = false;
+        out << '"' << json_escape(name) << "\":\"" << json_escape(value) << '"';
+    }
+    out << "}}\n";
     return out.str();
 }
 
@@ -390,6 +535,36 @@ void Parser::parse_object_body(ObjectDecl& object) {
                     }
                     tr.expect_present = true;
                     ++i;
+                } else if (tokens[i] == "expect_output") {
+                    ++i;
+                    if (i >= tokens.size()) {
+                        fail(line, "transition expect_output missing value");
+                    }
+                    tr.expect_output = tokens[i];
+                    ++i;
+                    if (tr.expect_output.size() >= 1 &&
+                        tr.expect_output.front() == '"' &&
+                        !(tr.expect_output.size() >= 2 &&
+                          tr.expect_output.back() == '"')) {
+                        while (i < tokens.size()) {
+                            tr.expect_output += " " + tokens[i];
+                            const bool closing = !tokens[i].empty() &&
+                                                 tokens[i].back() == '"';
+                            ++i;
+                            if (closing) {
+                                break;
+                            }
+                        }
+                    }
+                    if (tr.expect_output.size() >= 2 &&
+                        ((tr.expect_output.front() == '"' &&
+                          tr.expect_output.back() == '"') ||
+                         (tr.expect_output.front() == '\'' &&
+                          tr.expect_output.back() == '\''))) {
+                        tr.expect_output = tr.expect_output.substr(
+                            1, tr.expect_output.size() - 2);
+                    }
+                    tr.expect_output_present = true;
                 } else if (tokens[i] == "guard") {
                     ++i;
                     std::ostringstream g;
@@ -1225,6 +1400,8 @@ std::vector<FlowResult> Runner::run(const std::vector<Flow>& flows) const {
     for (const auto& flow : flows) {
         if (options_.dry_run) {
             results.push_back(run_not_executed(flow));
+        } else if (!options_.adapter_path.empty()) {
+            results.push_back(run_adapter(flow));
         } else {
             results.push_back(run_direct(flow));
         }
@@ -1381,6 +1558,210 @@ FlowResult Runner::run_direct(const Flow& flow) const {
     if (!detail.empty()) {
         result.detail = detail;
     }
+    result.bindings = flow_bindings(flow);
+    return result;
+}
+
+FlowResult Runner::run_adapter(const Flow& flow) const {
+    FlowResult result;
+    result.flow = flow;
+    if (!options_.spec) {
+        result.status = "failed";
+        result.detail = "adapter mode requires an internal model";
+        return result;
+    }
+
+    std::map<std::string, std::map<std::string, std::string>> returned;
+    for (std::size_t i = 0; i < flow.size(); ++i) {
+        const std::string& function = flow[i];
+        std::map<std::string, std::string> args;
+
+        for (const auto& rel : options_.spec->parameters) {
+            if (rel.lhs_func != function) {
+                continue;
+            }
+            if (rel.rhs_is_const) {
+                args[rel.lhs_param] = rel.rhs_const;
+                continue;
+            }
+            const auto producer = returned.find(rel.rhs_func);
+            if (producer == returned.end()) {
+                result.status = "failed";
+                result.detail = "producer return unavailable for " + function +
+                                "." + rel.lhs_param;
+                result.bindings = flow_bindings(flow);
+                return result;
+            }
+            const auto value = producer->second.find(rel.rhs_param);
+            if (value == producer->second.end()) {
+                result.status = "failed";
+                result.detail = "producer return missing: " + rel.rhs_func +
+                                "." + rel.rhs_param;
+                result.bindings = flow_bindings(flow);
+                return result;
+            }
+            args[rel.lhs_param] = value->second;
+        }
+
+        int in_pipe[2];
+        int out_pipe[2];
+        int err_pipe[2];
+        if (pipe(in_pipe) != 0 || pipe(out_pipe) != 0 || pipe(err_pipe) != 0) {
+            result.status = "failed";
+            result.detail = "pipe failed";
+            result.bindings = flow_bindings(flow);
+            return result;
+        }
+
+        const pid_t pid = fork();
+        if (pid < 0) {
+            close(in_pipe[0]);
+            close(in_pipe[1]);
+            close(out_pipe[0]);
+            close(out_pipe[1]);
+            close(err_pipe[0]);
+            close(err_pipe[1]);
+            result.status = "failed";
+            result.detail = "fork failed";
+            result.bindings = flow_bindings(flow);
+            return result;
+        }
+
+        if (pid == 0) {
+            dup2(in_pipe[0], STDIN_FILENO);
+            dup2(out_pipe[1], STDOUT_FILENO);
+            dup2(err_pipe[1], STDERR_FILENO);
+            close(in_pipe[0]);
+            close(in_pipe[1]);
+            close(out_pipe[0]);
+            close(out_pipe[1]);
+            close(err_pipe[0]);
+            close(err_pipe[1]);
+
+            std::vector<char*> argv;
+            argv.push_back(const_cast<char*>(options_.adapter_path.c_str()));
+            for (const auto& arg : options_.adapter_args) {
+                argv.push_back(const_cast<char*>(arg.c_str()));
+            }
+            argv.push_back(nullptr);
+            const char* env[] = {"PATH=/usr/bin:/bin", "LC_ALL=C", nullptr};
+            execve(options_.adapter_path.c_str(), argv.data(),
+                   const_cast<char* const*>(env));
+            _exit(127);
+        }
+
+        close(in_pipe[0]);
+        close(out_pipe[1]);
+        close(err_pipe[1]);
+
+        const std::string request =
+            make_adapter_request(flow_id(flow), i, function, args);
+        const ssize_t written =
+            write(in_pipe[1], request.data(), request.size());
+        (void)written;
+        close(in_pipe[1]);
+
+        fcntl(out_pipe[0], F_SETFL, O_NONBLOCK);
+        fcntl(err_pipe[0], F_SETFL, O_NONBLOCK);
+
+        const auto deadline =
+            std::chrono::steady_clock::now() +
+            std::chrono::seconds(options_.timeout_seconds > 0
+                                     ? options_.timeout_seconds
+                                     : 10);
+        std::string output;
+        std::string errors;
+        bool out_open = true;
+        bool err_open = true;
+        bool timed_out = false;
+
+        while (out_open || err_open) {
+            const auto now = std::chrono::steady_clock::now();
+            if (now >= deadline) {
+                kill(pid, SIGTERM);
+                timed_out = true;
+                break;
+            }
+            pollfd fds[2]{{out_pipe[0], POLLIN, 0}, {err_pipe[0], POLLIN, 0}};
+            const int wait_ms = static_cast<int>(
+                std::chrono::duration_cast<std::chrono::milliseconds>(deadline -
+                                                                      now)
+                    .count());
+            const int poll_rc = poll(fds, 2, std::max(1, wait_ms));
+            if (poll_rc < 0 && errno != EINTR) {
+                break;
+            }
+            for (int j = 0; j < 2; ++j) {
+                if (!(fds[j].revents & (POLLIN | POLLHUP))) {
+                    continue;
+                }
+                const int fd = j == 0 ? out_pipe[0] : err_pipe[0];
+                char buffer[4096];
+                const ssize_t n = read(fd, buffer, sizeof(buffer));
+                if (n > 0) {
+                    (j == 0 ? output : errors)
+                        .append(buffer, static_cast<std::size_t>(n));
+                } else if (n == 0) {
+                    if (j == 0) {
+                        out_open = false;
+                    } else {
+                        err_open = false;
+                    }
+                }
+            }
+        }
+        close(out_pipe[0]);
+        close(err_pipe[0]);
+
+        int status = 0;
+        while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {
+        }
+        if (timed_out) {
+            result.status = "timeout";
+            result.detail = "adapter step timed out";
+            result.bindings = flow_bindings(flow);
+            return result;
+        }
+        if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+            result.status = "failed";
+            result.detail = "adapter exited with error";
+            result.bindings = flow_bindings(flow);
+            return result;
+        }
+
+        std::string response_status;
+        std::string stdout_text;
+        std::map<std::string, std::string> returns;
+        if (!json_string_field(output, "status", response_status) ||
+            !parse_returns_json(output, returns) ||
+            !json_string_field(output, "stdout", stdout_text)) {
+            result.status = "failed";
+            result.detail = "malformed adapter response";
+            result.bindings = flow_bindings(flow);
+            return result;
+        }
+        if (response_status != "ok") {
+            result.status = "failed";
+            result.detail = "adapter reported " + response_status;
+            result.bindings = flow_bindings(flow);
+            return result;
+        }
+
+        const auto expected_output = options_.expected_outputs.find(function);
+        if (expected_output != options_.expected_outputs.end() &&
+            stdout_text != expected_output->second) {
+            result.status = "failed";
+            result.detail = "output mismatch for " + function + ": expected \"" +
+                            expected_output->second + "\", got \"" +
+                            stdout_text + "\"";
+            result.bindings = flow_bindings(flow);
+            return result;
+        }
+
+        returned[function] = std::move(returns);
+    }
+
+    result.status = "passed";
     result.bindings = flow_bindings(flow);
     return result;
 }

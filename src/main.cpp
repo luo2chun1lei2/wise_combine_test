@@ -13,6 +13,8 @@ struct CliOptions {
     std::vector<std::string> files;
     std::string mode = "direct";
     std::string lib_path;
+    std::string adapter_path;
+    std::vector<std::string> adapter_args;
     bool dry_run = false;
     std::string report = "text";
     wct::GenerationOptions gen;
@@ -23,6 +25,8 @@ void print_usage(std::ostream& out) {
     out << "usage: wise_combine_test <描述文件...> [选项]\n";
     out << "  --mode direct|standalone  执行模式（默认 direct）\n";
     out << "  --lib <path>              被测动态库路径\n";
+    out << "  --adapter <path>          使用 adapter 进程执行（JSON 协议）\n";
+    out << "  --adapter-arg <arg>       adapter 附加参数（可重复）\n";
     out << "  --dry-run                 只生成流程，不执行\n";
     out << "  --max-depth <n>           最大路径步数（默认 32）\n";
     out << "  --max-flows <n>           最大调用流程数量（默认 1000）\n";
@@ -92,6 +96,16 @@ CliOptions parse_args(int argc, char** argv) {
                 throw std::runtime_error("--lib requires a value");
             }
             o.lib_path = argv[++i];
+        } else if (a == "--adapter") {
+            if (i + 1 >= argc) {
+                throw std::runtime_error("--adapter requires a value");
+            }
+            o.adapter_path = argv[++i];
+        } else if (a == "--adapter-arg") {
+            if (i + 1 >= argc) {
+                throw std::runtime_error("--adapter-arg requires a value");
+            }
+            o.adapter_args.push_back(argv[++i]);
         } else if (a == "--dry-run") {
             o.dry_run = true;
         } else if (a == "--max-depth") {
@@ -190,8 +204,13 @@ int main(int argc, char** argv) {
                 if (tr.expect_present) {
                     runner_options.expected_returns[tr.func] = tr.expect_return;
                 }
+                if (tr.expect_output_present) {
+                    runner_options.expected_outputs[tr.func] = tr.expect_output;
+                }
             }
         }
+        runner_options.adapter_path = o.adapter_path;
+        runner_options.adapter_args = o.adapter_args;
 
         wct::Generator generator(model, o.gen);
         std::vector<wct::Flow> flows = generator.generate_state_flows();
@@ -242,9 +261,9 @@ int main(int argc, char** argv) {
             return 0;
         }
 
-        if (!o.dry_run && o.lib_path.empty()) {
+        if (!o.dry_run && o.lib_path.empty() && o.adapter_path.empty()) {
             throw std::runtime_error(
-                "direct mode requires --lib; use --dry-run to generate without executing");
+                "execution requires --lib or --adapter; use --dry-run to generate without executing");
         }
 
         wct::Runner runner(runner_options);
