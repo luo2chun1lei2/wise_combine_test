@@ -55,6 +55,7 @@ typedef struct {
 } wct_limits;
 typedef struct {
     size_t steps;
+    size_t flows;
     size_t covered;
     size_t failures;
     size_t uncovered;

@@ -337,7 +337,8 @@ int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) {
             }
             for (size_t j = 0; j < g->calls[i].argc; ++j) {
                 wct_value_type want = g->calls[i].arg_types[j];
-                if (want != WCT_ANY && want != infer_graph_arg_type(g, g->calls[i].args[j])) {
+                wct_value_type got = infer_graph_arg_type(g, g->calls[i].args[j]);
+                if (want != WCT_ANY && got != WCT_ANY && want != got) {
                     char msg[128];
                     snprintf(msg, sizeof msg, "call %s argument %zu type mismatch",
                              g->calls[i].id, j + 1);
@@ -613,14 +614,21 @@ int wct_run_relation(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
         return -1;
     }
     size_t n = g->call_count;
-    size_t max = lim.max_flows ? lim.max_flows : n;
+    size_t max = lim.max_steps ? lim.max_steps : n;
+    size_t flow_limit = lim.max_flows ? lim.max_flows : 1;
     r->declared_edges = g->relation_count;
     unsigned char *done = calloc(n ? n : 1, 1);
+    unsigned char *ever_done = calloc(n ? n : 1, 1);
+    unsigned char *edge_seen = calloc(g->relation_count ? g->relation_count : 1, 1);
     char **res = calloc(n ? n : 1, sizeof *res);
-    if (!done || !res) {
-        free(done); free(res); r->error = dupstr("out of memory"); return -1;
+    if (!done || !ever_done || !edge_seen || !res) {
+        free(done); free(ever_done); free(edge_seen); free(res); r->error = dupstr("out of memory"); return -1;
     }
-    for (size_t step = 0; step < max; step++) {
+    for (size_t flow = 0; flow < flow_limit; flow++) {
+      memset(done, 0, n ? n : 1);
+      for (size_t i = 0; i < n; i++) { free(res[i]); res[i] = NULL; }
+      size_t flow_steps = 0;
+      for (size_t step = 0; step < max; step++) {
         int pick = -1;
         size_t ready_count = 0;
         for (size_t i = 0; i < n; i++) {
@@ -707,15 +715,26 @@ int wct_run_relation(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
         res[(size_t)pick] = out;
         done[(size_t)pick] = 1;
         r->steps++;
-        r->covered++;
+        if (!ever_done[(size_t)pick]) { ever_done[(size_t)pick] = 1; r->covered++; }
+        for (size_t i = 0; i < g->relation_count; i++) {
+            int a = find_call(g, g->relations[i].from);
+            int b = find_call(g, g->relations[i].to);
+            if (a >= 0 && b == pick && done[(size_t)a]) edge_seen[i] = 1;
+        }
+        flow_steps++;
+      }
+      r->flows++;
+      if (r->failures || flow_steps == 0) break;
     }
-    for (size_t i = 0; i < n; i++) if (!done[i]) r->uncovered++;
+    for (size_t i = 0; i < n; i++) if (!ever_done[i]) r->uncovered++;
     r->covered_edges = 0;
-    for (size_t i = 0; i < g->relation_count; i++) { int a=find_call(g,g->relations[i].from), b=find_call(g,g->relations[i].to); if (a>=0 && b>=0 && done[(size_t)a] && done[(size_t)b]) r->covered_edges++; }
+    for (size_t i = 0; i < g->relation_count; i++) if (edge_seen[i]) r->covered_edges++;
     r->uncovered_edges = r->declared_edges - r->covered_edges;
     for (size_t i = 0; i < n; i++) free(res[i]);
     free(res);
     free(done);
+    free(ever_done);
+    free(edge_seen);
     if (!r->failures && r->uncovered) {
         r->error = dupstr("uncovered call");
         return -1;

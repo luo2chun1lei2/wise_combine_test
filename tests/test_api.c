@@ -592,7 +592,7 @@ static void test_relation_order_and_failure(void)
 
     CHECK(wct_validate_relation(&graph, NULL, 0) == 0, "valid relation graph should validate");
     CHECK(wct_run_relation(&graph, relation_callback, &context,
-                           (wct_limits){.max_flows = 2}, &report) == -1,
+                           (wct_limits){.max_flows = 1, .max_steps = 2}, &report) == -1,
           "relation run should report incomplete coverage under flow limit");
     CHECK(report.steps == 2 && report.covered == 2 && report.uncovered == 1,
           "relation flow limit should bound calls and expose incomplete coverage");
@@ -650,7 +650,7 @@ static void test_relation_lexical_tie_break(void)
     CHECK(wct_validate_relation(&graph, NULL, 0) == 0,
           "independent calls should validate");
     CHECK(wct_run_relation(&graph, relation_callback, &context,
-                           (wct_limits){.max_flows = 3, .seed = 0}, &report) == 0,
+                           (wct_limits){.max_flows = 1, .max_steps = 3, .seed = 0}, &report) == 0,
           "independent calls should execute");
     CHECK(context.count == 3 && strcmp(context.ids[0], "alpha") == 0 &&
               strcmp(context.ids[1], "middle") == 0 &&
