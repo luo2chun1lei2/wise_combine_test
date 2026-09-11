@@ -410,7 +410,7 @@ int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) {
     return 0;
 }
 
-int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
+static int wct_run_state_impl(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
                   wct_limits lim, wct_report *r) {
     if (!r) return -1;
     memset(r, 0, sizeof *r);
@@ -602,7 +602,42 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
     return r->failures ? -1 : 0;
 }
 
-int wct_run_relation(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
+int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
+                  wct_limits lim, wct_report *r) {
+    if (!lim.isolate) return wct_run_state_impl(g, fn, ctx, lim, r);
+    if (!r) return -1;
+    memset(r, 0, sizeof *r);
+    if (lim.timeout_ms > (unsigned)INT_MAX) { r->failures=1; r->error=dupstr("timeout exceeds poll limit"); return -1; }
+    void *parent_before=NULL; size_t parent_before_size=0; int parent_before_valid=0;
+    if (lim.state_snapshot) { if (lim.state_snapshot(ctx,&parent_before,&parent_before_size)) return -1; parent_before_valid=1; }
+    int p[2]; if (pipe(p) < 0) return -1;
+    pid_t pid=fork(); if (pid<0) { close(p[0]); close(p[1]); return -1; }
+    if (pid==0) {
+        close(p[0]); wct_limits child=lim; child.isolate=0; wct_report cr;
+        int rc=wct_run_state_impl(g,fn,ctx,child,&cr);
+        void *final_state=NULL; size_t final_state_size=0; int state_present=0;
+        if(child.state_snapshot) { if(child.state_snapshot(ctx,&final_state,&final_state_size)) rc=-1; else state_present=1; }
+        uint64_t lens[5]={cr.scenario?strlen(cr.scenario):0,cr.expected?strlen(cr.expected):0,cr.actual?strlen(cr.actual):0,cr.error?strlen(cr.error):0,(uint64_t)final_state_size};
+        if(write_all(p[1],&rc,sizeof rc)||write_all(p[1],&cr,offsetof(wct_report,scenario))||write_all(p[1],lens,sizeof lens)||
+           (lens[0]&&write_all(p[1],cr.scenario,lens[0]))||(lens[1]&&write_all(p[1],cr.expected,lens[1]))||(lens[2]&&write_all(p[1],cr.actual,lens[2]))||(lens[3]&&write_all(p[1],cr.error,lens[3]))||
+           write_all(p[1],&state_present,sizeof state_present)||(state_present&&lens[4]&&write_all(p[1],final_state,(size_t)lens[4]))) _exit(111);
+        free(final_state); wct_report_free(&cr); close(p[1]); _exit(0);
+    }
+    close(p[1]); long long deadline=lim.timeout_ms?now_ms()+lim.timeout_ms:-1; int rc=-1;
+    int rr=read_exact_deadline(p[0],&rc,sizeof rc,deadline); if(!rr) rr=read_exact_deadline(p[0],r,offsetof(wct_report,scenario),deadline);
+    uint64_t lens[5]={0}; if(!rr) rr=read_exact_deadline(p[0],lens,sizeof lens,deadline);
+    char **dst[4]={&r->scenario,&r->expected,&r->actual,&r->error};
+    if(!rr) for(size_t i=0;i<4;i++){if(lens[i]>WCT_MAX_RESULT){rr=-1;break;} if(lens[i]){*dst[i]=malloc((size_t)lens[i]+1);if(!*dst[i]||read_exact_deadline(p[0],*dst[i],(size_t)lens[i],deadline)){rr=-1;break;}(*dst[i])[lens[i]]='\0';}}
+    int state_present=0; void *final_state=NULL;
+    if(!rr) rr=read_exact_deadline(p[0],&state_present,sizeof state_present,deadline);
+    if(!rr && lens[4]>WCT_MAX_RESULT) rr=-1;
+    if(!rr && state_present && lens[4]){final_state=malloc((size_t)lens[4]);if(!final_state||read_exact_deadline(p[0],final_state,(size_t)lens[4],deadline))rr=-1;}
+    close(p[0]); int status=0; if(rr==-2){free(final_state);kill_reap(pid);if(parent_before_valid)lim.state_restore(ctx,parent_before,parent_before_size);free(parent_before);r->timed_out=1;r->process_signal=SIGKILL;r->error=dupstr("scenario timeout");return -1;} if(rr){free(final_state);kill_reap(pid);if(parent_before_valid)lim.state_restore(ctx,parent_before,parent_before_size);free(parent_before);r->error=dupstr("scenario isolation read failed");return -1;}
+    int wr=reap_deadline(pid,&status,deadline);if(wr==1){free(final_state);kill_reap(pid);if(parent_before_valid)lim.state_restore(ctx,parent_before,parent_before_size);free(parent_before);r->timed_out=1;r->process_signal=SIGKILL;r->error=dupstr("scenario timeout");return -1;}if(wr<0||!WIFEXITED(status)||WEXITSTATUS(status)!=0){free(final_state);kill_reap(pid);if(parent_before_valid)lim.state_restore(ctx,parent_before,parent_before_size);free(parent_before);r->error=dupstr("scenario terminated");return -1;}
+    if(state_present && lim.state_restore && lim.state_restore(ctx,final_state,(size_t)lens[4])){free(final_state);free(parent_before);r->failures++;r->error=dupstr("scenario commit failed");return -1;}free(parent_before);free(final_state);r->process_exit=WEXITSTATUS(status);return rc;
+}
+
+static int wct_run_relation_impl(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
                     wct_limits lim, wct_report *r) {
     if (!r) return -1;
     memset(r, 0, sizeof *r);
@@ -739,4 +774,40 @@ int wct_run_relation(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
         return -1;
     }
     return r->failures ? -1 : 0;
+}
+
+/* Whole-scenario isolation: the child owns the complete relation run, so
+ * callback side effects cannot contaminate the parent or another flow. */
+int wct_run_relation(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
+                    wct_limits lim, wct_report *r) {
+    if (!lim.isolate) return wct_run_relation_impl(g, fn, ctx, lim, r);
+    if (!r) return -1;
+    memset(r, 0, sizeof *r);
+    if (lim.timeout_ms > (unsigned)INT_MAX) { r->failures=1; r->error=dupstr("timeout exceeds poll limit"); return -1; }
+    int p[2]; if (pipe(p) < 0) return -1;
+    pid_t pid = fork();
+    if (pid < 0) { close(p[0]); close(p[1]); return -1; }
+    if (pid == 0) {
+        close(p[0]); wct_limits child = lim; child.isolate = 0;
+        wct_report cr; int rc = wct_run_relation_impl(g, fn, ctx, child, &cr);
+        uint64_t lens[6] = { cr.scenario ? strlen(cr.scenario) : 0, cr.expected ? strlen(cr.expected) : 0,
+            cr.actual ? strlen(cr.actual) : 0, cr.error ? strlen(cr.error) : 0, 0, 0 };
+        if (write_all(p[1], &rc, sizeof rc) || write_all(p[1], &cr, offsetof(wct_report, scenario)) ||
+            write_all(p[1], lens, sizeof lens) ||
+            (lens[0] && write_all(p[1], cr.scenario, lens[0])) || (lens[1] && write_all(p[1], cr.expected, lens[1])) ||
+            (lens[2] && write_all(p[1], cr.actual, lens[2])) || (lens[3] && write_all(p[1], cr.error, lens[3]))) _exit(111);
+        wct_report_free(&cr); close(p[1]); _exit(0);
+    }
+    close(p[1]); long long deadline = lim.timeout_ms ? now_ms() + lim.timeout_ms : -1;
+    int rc = -1; int rr = read_exact_deadline(p[0], &rc, sizeof rc, deadline);
+    if (!rr) rr = read_exact_deadline(p[0], r, offsetof(wct_report, scenario), deadline);
+    uint64_t lens[6] = {0}; if (!rr) rr = read_exact_deadline(p[0], lens, sizeof lens, deadline);
+    char **dst[4] = {&r->scenario, &r->expected, &r->actual, &r->error};
+    if (!rr) for (size_t i=0;i<4;i++) { if (lens[i] > WCT_MAX_RESULT) { rr=-1; break; } if (lens[i]) { *dst[i]=malloc((size_t)lens[i]+1); if (!*dst[i] || read_exact_deadline(p[0],*dst[i],(size_t)lens[i],deadline)) { rr=-1; break; } (*dst[i])[lens[i]]='\0'; } }
+    close(p[0]); int status=0;
+    if (rr == -2) { kill_reap(pid); r->timed_out=1; r->process_signal=SIGKILL; r->error=dupstr("scenario timeout"); return -1; }
+    if (rr) { kill_reap(pid); r->error=dupstr("scenario isolation read failed"); return -1; }
+    int wr=reap_deadline(pid,&status,deadline); if (wr==1) { kill_reap(pid); r->timed_out=1; r->process_signal=SIGKILL; r->error=dupstr("scenario timeout"); return -1; }
+    if (wr<0 || !WIFEXITED(status) || WEXITSTATUS(status)!=0) { kill_reap(pid); r->error=dupstr("scenario terminated"); return -1; }
+    r->process_exit=WEXITSTATUS(status); return rc;
 }
