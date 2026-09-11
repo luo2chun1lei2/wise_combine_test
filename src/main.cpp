@@ -289,7 +289,6 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
 
   if (!events.empty()) {
     std::vector<std::string> trace;
-    std::string current = smodel::leafOf(m, m.initial);
     bool failed = false;
     std::string failure;
 
@@ -302,49 +301,99 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
     }
     std::map<std::string, std::string> lastLeaf;
 
-    auto resolveTarget = [&](const std::string &to) -> std::string {
+    auto enterSet = [&](const std::string &state) -> std::set<std::string> {
+      const smodel::StateInfo *info = smodel::findState(m, state);
+      if (info != nullptr && info->concurrent) {
+        std::set<std::string> out;
+        for (const auto &child : info->children) {
+          out.insert(smodel::leafOf(m, child));
+        }
+        if (out.empty()) {
+          out.insert(smodel::leafOf(m, state));
+        }
+        return out;
+      }
+      return {smodel::leafOf(m, state)};
+    };
+
+    auto resolveTarget = [&](const std::string &to) -> std::set<std::string> {
       auto history = historyOwner.find(to);
       if (history != historyOwner.end()) {
         auto last = lastLeaf.find(history->second);
-        return last != lastLeaf.end() ? last->second : smodel::leafOf(m, history->second);
+        return {last != lastLeaf.end() ? last->second : smodel::leafOf(m, history->second)};
       }
-      return smodel::leafOf(m, to);
+      return enterSet(to);
     };
 
     auto updateHistory = [&](const std::string &leaf) {
-      std::string currentState = leaf;
-      while (!currentState.empty()) {
-        const smodel::StateInfo *info = smodel::findState(m, currentState);
+      std::string current = leaf;
+      while (!current.empty()) {
+        const smodel::StateInfo *info = smodel::findState(m, current);
         if (info == nullptr || info->parent.empty()) {
           break;
         }
         lastLeaf[info->parent] = leaf;
-        currentState = info->parent;
+        current = info->parent;
       }
     };
-    updateHistory(current);
+
+    std::set<std::string> active = enterSet(m.initial);
+    for (const auto &leaf : active) {
+      updateHistory(leaf);
+    }
+
+    auto activeText = [&]() {
+      std::string text;
+      for (const auto &leaf : active) {
+        if (!text.empty()) {
+          text += ",";
+        }
+        text += leaf;
+      }
+      return text;
+    };
 
     for (const auto &event : splitCsv(events)) {
-      const auto it =
-          std::find_if(m.transitions.begin(), m.transitions.end(), [&](const smodel::Transition &t) {
-            return (t.from == current || smodel::isDescendantOf(m, current, t.from)) && t.event == event;
-          });
-      if (it == m.transitions.end()) {
+      const smodel::Transition *chosen = nullptr;
+      for (const auto &leaf : active) {
+        auto it = std::find_if(m.transitions.begin(), m.transitions.end(),
+                               [&](const smodel::Transition &t) {
+                                 return (t.from == leaf || smodel::isDescendantOf(m, leaf, t.from)) &&
+                                        t.event == event;
+                               });
+        if (it != m.transitions.end()) {
+          chosen = &*it;
+          break;
+        }
+      }
+      if (chosen == nullptr) {
         failed = true;
-        failure = "state " + current + " has no event " + event;
+        failure = "no transition for event " + event + " in active states " + activeText();
         break;
       }
-      trace.push_back(current + " -" + event + "-> " + it->to);
-      current = resolveTarget(it->to);
-      updateHistory(current);
+
+      trace.push_back(chosen->from + " -" + event + "-> " + chosen->to);
+      for (auto it = active.begin(); it != active.end();) {
+        if (*it == chosen->from || smodel::isDescendantOf(m, *it, chosen->from)) {
+          it = active.erase(it);
+        } else {
+          ++it;
+        }
+      }
+      for (const auto &target : resolveTarget(chosen->to)) {
+        active.insert(target);
+        updateHistory(target);
+      }
     }
+
+    const std::string finalState = activeText();
 
     if (json) {
       std::cout << "{\"kind\":\"state_machine_execution\"";
       std::cout << ",\"machine\":\"" << jsonEscape(m.name) << "\"";
       std::cout << ",\"trace\":";
       printJsonStrings(trace);
-      std::cout << ",\"final\":\"" << jsonEscape(current) << "\"";
+      std::cout << ",\"final\":\"" << jsonEscape(finalState) << "\"";
       std::cout << ",\"failed\":" << (failed ? "true" : "false");
       std::cout << ",\"failure\":\"" << jsonEscape(failure) << "\"";
       std::cout << "}" << std::endl;
@@ -358,7 +407,7 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
       std::cout << "FAIL: " << failure << std::endl;
       return 1;
     }
-    std::cout << "final: " << current << std::endl;
+    std::cout << "final: " << finalState << std::endl;
     std::cout << "OK" << std::endl;
     return 0;
   }

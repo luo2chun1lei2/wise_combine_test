@@ -59,6 +59,9 @@ std::any StateMachineBuilder::visitStateBlock(StateMachineDslParser::StateBlockC
   if (!ctx->historyDecl().empty()) {
     info.history = ctx->historyDecl(0)->ID()->getText();
   }
+  if (!ctx->concurrentDecl().empty()) {
+    info.concurrent = true;
+  }
   machine_.stateInfo[name] = info;
   if (!currentParent_.empty()) {
     machine_.stateInfo[currentParent_].children.push_back(name);

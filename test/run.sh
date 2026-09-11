@@ -24,6 +24,9 @@ echo "$nested_out" | grep -q 'final: OFF'
 history_out="$("$BIN" doc/examples/nested-history.dsl --events power_on,start,power_off,resume)"
 echo "$history_out" | grep -q 'final: ON_WORKING'
 
+concurrent_out="$("$BIN" doc/examples/concurrent.dsl --events power_on,a_next,b_next,power_off)"
+echo "$concurrent_out" | grep -q 'final: OFF'
+
 harness_c="$("$BIN" doc/examples/file-functions.dsl --max-length 2 --seed 42 --max-cases 3 --harness)"
 echo "$harness_c" | gcc -x c - -o /tmp/wise_harness
 (
