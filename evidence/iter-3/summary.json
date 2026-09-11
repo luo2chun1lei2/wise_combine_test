@@ -1,18 +1,28 @@
 {
   "iteration": "I3",
-  "status": "PASS",
-  "scope": "release regression, deterministic replay, boundary fuzzing, and documentation",
-  "implementation": "integrated",
+  "status": "BLOCKED",
+  "scope": "release regression and deterministic replay",
+  "head": "f0119faef08669da33ce276348370cf00ed819a8",
   "checks": {
-    "clean_make_test": "PASS",
-    "asan_ubsan": "PASS",
-    "boundary_fuzz": "PASS",
-    "coverage": "PASS",
-    "trace_replay": "PASS",
-    "valgrind": "PASS: valgrind-3.15.0; API and relation runs clean",
-    "measurement": "PASS",
-    "git_push": "PASS"
+    "fresh_command_exit_codes": {
+      "make_clean_test": 0,
+      "make_coverage": 0,
+      "make_sanitize": 0,
+      "make_valgrind": 0,
+      "measure-1": 0,
+      "measure-2": 0,
+      "measure-3": 0,
+      "replay": 0,
+      "trace": 0,
+      "valgrind-api": 127,
+      "valgrind-relation": 1
+    },
+    "build_gate": "PASS"
   },
-  "blockers": [],
-  "next_step": "maintain the regression suite"
+  "blockers": [
+    "current HEAD does not compile: src/wct.c:291 parse_value_type defined but unused (-Werror)",
+    "isolated relation valgrind run reports callback terminated / 11 errors"
+  ],
+  "measurement_repetitions": 3,
+  "stop_reason": "Evidence regeneration is blocked until current HEAD build and isolated relation memory run are repaired."
 }

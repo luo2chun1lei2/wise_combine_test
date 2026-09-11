@@ -1,7 +1,7 @@
 {
   "iteration": "I6",
-  "prior_summary_sha256": "4612bccbce83bb870859e0ebc02f6053acebea03e3ce292c622bf1f1be249d45",
-  "head": "d9d86d1bb8828ecdc4244373c9dd8bfc0b583e89",
+  "prior_summary_sha256": "2022346b94b438b9c82c106e3e2f4d247b2fdd85503f75b48c8160a571332204",
+  "head": "f0119faef08669da33ce276348370cf00ed819a8",
   "commands": [
     {
       "command": "make clean test",
@@ -20,21 +20,24 @@
       "exit_code": 0
     },
     {
-      "command": "make measure OUT=evidence/iter-6/measure.tsv",
+      "command": "three repeated make measure runs",
       "exit_code": 0
     },
     {
-      "command": "./bin/wise-combine-test --model fixtures/function_relations.model --mode relation --trace evidence/iter-6/call-trace.wct",
+      "command": "trace and replay",
       "exit_code": 0
     },
     {
-      "command": "./bin/wise-combine-test --replay evidence/iter-6/call-trace.wct",
-      "exit_code": 0
+      "command": "valgrind API",
+      "exit_code": 127
+    },
+    {
+      "command": "valgrind isolated relation",
+      "exit_code": 1
     }
   ],
   "tools": {
     "cc": "cc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0",
-    "git": "git version 2.25.1",
     "valgrind": "valgrind-3.15.0"
   },
   "environment": {
@@ -43,82 +46,110 @@
     "machine": "x86_64",
     "python": "3.8.10"
   },
-  "git_delivery": {
-    "commit": "d9d86d1",
-    "push": "PENDING"
-  },
   "artifacts": [
     {
-      "path": "evidence/iter-6/call-trace.wct",
+      "path": "evidence/iter-6/regenerated/call-trace.wct",
       "sha256": "f74164fd752b688d3dd201daec46905863dc15120393c1669f7aa561ab712c4d"
     },
     {
-      "path": "evidence/iter-6/commands.log",
-      "sha256": "90fa1ff33b3fc1540083e51145d9cae7afa2b70844ab53eb9ca34c585983ee81"
-    },
-    {
-      "path": "evidence/iter-6/coverage.exit",
+      "path": "evidence/iter-6/regenerated/make_clean_test.exit",
       "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
     },
     {
-      "path": "evidence/iter-6/coverage.log",
-      "sha256": "72c43ba67b050c70e7b343d58869c190e953cb2ab096fbdca970b496a142add7"
-    },
-    {
-      "path": "evidence/iter-6/make-clean-test.exit",
-      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
-    },
-    {
-      "path": "evidence/iter-6/make-clean-test.log",
+      "path": "evidence/iter-6/regenerated/make_clean_test.log",
       "sha256": "837e9f3aecbf2d6c8b914d5fd15f7f99889e9f6f1b58419fefee2cbc94293044"
     },
     {
-      "path": "evidence/iter-6/measure.exit",
+      "path": "evidence/iter-6/regenerated/make_coverage.exit",
       "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
     },
     {
-      "path": "evidence/iter-6/measure.log",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "path": "evidence/iter-6/regenerated/make_coverage.log",
+      "sha256": "72c43ba67b050c70e7b343d58869c190e953cb2ab096fbdca970b496a142add7"
     },
     {
-      "path": "evidence/iter-6/measure.tsv",
-      "sha256": "2bc28a8c6810b725ddc967873f9ec325a43295ebfd6c34f210139ca4e264fa95"
-    },
-    {
-      "path": "evidence/iter-6/replay.exit",
+      "path": "evidence/iter-6/regenerated/make_sanitize.exit",
       "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
     },
     {
-      "path": "evidence/iter-6/replay.log",
-      "sha256": "eba4919b9974db691d49bd9b21e091d5c14bdb4b905fba2277a9af20deaf5dcb"
-    },
-    {
-      "path": "evidence/iter-6/sanitize.exit",
-      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
-    },
-    {
-      "path": "evidence/iter-6/sanitize.log",
+      "path": "evidence/iter-6/regenerated/make_sanitize.log",
       "sha256": "b537c7eefe30edc814a86877fcbfa996b61931d04c448a6c94d3677001543a21"
     },
     {
-      "path": "evidence/iter-6/summary.json",
-      "sha256": "7b293f4e44a6d7ad577b60235f27254baab7068d5cb6461d1b5a14d915632d51"
-    },
-    {
-      "path": "evidence/iter-6/trace.exit",
+      "path": "evidence/iter-6/regenerated/make_valgrind.exit",
       "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
     },
     {
-      "path": "evidence/iter-6/trace.log",
+      "path": "evidence/iter-6/regenerated/make_valgrind.log",
+      "sha256": "1829e564ac594935c56563dc7b612a12078dfc65194dd226e39447cd64000ac5"
+    },
+    {
+      "path": "evidence/iter-6/regenerated/measure-1.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-6/regenerated/measure-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "evidence/iter-6/regenerated/measure-1.tsv",
+      "sha256": "66204785706c404faf8a387858ab0515cff3dfef5930bb96d6de189e9518b934"
+    },
+    {
+      "path": "evidence/iter-6/regenerated/measure-2.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-6/regenerated/measure-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "evidence/iter-6/regenerated/measure-2.tsv",
+      "sha256": "fb5854e7cfb14e645ac46d31c084275a9a570d8d506dcf9767a9e6effe7a98e2"
+    },
+    {
+      "path": "evidence/iter-6/regenerated/measure-3.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-6/regenerated/measure-3.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "evidence/iter-6/regenerated/measure-3.tsv",
+      "sha256": "5b971a2ea99d3fbad5c764435add47a26b35eacb5359edb84ec86716c72439b8"
+    },
+    {
+      "path": "evidence/iter-6/regenerated/replay.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-6/regenerated/replay.log",
+      "sha256": "eba4919b9974db691d49bd9b21e091d5c14bdb4b905fba2277a9af20deaf5dcb"
+    },
+    {
+      "path": "evidence/iter-6/regenerated/trace.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-6/regenerated/trace.log",
       "sha256": "02c89f1b7f44567add7c00cc089e4790d762ad4d343b9a22513ae93e53742222"
     },
     {
-      "path": "evidence/iter-6/valgrind.exit",
-      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      "path": "evidence/iter-6/regenerated/valgrind-api.exit",
+      "sha256": "743c7850cccfba5e53a9002663ec1ddd1079315a98bdbfdde10e6044f56abefe"
     },
     {
-      "path": "evidence/iter-6/valgrind.log",
-      "sha256": "06c78dec0ebf0999eb7ea7a240885847befc8d272a4512e3c0481e3e148eee98"
+      "path": "evidence/iter-6/regenerated/valgrind-api.log",
+      "sha256": "35f06bc6388fda0658fc6257cb0f7322598164ee4c95b3b8d0b27eaa43cabd84"
+    },
+    {
+      "path": "evidence/iter-6/regenerated/valgrind-relation.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "path": "evidence/iter-6/regenerated/valgrind-relation.log",
+      "sha256": "d543d65150da54d073f7c055aa1b22e3e1fc14d441c248c285ce8fb7fcb6b23b"
     }
   ]
 }

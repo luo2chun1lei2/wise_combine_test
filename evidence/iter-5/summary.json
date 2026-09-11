@@ -1,13 +1,28 @@
 {
-  "iteration":"I5",
-  "status":"BLOCKED",
-  "scope":"original-plan closure review",
-  "checks":{"make_clean_test":"PASS","asan_ubsan":"PASS","valgrind_api_state_isolated_relation":"PASS","git_push":"PASS"},
-  "blockers":[
-    "per-callback fork isolation cannot preserve mutable state across a multi-transition scenario",
-    "direct callback failure cannot roll back opaque user context without a snapshot/rollback hook",
-    "trace replay does not validate all emitted metadata fields",
-    "prior iteration evidence summaries remain historical and require regeneration for a clean release gate"
+  "iteration": "I5",
+  "status": "BLOCKED",
+  "scope": "transaction and trace blocker review",
+  "head": "f0119faef08669da33ce276348370cf00ed819a8",
+  "checks": {
+    "fresh_command_exit_codes": {
+      "make_clean_test": 0,
+      "make_coverage": 0,
+      "make_sanitize": 0,
+      "make_valgrind": 0,
+      "measure-1": 0,
+      "measure-2": 0,
+      "measure-3": 0,
+      "replay": 0,
+      "trace": 0,
+      "valgrind-api": 127,
+      "valgrind-relation": 1
+    },
+    "build_gate": "PASS"
+  },
+  "blockers": [
+    "current HEAD does not compile: src/wct.c:291 parse_value_type defined but unused (-Werror)",
+    "isolated relation valgrind run reports callback terminated / 11 errors"
   ],
-  "stop_reason":"The state-context isolation/atomicity blocker was independently reported three times; stop per task instruction and preserve analysis."
+  "measurement_repetitions": 3,
+  "stop_reason": "Evidence regeneration is blocked until current HEAD build and isolated relation memory run are repaired."
 }

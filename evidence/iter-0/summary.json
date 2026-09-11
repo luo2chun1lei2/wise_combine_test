@@ -1,7 +1,7 @@
 {
-  "iteration": "I2",
+  "iteration": "I0",
   "status": "BLOCKED",
-  "scope": "relation DAG ordering and typed binding",
+  "scope": "baseline repository inventory",
   "head": "f0119faef08669da33ce276348370cf00ed819a8",
   "checks": {
     "fresh_command_exit_codes": {

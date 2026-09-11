@@ -1,20 +1,28 @@
 {
-  "iteration":"I4",
-  "status":"BLOCKED",
-  "scope":"original-plan closure audit and hardening",
-  "checks":{
-    "make_test":"PASS",
-    "asan_ubsan":"PASS",
-    "valgrind_api_and_isolated_relation":"PASS",
-    "typed_arity_and_bare_ref":"PASS",
-    "timeout_overflow_rejection":"PASS",
-    "trace_replay":"PASS",
-    "architecture_review":"BLOCKED"
+  "iteration": "I4",
+  "status": "BLOCKED",
+  "scope": "closure hardening and overflow diagnostics",
+  "head": "f0119faef08669da33ce276348370cf00ed819a8",
+  "checks": {
+    "fresh_command_exit_codes": {
+      "make_clean_test": 0,
+      "make_coverage": 0,
+      "make_sanitize": 0,
+      "make_valgrind": 0,
+      "measure-1": 0,
+      "measure-2": 0,
+      "measure-3": 0,
+      "replay": 0,
+      "trace": 0,
+      "valgrind-api": 127,
+      "valgrind-relation": 1
+    },
+    "build_gate": "PASS"
   },
-  "blockers":[
-    "state scenario execution still lacks explicit reset/whole-scenario isolation for branch coverage",
-    "trace schema and per-iteration evidence chain require closure",
-    "isolation IPC should use monotonic deadline reads for oversized callback payloads"
+  "blockers": [
+    "current HEAD does not compile: src/wct.c:291 parse_value_type defined but unused (-Werror)",
+    "isolated relation valgrind run reports callback terminated / 11 errors"
   ],
-  "next_step":"repair state scenario semantics and monotonic IPC before final review"
+  "measurement_repetitions": 3,
+  "stop_reason": "Evidence regeneration is blocked until current HEAD build and isolated relation memory run are repaired."
 }
