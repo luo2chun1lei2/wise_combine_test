@@ -347,6 +347,28 @@ int main() {
 
     {
         const std::string path = write_tmp(
+            "object x {\n"
+            " state A initial\n"
+            " state B final\n"
+            " state C final\n"
+            " transition A -> B by f()\n"
+            " transition A -> C by g()\n"
+            "}\n"
+            "function f()\n"
+            "function g()\n"
+            "constraint state B");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::Generator generator(model);
+        const auto flows = generator.generate_state_flows();
+        assert(flows.size() == 1);
+        assert(flows[0] == (wct::Flow{"f"}));
+    }
+
+    {
+        const std::string path = write_tmp(
             "function f()\n"
             "function g()\n"
             "constraint count(f) > 0 and count(g) > 0");

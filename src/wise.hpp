@@ -89,6 +89,7 @@ struct Spec {
     std::vector<OrderRel> orders;
     std::vector<MutexRel> mutexes;
     std::vector<ConstraintRel> constraints;
+    std::vector<std::string> state_constraints;
 };
 
 struct ParseError {
@@ -185,6 +186,7 @@ private:
     bool order_respected(const Flow& flow) const;
     bool parameter_respected(const Flow& flow) const;
     bool guard_allows(const TransitionDecl& transition) const;
+    bool state_allowed(const ObjectDecl& object, const std::string& state) const;
     bool mutex_violated(const Flow& flow) const;
     bool constraint_violated(const Flow& flow) const;
 };

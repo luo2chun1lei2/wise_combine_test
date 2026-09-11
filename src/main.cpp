@@ -164,6 +164,9 @@ int main(int argc, char** argv) {
                                 parsed.mutexes.end());
             spec.constraints.insert(spec.constraints.end(), parsed.constraints.begin(),
                                     parsed.constraints.end());
+            spec.state_constraints.insert(spec.state_constraints.end(),
+                                          parsed.state_constraints.begin(),
+                                          parsed.state_constraints.end());
         }
 
         wct::Model model(std::move(spec));

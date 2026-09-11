@@ -36,6 +36,7 @@ parameter <函数名>.<参数名> = <函数名>.<参数名> | <常量>
 order <前驱函数> before <后继函数>
 mutex <函数名> <函数名> [<函数名> ...]
 constraint count(<函数名>) <比较符> <整数> [and count(<函数名>) <比较符> <整数> ...]
+constraint state <状态名>
 ```
 
 字段说明：
@@ -44,7 +45,7 @@ constraint count(<函数名>) <比较符> <整数> [and count(<函数名>) <比�
 - `parameter`：声明参数之间的数据传递关系，右值可以是另一个函数的参数/返回值，也可以是常量（例如 `parameter start.config = "default"`）。
 - `order`：声明调用顺序约束，前驱函数必须先于后继函数调用。
 - `mutex`：声明一组函数互斥，同一组合调用流程中至多出现其中一个。
-- `constraint`：声明组合约束，支持一个或多个 `count(<函数名>) <比较符> <整数>` 用 `and` 连接；比较符可以是 `<`、`<=`、`>`、`>=`、`==`、`!=`。
+- `constraint`：声明组合约束，支持一个或多个 `count(<函数名>) <比较符> <整数>` 用 `and` 连接；比较符可以是 `<`、`<=`、`>`、`>=`、`==`、`!=`；也支持 `constraint state <状态名>` 限制状态路径只能以指定最终状态结束。
 
 示例见 [examples/functions.ct](examples/functions.ct)。
 
@@ -58,4 +59,5 @@ constraint count(<函数名>) <比较符> <整数> [and count(<函数名>) <比�
 - `order` 不能形成循环依赖。
 - `mutex` 引用的函数必须已声明，且同一组内不能重复。
 - `constraint` 表达式中的函数必须已声明。
+- `constraint state` 引用的状态必须已声明。
 - 必须存在且仅存在一个初始状态。

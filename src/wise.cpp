@@ -524,6 +524,14 @@ void Parser::parse_constraint(const std::string& text, int line, Spec& spec) {
     if (expr.empty()) {
         fail(line, "constraint expression is empty");
     }
+    if (starts_with(expr, "state ")) {
+        const std::string state = trim(expr.substr(std::string("state").size()));
+        if (state.empty()) {
+            fail(line, "constraint state is empty");
+        }
+        spec.state_constraints.push_back(state);
+        return;
+    }
     ConstraintRel rel;
     rel.line = line;
     rel.expr = expr;
@@ -748,6 +756,25 @@ void Model::validate() {
             }
         }
     }
+
+    for (const auto& state : spec_.state_constraints) {
+        bool found = false;
+        for (const auto& object : spec_.objects) {
+            for (const auto& s : object.states) {
+                if (s.name == state) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found) {
+                break;
+            }
+        }
+        if (!found) {
+            throw ModelError{"state constraint references unknown state: " +
+                             state};
+        }
+    }
 }
 
 const FunctionDecl& Model::function(const std::string& name) const {
@@ -820,7 +847,7 @@ void Generator::state_dfs(const ObjectDecl& object, std::size_t state_index,
     }
     ++visit;
     if (state.final && !path.empty()) {
-        if (parameter_respected(path)) {
+        if (parameter_respected(path) && state_allowed(object, state.name)) {
             out.push_back(path);
         }
     }
@@ -966,6 +993,20 @@ bool Generator::guard_allows(const TransitionDecl& transition) const {
         return true;
     }
     return guard_satisfied(guard, transition.expect_return);
+}
+
+bool Generator::state_allowed(const ObjectDecl& object,
+                              const std::string& state) const {
+    (void)object;
+    if (model_.spec().state_constraints.empty()) {
+        return true;
+    }
+    for (const auto& allowed : model_.spec().state_constraints) {
+        if (allowed == state) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Generator::mutex_violated(const Flow& flow) const {
