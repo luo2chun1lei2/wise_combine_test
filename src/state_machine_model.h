@@ -26,6 +26,17 @@ struct StateInfo {
   bool concurrent = false;
 };
 
+struct ClassEntry {
+  std::string name;
+  std::string cpp;
+  std::string header;
+};
+
+struct ActionMap {
+  std::string className;
+  std::string method;
+};
+
 struct StateMachine {
   std::string name;
   std::vector<std::string> states;
@@ -33,6 +44,8 @@ struct StateMachine {
   std::vector<std::string> events;
   std::map<std::string, StateInfo> stateInfo;
   std::vector<Transition> transitions;
+  std::map<std::string, ClassEntry> classes;
+  std::map<std::string, ActionMap> actions;
   std::vector<std::string> errors;
 };
 

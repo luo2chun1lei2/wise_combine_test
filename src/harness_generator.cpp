@@ -381,4 +381,74 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
   return out.str();
 }
 
+std::string generateStateMachine(const smodel::StateMachine &machine,
+                                 const std::vector<std::string> &events) {
+  std::ostringstream out;
+  out << "#include <cstdio>\n";
+  out << "#include <cstring>\n";
+  for (const auto &[name, cls] : machine.classes) {
+    (void)name;
+    if (!cls.header.empty()) {
+      out << "#include \"" << cls.header << "\"\n";
+    }
+  }
+  out << "\n";
+
+  for (const auto &[name, cls] : machine.classes) {
+    (void)name;
+    out << cls.cpp << " obj_" << cls.name << ";\n";
+  }
+  out << "\n";
+
+  out << "static void run_action(const char* name) {\n";
+  for (const auto &[actionName, action] : machine.actions) {
+    out << "  if (std::strcmp(name, \"" << actionName << "\") == 0) { obj_" << action.className
+        << "." << action.method << "(); return; }\n";
+  }
+  out << "}\n\n";
+
+  out << "int main() {\n";
+  out << "  const char* current = \"" << smodel::leafOf(machine, machine.initial) << "\";\n";
+  out << "  const char* events[] = {";
+  for (std::size_t i = 0; i < events.size(); ++i) {
+    if (i > 0) out << ", ";
+    out << "\"" << escapeCString(events[i]) << "\"";
+  }
+  out << "};\n";
+  out << "  const int n = " << events.size() << ";\n";
+  out << "  for (int i = 0; i < n; ++i) {\n";
+  out << "    const char* e = events[i];\n";
+  out << "    const char* next = 0;\n";
+
+  for (const auto &transition : machine.transitions) {
+    out << "    if (std::strcmp(current, \"" << transition.from << "\") == 0 && std::strcmp(e, \""
+        << transition.event << "\") == 0) {\n";
+    auto emitAction = [&](const std::string &name) {
+      if (!name.empty()) {
+        out << "      run_action(\"" << escapeCString(name) << "\");\n";
+      }
+    };
+    const auto *fromInfo = smodel::findState(machine, transition.from);
+    if (fromInfo != nullptr) {
+      emitAction(fromInfo->exit);
+    }
+    emitAction(transition.action);
+    const std::string targetLeaf = smodel::leafOf(machine, transition.to);
+    const auto *toInfo = smodel::findState(machine, targetLeaf);
+    if (toInfo != nullptr) {
+      emitAction(toInfo->entry);
+    }
+    out << "      next = \"" << targetLeaf << "\";\n";
+    out << "    }\n";
+  }
+
+  out << "    if (!next) { std::printf(\"FAIL: no transition for %s in %s\\n\", e, current); return 1; }\n";
+  out << "    current = next;\n";
+  out << "  }\n";
+  out << "  std::printf(\"ALL PASS\\n\");\n";
+  out << "  return 0;\n";
+  out << "}\n";
+  return out.str();
+}
+
 }  // namespace harness

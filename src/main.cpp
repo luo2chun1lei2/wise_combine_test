@@ -449,7 +449,8 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
 int runStateMachine(const std::string &text, int maxLength, bool json, bool coverage, bool cover,
                     bool randomAlgorithm, bool tourAlgorithm, bool bfsAlgorithm, unsigned seed, int maxCases,
                     const std::string &events, int replayIndex, int nSwitch,
-                    const std::map<std::string, std::string> &guardValues, bool negative) {
+                    const std::map<std::string, std::string> &guardValues, bool negative,
+                    bool harness) {
   antlr4::ANTLRInputStream input(text);
   StateMachineDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -463,6 +464,21 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
 
   StateMachineBuilder builder;
   smodel::StateMachine m = builder.build(tree);
+  if (harness) {
+    if (!m.errors.empty()) {
+      std::cerr << m.errors.size() << " semantic error(s)" << std::endl;
+      for (const auto &e : m.errors) {
+        std::cerr << "  " << e << std::endl;
+      }
+      return 1;
+    }
+    if (events.empty()) {
+      std::cerr << "state machine harness requires --events" << std::endl;
+      return 2;
+    }
+    std::cout << harness::generateStateMachine(m, splitCsv(events));
+    return 0;
+  }
   spath::StateMachinePathGenerator generator(m, maxLength);
   std::vector<spath::Path> paths;
   if (tourAlgorithm) {
@@ -978,14 +994,14 @@ int main(int argc, char **argv) {
 
   try {
     const bool isMachine = (firstKeyword(text) == "machine");
-    if (isMachine && (harness || dylib || bindRandom)) {
-      std::cerr << "warning: --harness/--dylib/--bind are ignored for state machine models"
+    if (isMachine && (dylib || bindRandom)) {
+      std::cerr << "warning: --dylib/--bind are ignored for state machine models"
                 << std::endl;
     }
     if (isMachine) {
       return runStateMachine(text, maxLength, json, coverage, cover, randomAlgorithm, tourAlgorithm,
                              bfsAlgorithm, seed, maxCases, events, replayIndex, nSwitch, guardValues,
-                             negative);
+                             negative, harness);
     }
     return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness, dylib,
                        randomAlgorithm, bfsAlgorithm, bindRandom, cover, replayIndex, harnessJson);

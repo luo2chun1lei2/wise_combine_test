@@ -93,4 +93,9 @@ echo "$cpp_c" | g++ -x c++ -Itest test/store_sut.cpp -o /tmp/cppharness -
 /tmp/cppharness | grep -q 'ALL PASS'
 rm -f /tmp/cppharness
 
+sm_c="$("$BIN" doc/examples/sm-actions.dsl --events go,back --harness)"
+echo "$sm_c" | g++ -x c++ -Itest test/worker_sut.cpp -o /tmp/smharness -
+/tmp/smharness | grep -q 'ALL PASS'
+rm -f /tmp/smharness
+
 echo "PASS"

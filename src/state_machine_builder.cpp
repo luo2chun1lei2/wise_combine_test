@@ -13,6 +13,13 @@ bool contains(const std::vector<std::string> &vec, const std::string &value) {
   return false;
 }
 
+std::string unquote(const std::string &s) {
+  if (s.size() >= 2 && s.front() == '"' && s.back() == '"') {
+    return s.substr(1, s.size() - 2);
+  }
+  return s;
+}
+
 }  // namespace
 
 smodel::StateMachine StateMachineBuilder::build(StateMachineDslParser::MachineContext *ctx) {
@@ -91,6 +98,25 @@ std::any StateMachineBuilder::visitTransition(StateMachineDslParser::TransitionC
     transition.action = actionText(ctx->actionDecl(0)->action());
   }
   machine_.transitions.push_back(transition);
+  return nullptr;
+}
+
+std::any StateMachineBuilder::visitClassBlock(StateMachineDslParser::ClassBlockContext *ctx) {
+  smodel::ClassEntry entry;
+  entry.name = ctx->ID()->getText();
+  entry.cpp = unquote(ctx->cppDecl()->STRING()->getText());
+  entry.header = unquote(ctx->headerDecl()->STRING()->getText());
+  machine_.classes[entry.name] = entry;
+  return nullptr;
+}
+
+std::any StateMachineBuilder::visitActionsBlock(StateMachineDslParser::ActionsBlockContext *ctx) {
+  for (auto *map : ctx->actionMap()) {
+    smodel::ActionMap action;
+    action.className = map->ID(1)->getText();
+    action.method = map->ID(2)->getText();
+    machine_.actions[map->ID(0)->getText()] = action;
+  }
   return nullptr;
 }
 

@@ -2,7 +2,7 @@ grammar StateMachineDsl;
 
 model: machine EOF;
 
-machine: 'machine' ID '{' statesDecl initialDecl eventsDecl stateBlock* transition* '}';
+machine: 'machine' ID '{' statesDecl initialDecl eventsDecl classBlock* actionsBlock? stateBlock* transition* '}';
 statesDecl: 'states' ':' ID (',' ID)*;
 initialDecl: 'initial' ':' ID;
 eventsDecl: 'events' ':' ID (',' ID)*;
@@ -17,6 +17,12 @@ concurrentDecl: 'concurrent';
 transition: 'transition' ID '->' ID 'on' ID '{' (guardDecl | actionDecl)* '}';
 guardDecl: 'guard' ':' expr;
 actionDecl: 'action' ':' action;
+
+classBlock: 'class' ID '{' cppDecl headerDecl '}';
+cppDecl: 'cpp' ':' STRING;
+headerDecl: 'header' ':' STRING;
+actionsBlock: 'actions' '{' actionMap* '}';
+actionMap: ID ':' ID '.' ID;
 
 action: ID ('.' ID)*;
 expr: orExpr;

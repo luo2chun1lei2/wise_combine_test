@@ -12,6 +12,8 @@ class StateMachineBuilder : public StateMachineDslBaseVisitor {
   std::any visitEventsDecl(StateMachineDslParser::EventsDeclContext *ctx) override;
   std::any visitStateBlock(StateMachineDslParser::StateBlockContext *ctx) override;
   std::any visitTransition(StateMachineDslParser::TransitionContext *ctx) override;
+  std::any visitClassBlock(StateMachineDslParser::ClassBlockContext *ctx) override;
+  std::any visitActionsBlock(StateMachineDslParser::ActionsBlockContext *ctx) override;
 
  private:
   smodel::StateMachine machine_;
