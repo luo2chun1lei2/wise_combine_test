@@ -19,7 +19,12 @@ guardDecl: 'guard' ':' expr;
 actionDecl: 'action' ':' action;
 
 action: ID ('.' ID)*;
-expr: ID ('==' | '!=' | '>' | '>=' | '<' | '<=') (ID | INT | STRING);
+expr: orExpr;
+orExpr: andExpr ('||' andExpr)*;
+andExpr: primary ('&&' primary)*;
+primary: '(' orExpr ')' | comparison;
+comparison: ID op (ID | INT | STRING);
+op: '==' | '!=' | '>' | '>=' | '<' | '<=';
 
 COMMENT: '#' ~[\r\n]* -> skip;
 ID: [a-zA-Z_][a-zA-Z0-9_]*;

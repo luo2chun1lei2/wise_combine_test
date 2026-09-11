@@ -105,68 +105,143 @@ bool evalGuard(const std::string &guard, const std::map<std::string, std::string
   if (guard.empty()) {
     return true;
   }
-  const std::vector<std::string> ops = {"==", "!=", ">=", "<=", ">", "<"};
-  std::size_t pos = std::string::npos;
-  std::string op;
-  for (const auto &candidate : ops) {
-    pos = guard.find(candidate);
-    if (pos != std::string::npos) {
-      op = candidate;
-      break;
+
+  struct Token {
+    std::string text;
+    std::string kind;  // "id" | "num" | "str" | "op"
+  };
+  std::vector<Token> tokens;
+  for (std::size_t i = 0; i < guard.size();) {
+    const char c = guard[i];
+    if (std::isspace(static_cast<unsigned char>(c))) {
+      ++i;
+    } else if (std::isalpha(static_cast<unsigned char>(c)) || c == '_') {
+      std::size_t j = i;
+      while (j < guard.size() &&
+             (std::isalnum(static_cast<unsigned char>(guard[j])) || guard[j] == '_')) {
+        ++j;
+      }
+      tokens.push_back({guard.substr(i, j - i), "id"});
+      i = j;
+    } else if (std::isdigit(static_cast<unsigned char>(c))) {
+      std::size_t j = i;
+      while (j < guard.size() && std::isdigit(static_cast<unsigned char>(guard[j]))) {
+        ++j;
+      }
+      tokens.push_back({guard.substr(i, j - i), "num"});
+      i = j;
+    } else if (c == '"') {
+      std::size_t j = i + 1;
+      while (j < guard.size() && guard[j] != '"') {
+        ++j;
+      }
+      if (j < guard.size()) {
+        ++j;
+      }
+      tokens.push_back({guard.substr(i, j - i), "str"});
+      i = j;
+    } else if (i + 1 < guard.size() &&
+               (guard.substr(i, 2) == "==" || guard.substr(i, 2) == "!=" ||
+                guard.substr(i, 2) == ">=" || guard.substr(i, 2) == "<=" ||
+                guard.substr(i, 2) == "&&" || guard.substr(i, 2) == "||")) {
+      tokens.push_back({guard.substr(i, 2), "op"});
+      i += 2;
+    } else if (c == '>' || c == '<' || c == '(' || c == ')') {
+      tokens.push_back({std::string(1, c), "op"});
+      ++i;
+    } else {
+      ++i;
     }
-  }
-  if (pos == std::string::npos) {
-    return true;
   }
 
-  auto resolveVariable = [&](const std::string &token) -> std::optional<std::string> {
-    auto it = values.find(token);
-    if (it != values.end()) {
-      return it->second;
+  std::size_t index = 0;
+  auto peek = [&]() -> const Token * {
+    return index < tokens.size() ? &tokens[index] : nullptr;
+  };
+  auto consume = [&](const std::string &text) -> bool {
+    if (peek() != nullptr && peek()->text == text) {
+      ++index;
+      return true;
     }
-    return std::nullopt;
+    return false;
   };
 
-  auto resolveValue = [&](const std::string &token) -> std::string {
-    auto it = values.find(token);
-    if (it != values.end()) {
-      return it->second;
+  std::function<bool()> parseOr;
+  std::function<bool()> parseAnd;
+  std::function<bool()> parsePrimary;
+
+  parsePrimary = [&]() -> bool {
+    if (consume("(")) {
+      const bool value = parseOr();
+      consume(")");
+      return value;
     }
-    if (token.size() >= 2 && token.front() == '"' && token.back() == '"') {
-      return token.substr(1, token.size() - 2);
+    const Token *left = peek();
+    if (left == nullptr || left->kind != "id") {
+      return true;
     }
-    if (isNumber(token)) {
-      return token;
+    ++index;
+    const Token *op = peek();
+    if (op == nullptr || op->kind != "op") {
+      return true;
     }
-    return token;
+    ++index;
+    const Token *right = peek();
+    std::string rightValue;
+    if (right == nullptr) {
+      return true;
+    }
+    if (right->kind == "num") {
+      rightValue = right->text;
+    } else if (right->kind == "str") {
+      rightValue = right->text.substr(1, right->text.size() - 2);
+    } else if (right->kind == "id") {
+      auto it = values.find(right->text);
+      rightValue = it != values.end() ? it->second : right->text;
+    } else {
+      return true;
+    }
+    ++index;
+
+    auto it = values.find(left->text);
+    if (it == values.end()) {
+      return true;
+    }
+    const std::string leftValue = it->second;
+
+    if (op->text == "==") return leftValue == rightValue;
+    if (op->text == "!=") return leftValue != rightValue;
+    if (isNumber(leftValue) && isNumber(rightValue)) {
+      const long long a = std::stoll(leftValue);
+      const long long b = std::stoll(rightValue);
+      if (op->text == ">") return a > b;
+      if (op->text == ">=") return a >= b;
+      if (op->text == "<") return a < b;
+      return a <= b;
+    }
+    if (op->text == ">") return leftValue > rightValue;
+    if (op->text == ">=") return leftValue >= rightValue;
+    if (op->text == "<") return leftValue < rightValue;
+    return leftValue <= rightValue;
   };
 
-  const std::string lhs = ltrim(guard.substr(0, pos));
-  const std::string rhs = ltrim(guard.substr(pos + op.size()));
-  const auto left = resolveVariable(lhs);
-  const std::string right = resolveValue(rhs);
-  if (!left) {
-    return true;
-  }
+  parseAnd = [&]() -> bool {
+    bool value = parsePrimary();
+    while (consume("&&")) {
+      value = parsePrimary() && value;
+    }
+    return value;
+  };
 
-  if (op == "==" || op == "!=") {
-    const bool equal = *left == right;
-    return op == "==" ? equal : !equal;
-  }
+  parseOr = [&]() -> bool {
+    bool value = parseAnd();
+    while (consume("||")) {
+      value = parseAnd() || value;
+    }
+    return value;
+  };
 
-  if (isNumber(*left) && isNumber(right)) {
-    const long long a = std::stoll(*left);
-    const long long b = std::stoll(right);
-    if (op == ">") return a > b;
-    if (op == ">=") return a >= b;
-    if (op == "<") return a < b;
-    return a <= b;
-  }
-
-  if (op == ">") return *left > right;
-  if (op == ">=") return *left >= right;
-  if (op == "<") return *left < right;
-  return *left <= right;
+  return parseOr();
 }
 
 std::string transitionKey(const smodel::Transition &t) {

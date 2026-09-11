@@ -39,6 +39,7 @@ state 状态名 {
   exit: [动作]
   initial: [子状态]
   history: [伪状态名]
+  history*: [伪状态名]
   concurrent
   state 子状态 { ... }
 }

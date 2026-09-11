@@ -180,6 +180,7 @@ func close(h: FileHandle) -> int {
 - `--bind enumerate|random`：资源实例绑定策略，默认枚举全部合法绑定。
 - `--json`：输出 JSON 报告。
 - `--harness`：生成并输出 C harness 代码。
+- `--harness-json`：harness 失败时输出结构化 JSON。
 - `--dylib`：生成需要动态加载被测库的 C harness 代码。
 - `--replay N`：输出第 N 个合法序列的 harness，便于复现。
 

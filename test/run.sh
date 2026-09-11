@@ -39,6 +39,18 @@ echo "$nswitch_out" | grep -q 'covered_nswitch_2: 7/7'
 json_exec="$("$BIN" doc/examples/connection.dsl --events connect,close --json || true)"
 echo "$json_exec" | grep -q '"failed":true'
 
+guard_ok="$("$BIN" doc/examples/connection.dsl --events connect,connected_ok,disconnect,close --guard result=OK)"
+echo "$guard_ok" | grep -q 'final: CLOSED'
+
+guard_fail="$("$BIN" doc/examples/connection.dsl --events connect,connected_ok --guard result=FAIL || true)"
+echo "$guard_fail" | grep -q 'no transition for event connected_ok'
+
+pair_out="$("$BIN" doc/examples/file-functions.dsl --max-length 3 --coverage)"
+echo "$pair_out" | grep -q 'covered_function_pairs:'
+
+concurrent_paths="$("$BIN" doc/examples/concurrent.dsl --max-length 2)"
+echo "$concurrent_paths" | grep -q 'paths: 4'
+
 harness_c="$("$BIN" doc/examples/file-functions.dsl --max-length 2 --seed 42 --max-cases 3 --harness)"
 echo "$harness_c" | gcc -x c - -o /tmp/wise_harness
 (
@@ -57,5 +69,10 @@ dylib_c="$("$BIN" doc/examples/observed.dsl --max-length 2 --seed 0 --max-cases 
 echo "$dylib_c" | gcc -x c - -ldl -o /tmp/observed_dylib
 /tmp/observed_dylib /tmp/observed.so | grep -q 'ALL PASS'
 rm -f /tmp/observed.so /tmp/observed_dylib
+
+hjson_c="$("$BIN" doc/examples/file-functions.dsl --max-length 1 --seed 0 --max-cases 1 --harness-json)"
+echo "$hjson_c" | gcc -x c - -o /tmp/hjson
+/tmp/hjson | grep -q '"kind":"failure"' || true
+rm -f /tmp/hjson /tmp/a.txt /tmp/b.txt /tmp/c.txt
 
 echo "PASS"
