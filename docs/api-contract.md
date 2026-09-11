@@ -22,6 +22,8 @@ framework-free executable contract for the first release.
 unknown transition endpoints, and duplicate transition IDs. `wct_run_state`
 computes reachability from `initial` and invokes transitions in valid graph
 order, stopping at `limits.max_steps` (or a replay-safe bounded default).
+State execution requires paired `state_snapshot` and `state_restore` hooks so
+opaque callback context has explicit transactional semantics.
 Branch coverage may replay a prefix from `initial`; provide the optional
 `wct_limits.state_reset` hook to restore mutable callback context before each
 scenario. For mutable contexts, pair `wct_limits.state_snapshot` and

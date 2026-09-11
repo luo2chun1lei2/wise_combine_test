@@ -102,6 +102,12 @@ static int relation_callback(const char *id, const char *const *args, size_t arg
 
 static uint64_t trace_seed(void) { return UINT64_C(1469598103934665603); }
 static int state_reset(void *ctx) { (void)ctx; return 0; }
+static int state_snapshot(void *ctx, void **snapshot, size_t *size) {
+    (void)ctx; *snapshot = NULL; *size = 0; return 0;
+}
+static int state_restore(void *ctx, const void *snapshot, size_t size) {
+    (void)ctx; (void)snapshot; return size == 0 ? 0 : -1;
+}
 static void state_observer(const char *id, void *ctx) { cli_context *c = ctx; if (c) c->current_edge_id = id; }
 
 static void hash_field(cli_context *c, const char *s) {
@@ -224,6 +230,8 @@ static int replay_trace(const char *path) {
         return 1;
     }
     limits.state_reset = state_reset;
+    limits.state_snapshot = state_snapshot;
+    limits.state_restore = state_restore;
     limits.transition_observer = state_observer;
     if (hash_file(model) != expected_model_digest) {
         fprintf(stderr, "error: trace model checksum mismatch\n");
@@ -302,6 +310,8 @@ int main(int argc, char **argv) {
         fprintf(stderr, "error: --mode must be state or relation\n"); return 2;
     }
     limits.state_reset = state_reset;
+    limits.state_snapshot = state_snapshot;
+    limits.state_restore = state_restore;
     limits.transition_observer = state_observer;
     if (trace_path && limits.isolate) {
         fprintf(stderr, "error: --trace cannot be combined with --isolate; replay the isolated run separately\n");

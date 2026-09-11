@@ -391,8 +391,8 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
     if (!r) return -1;
     memset(r, 0, sizeof *r);
     r->seed = lim.seed;
-    if ((lim.state_snapshot == NULL) != (lim.state_restore == NULL)) {
-        r->error = dupstr("state snapshot and restore hooks must be paired");
+    if (!lim.state_snapshot || !lim.state_restore) {
+        r->error = dupstr("state snapshot/restore hooks are required");
         r->failures = 1;
         return -1;
     }
