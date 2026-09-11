@@ -1,7 +1,7 @@
 {
   "version": 1,
   "createdAt": "2026-09-11T03:20:32.090Z",
-  "updatedAt": "2026-09-11T08:19:03.264Z",
+  "updatedAt": "2026-09-11T08:26:25.638Z",
   "briefPath": ".omx/ultragoal/brief.md",
   "goalsPath": ".omx/ultragoal/goals.json",
   "ledgerPath": ".omx/ultragoal/ledger.jsonl",
@@ -14,7 +14,7 @@
       "status": "review_blocked",
       "attempt": 1,
       "createdAt": "2026-09-11T03:20:32.090Z",
-      "updatedAt": "2026-09-11T04:50:31.474Z",
+      "updatedAt": "2026-09-11T08:25:59.957Z",
       "startedAt": "2026-09-11T03:20:47.932Z",
       "reviewBlockedAt": "2026-09-11T04:50:31.474Z",
       "evidence": "Independent code review REQUEST_CHANGES and architecture review BLOCK; see evidence/iter-6/summary.json.",
@@ -22,7 +22,11 @@
         "resolverGoalId": "G002-resolve-final-state-transaction-and",
         "status": "pending",
         "evidence": "Independent code review REQUEST_CHANGES and architecture review BLOCK; see evidence/iter-6/summary.json."
-      }
+      },
+      "steeringStatus": "blocked",
+      "blockedReason": "Subsequent resolver goals closed all blockers.",
+      "steeringEvidence": "evidence/iter-15 PASS; final reviews APPROVE/CLEAR; clean synced worktree.",
+      "steeringRationale": "Subsequent resolver goals closed all blockers."
     },
     {
       "id": "G002-resolve-final-state-transaction-and",
@@ -31,7 +35,7 @@
       "status": "review_blocked",
       "attempt": 1,
       "createdAt": "2026-09-11T04:50:31.474Z",
-      "updatedAt": "2026-09-11T05:09:15.646Z",
+      "updatedAt": "2026-09-11T08:26:25.638Z",
       "evidence": "G002 code review APPROVE, but aggregate original-plan architecture review identifies relation result assertions/flow semantics and sequential evidence gates still incomplete.",
       "resolvesReviewBlockedGoalId": "G001-wise-combine-test-c11-linux",
       "startedAt": "2026-09-11T04:50:42.310Z",
@@ -40,7 +44,11 @@
         "resolverGoalId": "G003-close-original-plan-relation-and-evi",
         "status": "pending",
         "evidence": "G002 code review APPROVE, but aggregate original-plan architecture review identifies relation result assertions/flow semantics and sequential evidence gates still incomplete."
-      }
+      },
+      "steeringStatus": "blocked",
+      "blockedReason": "G003 resolver completed the remaining requirements.",
+      "steeringEvidence": "evidence/iter-15 PASS; final reviews APPROVE/CLEAR; clean synced worktree.",
+      "steeringRationale": "G003 resolver completed the remaining requirements."
     },
     {
       "id": "G003-close-original-plan-relation-and-evi",
