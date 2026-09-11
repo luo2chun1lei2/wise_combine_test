@@ -1,0 +1,4 @@
+command	wall_seconds	user_seconds	sys_seconds	max_rss_kb	run
+./bin/wise-combine-test --model fixtures/relation.model --mode relation	0.00	0.00	0.00	1644	1
+./bin/wise-combine-test --model fixtures/relation.model --mode relation	0.00	0.00	0.00	1744	2
+./bin/wise-combine-test --model fixtures/relation.model --mode relation	0.00	0.00	0.00	1760	3
