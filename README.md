@@ -63,9 +63,13 @@ included in the report (`process_exit`, `process_signal`, `timed_out`). Trace
 capture is intentionally mutually exclusive with isolation because callback
 side effects and child-process output are not replayable in the parent.
 
-Isolation is transactional and scenario-scoped: the parent owns scenario state, the child executes
-the callback under a monotonic deadline, and serialized post-state is committed
-only after the result satisfies the transition/call contract. Failed callbacks,
+State isolation is transactional and scenario-scoped: the parent owns state
+snapshots, and a successful state child commits its serialized post-state;
+failed state scenarios roll back atomically. Relation scenarios execute entirely
+in the child and deliberately do not commit arbitrary callback context (callers
+must return results through the callback contract). The child executes
+the callback under a monotonic deadline. Serialized state is committed only for
+state scenarios after the result satisfies the transition contract. Failed callbacks,
 timeouts, and assertion mismatches are discarded. Mutable API contexts must
 provide paired snapshot/restore hooks; branch replay uses the reset hook to
 begin each scenario from the declared initial state.
