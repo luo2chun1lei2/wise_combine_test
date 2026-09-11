@@ -108,15 +108,25 @@ static int relation_callback(const char *id, const char *const *args, size_t arg
 static uint64_t trace_seed(void) { return UINT64_C(1469598103934665603); }
 static int state_reset(void *ctx) { (void)ctx; return 0; }
 
+static void hash_field(cli_context *c, const char *s) {
+    uint64_t n = s ? strlen(s) : 0;
+    for (unsigned i = 0; i < 8; ++i) { c->hash ^= (unsigned char)(n >> (i * 8)); c->hash *= UINT64_C(1099511628211); }
+    if (s) hash_bytes(c, s);
+}
+static void hash_num(cli_context *c, uint64_t n) { char b[32]; snprintf(b,sizeof b,"%" PRIu64,n); hash_field(c,b); }
+
 static uint64_t canonical_ir_digest(const wct_state_graph *state, const wct_relation_graph *relation, const char *mode) {
     cli_context c = {.hash = trace_seed()};
-    hash_bytes(&c, mode);
+    hash_field(&c, mode);
     if (!strcmp(mode, "state") && state) {
-        for (size_t i = 0; i < state->state_count; ++i) hash_bytes(&c, state->states[i]);
-        for (size_t i = 0; i < state->transition_count; ++i) { const wct_transition *t=&state->transitions[i]; hash_bytes(&c,t->id); hash_bytes(&c,t->from); hash_bytes(&c,t->to); hash_bytes(&c,t->input); hash_bytes(&c,t->expect); }
+        hash_field(&c, state->id); hash_field(&c, state->initial); hash_num(&c, state->state_count);
+        for (size_t i = 0; i < state->state_count; ++i) hash_field(&c, state->states[i]);
+        hash_num(&c, state->transition_count);
+        for (size_t i = 0; i < state->transition_count; ++i) { const wct_transition *t=&state->transitions[i]; hash_field(&c,t->id); hash_field(&c,t->from); hash_field(&c,t->to); hash_field(&c,t->input); hash_field(&c,t->expect); }
     } else if (relation) {
-        for (size_t i = 0; i < relation->call_count; ++i) { const wct_call *x=&relation->calls[i]; hash_bytes(&c,x->id); for(size_t j=0;j<x->argc;++j) hash_bytes(&c,x->args[j]); }
-        for (size_t i = 0; i < relation->relation_count; ++i) { hash_bytes(&c,relation->relations[i].from); hash_bytes(&c,relation->relations[i].to); }
+        hash_field(&c, relation->id); hash_num(&c, relation->call_count);
+        for (size_t i = 0; i < relation->call_count; ++i) { const wct_call *x=&relation->calls[i]; hash_field(&c,x->id); hash_num(&c,x->argc); for(size_t j=0;j<x->argc;++j) hash_field(&c,x->args[j]); hash_num(&c,x->expected_argc); hash_num(&c,x->arg_type_count); hash_num(&c,(uint64_t)x->contract_set); for(size_t j=0;j<x->arg_type_count;++j) hash_num(&c,(uint64_t)(int)x->arg_types[j]); }
+        hash_num(&c, relation->relation_count); for (size_t i = 0; i < relation->relation_count; ++i) { hash_field(&c,relation->relations[i].from); hash_field(&c,relation->relations[i].to); }
     }
     return c.hash;
 }
