@@ -5,7 +5,7 @@ BUILD := build
 BIN := bin/wise-combine-test
 API_TEST := $(BUILD)/test_api
 
-.PHONY: all clean test sanitize valgrind measure
+.PHONY: all clean test sanitize valgrind measure coverage
 
 all: $(BIN)
 
@@ -28,11 +28,13 @@ $(BIN): $(BUILD)/wct.o $(BUILD)/wct_cli.o
 test: all $(API_TEST)
 	./tests/test_cli.sh
 	./$(API_TEST)
+	./tests/test_fuzz.sh
 
 sanitize: clean
 	$(MAKE) CFLAGS='$(CFLAGS) -fsanitize=address,undefined -fno-omit-frame-pointer' LDFLAGS='-fsanitize=address,undefined' all $(API_TEST)
 	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./tests/test_cli.sh
 	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./$(API_TEST)
+	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./tests/test_fuzz.sh
 
 valgrind: all
 	@if command -v valgrind >/dev/null 2>&1; then valgrind --leak-check=full --error-exitcode=1 $(BIN) --model fixtures/smoke.model --mode state; else echo 'SKIP: valgrind not installed'; fi
@@ -43,6 +45,15 @@ measure: all
 	@printf 'command\twall_seconds\tmax_rss_kb\n' > '$(OUT)'
 	@/usr/bin/time -f './bin/wise-combine-test --model $(or $(FIXTURE),fixtures/smoke.model) --mode $(or $(MODE),state)\t%e\t%M' -o '$(OUT).tmp' ./bin/wise-combine-test --model $(or $(FIXTURE),fixtures/smoke.model) --mode $(or $(MODE),state) >/dev/null
 	@cat '$(OUT).tmp' >> '$(OUT)'; rm -f '$(OUT).tmp'
+
+coverage: clean
+	$(MAKE) CFLAGS='$(CFLAGS) --coverage' LDFLAGS='--coverage' all $(API_TEST)
+	./tests/test_cli.sh
+	./$(API_TEST)
+	./tests/test_fuzz.sh
+	@mkdir -p coverage
+	@gcov -b -c -o build src/wct.c > coverage/wct.gcov.txt
+	@printf 'coverage report: coverage/wct.gcov.txt\n'
 
 clean:
 	rm -rf $(BUILD) bin

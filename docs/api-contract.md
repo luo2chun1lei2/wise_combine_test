@@ -31,13 +31,13 @@ the failed transition as a completed step or covered edge.
 
 `wct_validate_relation` rejects duplicate call IDs, unknown relation endpoints,
 self-relations, duplicate edges, unknown `$call` argument references, and
-cycles. `wct_run_relation` invokes calls only after all declared prerequisites
-complete, using lexicographic call-ID tie-breaking for otherwise independent
-calls, and stops at `limits.max_flows` (or the number of calls). A call argument
-beginning with `$` (for example `$fetch`) is replaced with the prior callback
-result from that call. Callback failures return `-1` with a diagnostic and
-preserve the completed step count; bounded runs expose incomplete calls in
-`report.uncovered`.
+cycles, including cycles formed by result references. `wct_run_relation`
+invokes calls only after all declared prerequisites and implicit `$call`
+dependencies complete, using lexicographic call-ID tie-breaking for otherwise
+independent calls. A call argument beginning with `$` (for example `$fetch`)
+is replaced with the prior callback result from that call. Callback failures
+return `-1` with a diagnostic and preserve the completed step count; bounded
+runs expose incomplete calls in `report.uncovered` and return `-1`.
 
 ## Determinism and limits
 

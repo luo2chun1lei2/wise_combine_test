@@ -340,10 +340,10 @@ static void test_relation_order_and_failure(void)
 
     CHECK(wct_validate_relation(&graph, NULL, 0) == 0, "valid relation graph should validate");
     CHECK(wct_run_relation(&graph, relation_callback, &context,
-                           (wct_limits){.max_flows = 2}, &report) == 0,
-          "relation run should succeed under flow limit");
-    CHECK(report.steps == 2 && report.covered == 2,
-          "relation flow limit should bound completed calls");
+                           (wct_limits){.max_flows = 2}, &report) == -1,
+          "relation run should report incomplete coverage under flow limit");
+    CHECK(report.steps == 2 && report.covered == 2 && report.uncovered == 1,
+          "relation flow limit should bound calls and expose incomplete coverage");
     CHECK(context.count == 2 && strcmp(context.ids[0], "fetch") == 0 &&
               strcmp(context.ids[1], "transform") == 0,
           "relation calls should follow prerequisite order");
@@ -408,6 +408,68 @@ static void test_relation_lexical_tie_break(void)
     wct_relation_graph_free(&graph);
 }
 
+static void test_relation_reference_dependency(void)
+{
+    wct_relation_graph graph = {0};
+    wct_report report;
+    relation_context context = {0};
+    graph.id = copy_string("implicit-dependency");
+    graph.call_count = 2;
+    graph.calls = calloc(graph.call_count, sizeof *graph.calls);
+    graph.calls[0].id = copy_string("consume");
+    graph.calls[0].argc = 1;
+    graph.calls[0].args = calloc(1, sizeof(char *));
+    graph.calls[0].args[0] = copy_string("$produce");
+    graph.calls[1].id = copy_string("produce");
+
+    CHECK(wct_validate_relation(&graph, NULL, 0) == 0,
+          "result reference should define a valid implicit dependency");
+    CHECK(wct_run_relation(&graph, relation_callback, &context,
+                           (wct_limits){0}, &report) == 0,
+          "implicit result dependency should execute successfully");
+    CHECK(context.count == 2 && strcmp(context.ids[0], "produce") == 0 &&
+              strcmp(context.ids[1], "consume") == 0,
+          "producer should run before its result consumer without a redundant edge");
+    wct_report_free(&report);
+
+    free(graph.calls[1].id);
+    graph.calls[1].id = copy_string("produce");
+    graph.calls[1].argc = 1;
+    graph.calls[1].args = calloc(1, sizeof(char *));
+    graph.calls[1].args[0] = copy_string("$consume");
+    char error[64] = {0};
+    CHECK(wct_validate_relation(&graph, error, sizeof error) == -1 &&
+              strstr(error, "cycle") != NULL,
+          "cycles formed only by result references should be rejected");
+    wct_relation_graph_free(&graph);
+}
+
+static void test_parser_boundaries(void)
+{
+    wct_state_graph state = {0};
+    wct_relation_graph relation = {0};
+    char error[128] = {0};
+    CHECK(wct_parse_file("fixtures/smoke.model", NULL, &relation,
+                         error, sizeof error) == -1,
+          "parser should reject a null state output");
+
+    const char *path = "/tmp/wct-overlong.model";
+    FILE *file = fopen(path, "w");
+    CHECK(file != NULL, "overlong fixture should be writable");
+    if (file == NULL) return;
+    fputs("schema 1\n#", file);
+    for (size_t i = 0; i < 4096; ++i) fputc('x', file);
+    fputc('\n', file);
+    fclose(file);
+    memset(error, 0, sizeof error);
+    CHECK(wct_parse_file(path, &state, &relation, error, sizeof error) == -1 &&
+              strstr(error, "line too long") != NULL,
+          "overlong DSL lines should be rejected without truncation");
+    wct_state_graph_free(&state);
+    wct_relation_graph_free(&relation);
+    remove(path);
+}
+
 static void test_parse_fixtures(void)
 {
     wct_state_graph state = {0};
@@ -452,6 +514,8 @@ int main(void)
     test_relation_result_binding();
     test_relation_cycle();
     test_relation_lexical_tie_break();
+    test_relation_reference_dependency();
+    test_parser_boundaries();
     test_parse_fixtures();
     if (failures != 0) {
         fprintf(stderr, "%d API contract test(s) failed\n", failures);
