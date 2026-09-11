@@ -1,0 +1,176 @@
+{
+  "iteration": "I3",
+  "status": "PASS",
+  "head": "2d99f9ca9e3b209430c618281e862ed6d294b76f",
+  "tested_source_commit": "2d99f9ca9e3b209430c618281e862ed6d294b76f",
+  "prior_summary_sha256": "bc1968115fd30c25664f634a3bd06712b34a8ce809588d567541eddbc26b15b5",
+  "commands": [
+    {
+      "command": "coverage",
+      "exit_code": 0
+    },
+    {
+      "command": "measure-1",
+      "exit_code": 0
+    },
+    {
+      "command": "measure-2",
+      "exit_code": 0
+    },
+    {
+      "command": "measure-3",
+      "exit_code": 0
+    },
+    {
+      "command": "replay",
+      "exit_code": 0
+    },
+    {
+      "command": "sanitize",
+      "exit_code": 0
+    },
+    {
+      "command": "sentinels",
+      "exit_code": 0
+    },
+    {
+      "command": "test",
+      "exit_code": 0
+    },
+    {
+      "command": "trace",
+      "exit_code": 0
+    },
+    {
+      "command": "valgrind",
+      "exit_code": 0
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/iter-11/coverage.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-11/coverage.log",
+      "sha256": "72c43ba67b050c70e7b343d58869c190e953cb2ab096fbdca970b496a142add7"
+    },
+    {
+      "path": "evidence/iter-11/head.txt",
+      "sha256": "4de139d22ae189247579041cdb5c67a293f83f18d7f0dc7613a3899cb4c478c8"
+    },
+    {
+      "path": "evidence/iter-11/measure-1.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-11/measure-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "evidence/iter-11/measure-1.tsv",
+      "sha256": "a0ea414b0b011719bfc2b0f35b5c7c41fcc286d884394389a814bedf0d1ecf8f"
+    },
+    {
+      "path": "evidence/iter-11/measure-1.tsv.summary.tsv",
+      "sha256": "09058f96c254e6b47b3a0638c41771730d0e4224d13fc12030aae78b3f029abf"
+    },
+    {
+      "path": "evidence/iter-11/measure-2.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-11/measure-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "evidence/iter-11/measure-2.tsv",
+      "sha256": "24619101487966852441ac7954f629af40f3f9a5bad3059d1b86db93ec5d51e8"
+    },
+    {
+      "path": "evidence/iter-11/measure-2.tsv.summary.tsv",
+      "sha256": "7d5765eb457d14840cbb1e380475f6e0dd60cc24aa4ed809096ce75ef9c689a9"
+    },
+    {
+      "path": "evidence/iter-11/measure-3.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-11/measure-3.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "evidence/iter-11/measure-3.tsv",
+      "sha256": "aba65cf00736010c239cc675b01167f32184a2b6ca8934955aeeccd6676b6a62"
+    },
+    {
+      "path": "evidence/iter-11/measure-3.tsv.summary.tsv",
+      "sha256": "cf98e7589bcc195ea564d11cbbf357c3b268f0d8cf6fe2f7ee0243ce997e644a"
+    },
+    {
+      "path": "evidence/iter-11/replay.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-11/replay.log",
+      "sha256": "eba4919b9974db691d49bd9b21e091d5c14bdb4b905fba2277a9af20deaf5dcb"
+    },
+    {
+      "path": "evidence/iter-11/sanitize.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-11/sanitize.log",
+      "sha256": "2e5f1dfd2f406b226dfd80f1d214ca858400d1e68f036619397b077c90f15aa2"
+    },
+    {
+      "path": "evidence/iter-11/sentinels.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-11/sentinels.log",
+      "sha256": "c774dd09e47d8070fe9b6f5608a47d38642bdfc57f44b6029e32d1ff61eb6650"
+    },
+    {
+      "path": "evidence/iter-11/test.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-11/test.log",
+      "sha256": "837e9f3aecbf2d6c8b914d5fd15f7f99889e9f6f1b58419fefee2cbc94293044"
+    },
+    {
+      "path": "evidence/iter-11/trace.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-11/trace.log",
+      "sha256": "02c89f1b7f44567add7c00cc089e4790d762ad4d343b9a22513ae93e53742222"
+    },
+    {
+      "path": "evidence/iter-11/trace.wct",
+      "sha256": "ed8d4951cec5f3d800a8a50504c440a1afa66b7736ab0cc3e335d0ba7a50c109"
+    },
+    {
+      "path": "evidence/iter-11/valgrind.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-11/valgrind.log",
+      "sha256": "b093fbc282b82bcfa1edb704b1c53d4feec12f83ac281d1af8ec716d9ef585c3"
+    }
+  ],
+  "tools": {
+    "cc": "cc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0",
+    "valgrind": "valgrind-3.15.0"
+  },
+  "environment": {
+    "system": "Linux",
+    "release": "5.15.0-139-generic",
+    "machine": "x86_64"
+  },
+  "git": {
+    "commit": "2d99f9ca9e3b209430c618281e862ed6d294b76f",
+    "push": "PENDING"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "iteration": "I3",
+  "status": "PASS",
+  "scope": "release regression, memory gates and deterministic replay",
+  "head": "2d99f9ca9e3b209430c618281e862ed6d294b76f",
+  "tested_source_commit": "2d99f9ca9e3b209430c618281e862ed6d294b76f",
+  "prior_summary_sha256": "bc1968115fd30c25664f634a3bd06712b34a8ce809588d567541eddbc26b15b5",
+  "checks": {
+    "replay": 0,
+    "valgrind": 0,
+    "sanitize": 0,
+    "measure-3": 0,
+    "measure-1": 0,
+    "test": 0,
+    "trace": 0,
+    "measure-2": 0,
+    "sentinels": 0,
+    "coverage": 0
+  },
+  "blockers": []
+}

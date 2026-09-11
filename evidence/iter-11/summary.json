@@ -1,0 +1,21 @@
+{
+  "iteration": "I11",
+  "status": "PASS",
+  "scope": "canonical I0-I3 chain finalization",
+  "head": "2d99f9ca9e3b209430c618281e862ed6d294b76f",
+  "tested_source_commit": "2d99f9ca9e3b209430c618281e862ed6d294b76f",
+  "prior_summary_sha256": "4b07e889d408a720cd0180e2262c7b73cbff73850623809e6c5e16e710242c63",
+  "checks": {
+    "replay": 0,
+    "valgrind": 0,
+    "sanitize": 0,
+    "measure-3": 0,
+    "measure-1": 0,
+    "test": 0,
+    "trace": 0,
+    "measure-2": 0,
+    "sentinels": 0,
+    "coverage": 0
+  },
+  "blockers": []
+}

@@ -1,0 +1,21 @@
+{
+  "iteration": "I0",
+  "status": "PASS",
+  "scope": "baseline build and schema",
+  "head": "2d99f9ca9e3b209430c618281e862ed6d294b76f",
+  "tested_source_commit": "2d99f9ca9e3b209430c618281e862ed6d294b76f",
+  "prior_summary_sha256": null,
+  "checks": {
+    "replay": 0,
+    "valgrind": 0,
+    "sanitize": 0,
+    "measure-3": 0,
+    "measure-1": 0,
+    "test": 0,
+    "trace": 0,
+    "measure-2": 0,
+    "sentinels": 0,
+    "coverage": 0
+  },
+  "blockers": []
+}

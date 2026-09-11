@@ -1,0 +1,4 @@
+call fetch url
+call transform json
+call store db
+steps=3 covered=3 failures=0 uncovered=0 edges=2/2 uncovered_edges=0 seed=0

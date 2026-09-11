@@ -1,0 +1,21 @@
+{
+  "iteration": "I1",
+  "status": "PASS",
+  "scope": "state graph and transactional execution",
+  "head": "2d99f9ca9e3b209430c618281e862ed6d294b76f",
+  "tested_source_commit": "2d99f9ca9e3b209430c618281e862ed6d294b76f",
+  "prior_summary_sha256": "11d9646c48b7db7fcef0793fecddd55f570f92909b59d304cc38bbd6d61c40e2",
+  "checks": {
+    "replay": 0,
+    "valgrind": 0,
+    "sanitize": 0,
+    "measure-3": 0,
+    "measure-1": 0,
+    "test": 0,
+    "trace": 0,
+    "measure-2": 0,
+    "sentinels": 0,
+    "coverage": 0
+  },
+  "blockers": []
+}
