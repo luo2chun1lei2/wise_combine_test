@@ -5,7 +5,7 @@ BUILD := build
 BIN := bin/wise-combine-test
 API_TEST := $(BUILD)/test_api
 
-.PHONY: all clean test sanitize valgrind measure coverage
+.PHONY: all clean test sanitize sanitizer-sentinels valgrind measure coverage
 
 all: $(BIN)
 
@@ -35,6 +35,12 @@ sanitize: clean
 	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./tests/test_cli.sh
 	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./$(API_TEST)
 	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./tests/test_fuzz.sh
+	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./tests/sanitizer_sentinels.sh
+
+# Intentional failures are isolated from the product tests and must be
+# classified by the sentinel harness rather than treated as product errors.
+sanitizer-sentinels:
+	./tests/sanitizer_sentinels.sh
 
 valgrind: clean
 	$(MAKE) CFLAGS='-std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude' LDFLAGS='' all $(API_TEST)
@@ -49,9 +55,12 @@ valgrind: clean
 measure: all
 	@test -n "$(OUT)" || (echo 'OUT is required, e.g. make measure OUT=evidence/iter-0/measure.tsv'; exit 2)
 	@mkdir -p "$$(dirname '$(OUT)')"
-	@printf 'command\twall_seconds\tmax_rss_kb\n' > '$(OUT)'
-	@/usr/bin/time -f './bin/wise-combine-test --model $(or $(FIXTURE),fixtures/smoke.model) --mode $(or $(MODE),state)\t%e\t%M' -o '$(OUT).tmp' ./bin/wise-combine-test --model $(or $(FIXTURE),fixtures/smoke.model) --mode $(or $(MODE),state) >/dev/null
-	@cat '$(OUT).tmp' >> '$(OUT)'; rm -f '$(OUT).tmp'
+	@printf 'command\twall_seconds\tuser_seconds\tsys_seconds\tmax_rss_kb\trun\n' > '$(OUT)'
+	@set -eu; command='./bin/wise-combine-test --model $(or $(FIXTURE),fixtures/smoke.model) --mode $(or $(MODE),state)'; \
+		i=1; while [ "$$i" -le "$(or $(REPEAT),3)" ]; do \
+		LC_ALL=C /usr/bin/time -f "$$command\t%e\t%U\t%S\t%M\t$$i" -o '$(OUT).tmp' $$command >/dev/null; \
+		cat '$(OUT).tmp' >> '$(OUT)'; i=$$((i + 1)); \
+	done; rm -f '$(OUT).tmp'; LC_ALL=C awk -f tools/summarize_measure.awk '$(OUT)' > '$(OUT).summary.tsv'
 
 coverage: clean
 	$(MAKE) CFLAGS='$(CFLAGS) --coverage' LDFLAGS='--coverage' all $(API_TEST)

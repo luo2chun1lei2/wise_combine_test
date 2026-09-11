@@ -70,3 +70,7 @@ vcpkg_installed/
 Testing/
 .cache/
 .agents/
+
+# Evidence logs are release artifacts and must remain trackable.
+!evidence/
+!evidence/**/*.log

@@ -30,9 +30,20 @@ relation prerequisite dependent
 contract function-id argc type...
 ```
 
+`schema 1` is the on-disk compatibility boundary. New directives and
+contract attributes are append-only; an older reader must reject an unknown
+required directive rather than silently changing execution. Trace files carry
+their own `WCT_TRACE 1` version and canonical model/IR/metadata digests, so a
+replay is accepted only when both the schema and all recorded inputs match.
+
 Call contracts are optional. For example, `contract fetch 2 string int`
 requires two arguments and validates their declared literal types (`int`,
 `bool`, `string`, `bytes`, `ref`, or `any`).
+
+Contracts may append `result=<type>` to validate the callback result and
+`expect=<text>` to require an exact result. A producer's declared result type
+also constrains `$producer` reference arguments. Both attributes are optional,
+so existing schema-1 contracts remain valid.
 
 `--mode state` executes reachable transitions in valid graph order. Branches
 may replay a prefix from the initial state; callers with mutable state should
@@ -51,12 +62,24 @@ included in the report (`process_exit`, `process_signal`, `timed_out`). Trace
 capture is intentionally mutually exclusive with isolation because callback
 side effects and child-process output are not replayable in the parent.
 
+Isolation is transactional: the parent owns scenario state, the child executes
+the callback under a monotonic deadline, and serialized post-state is committed
+only after the result satisfies the transition/call contract. Failed callbacks,
+timeouts, and assertion mismatches are discarded. Mutable API contexts must
+provide paired snapshot/restore hooks; branch replay uses the reset hook to
+begin each scenario from the declared initial state.
+
 ## Verification
 
 `make test` runs the standalone smoke checks. `make sanitize` enables
-AddressSanitizer and UndefinedBehaviorSanitizer. `make valgrind` runs when
+AddressSanitizer and UndefinedBehaviorSanitizer and runs isolated intentional
+OOB/leak sentinels; expected sanitizer findings are classified separately from
+product failures. `make valgrind` runs when
 Valgrind is installed and otherwise records an explicit skip. A measurement
-TSV can be generated with `make measure OUT=evidence/iter-0/measure.tsv`.
+TSV can be generated with `LC_ALL=C make measure OUT=evidence/iter-0/measure.tsv`.
+It repeats the fixed command three times by default, records wall/user/system
+CPU and maximum RSS, and writes a companion median/min/max/range table. Use
+`REPEAT=N`, `FIXTURE=...`, and `MODE=...` for controlled comparisons.
 
 The iteration gates and verification evidence are tracked in
 [`docs/release-readiness.md`](docs/release-readiness.md). `make coverage`
