@@ -87,6 +87,22 @@ std::string transitionKey(const smodel::Transition &t) {
   return t.from + " -" + t.event + "-> " + t.to;
 }
 
+void collectNswitch(const smodel::StateMachine &machine, const std::string &state, int depth,
+                    const std::string &prefix, std::set<std::string> &out) {
+  if (depth == 0) {
+    out.insert(prefix);
+    return;
+  }
+  for (const auto &transition : machine.transitions) {
+    if (transition.from != state) {
+      continue;
+    }
+    const std::string key =
+        prefix.empty() ? transitionKey(transition) : prefix + " ; " + transitionKey(transition);
+    collectNswitch(machine, transition.to, depth - 1, key, out);
+  }
+}
+
 int runFunction(const std::string &text, int maxLength, unsigned seed, bool json, bool negative,
                 int maxCases, bool coverage, bool harness, bool dylib, bool randomAlgorithm,
                 bool bfsAlgorithm, bool bindRandom, bool cover, int replayIndex) {
@@ -245,7 +261,7 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
 
 int runStateMachine(const std::string &text, int maxLength, bool json, bool coverage, bool cover,
                     bool randomAlgorithm, bool tourAlgorithm, bool bfsAlgorithm, unsigned seed, int maxCases,
-                    const std::string &events, int replayIndex) {
+                    const std::string &events, int replayIndex, int nSwitch) {
   antlr4::ANTLRInputStream input(text);
   StateMachineDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -410,6 +426,28 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
     std::cout << "covered_states: " << coveredStates.size() << "/" << m.states.size() << std::endl;
     std::cout << "covered_transitions: " << coveredTransitions.size() << "/" << m.transitions.size()
               << std::endl;
+
+    if (nSwitch >= 1) {
+      std::set<std::string> totalNswitch;
+      for (const auto &state : m.states) {
+        collectNswitch(m, state, nSwitch, "", totalNswitch);
+      }
+      std::set<std::string> coveredNswitch;
+      for (const auto &path : paths) {
+        for (std::size_t i = 0; i + nSwitch <= path.steps.size(); ++i) {
+          std::string key;
+          for (int k = 0; k < nSwitch; ++k) {
+            if (k > 0) {
+              key += " ; ";
+            }
+            key += transitionKey(path.steps[i + k].transition);
+          }
+          coveredNswitch.insert(key);
+        }
+      }
+      std::cout << "covered_nswitch_" << nSwitch << ": " << coveredNswitch.size() << "/"
+                << totalNswitch.size() << std::endl;
+    }
   }
   std::cout << "OK" << std::endl;
   return 0;
@@ -422,7 +460,7 @@ int main(int argc, char **argv) {
     std::cerr << "usage: " << argv[0]
               << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--coverage]"
               << " [--cover] [--algorithm dfs|bfs|random|tour] [--harness] [--dylib] [--events e1,e2,...]"
-              << " [--bind enumerate|random] [--replay N] [--max-cases N]"
+              << " [--bind enumerate|random] [--n-switch N] [--replay N] [--max-cases N]"
               << std::endl;
     return 2;
   }
@@ -439,6 +477,7 @@ int main(int argc, char **argv) {
   bool tourAlgorithm = false;
   bool bfsAlgorithm = false;
   bool bindRandom = false;
+  int nSwitch = 0;
   int maxCases = 0;
   int replayIndex = -1;
   std::string events;
@@ -477,6 +516,9 @@ int main(int argc, char **argv) {
         std::cerr << "unknown bind mode: " << bindMode << std::endl;
         return 2;
       }
+    } else if (arg == "--n-switch" && i + 1 < argc) {
+      nSwitch = std::stoi(argv[++i]);
+      coverage = true;
     } else if (arg == "--harness") {
       harness = true;
     } else if (arg == "--dylib") {
@@ -522,7 +564,7 @@ int main(int argc, char **argv) {
   try {
     if (firstKeyword(text) == "machine") {
       return runStateMachine(text, maxLength, json, coverage, cover, randomAlgorithm, tourAlgorithm,
-                             bfsAlgorithm, seed, maxCases, events, replayIndex);
+                             bfsAlgorithm, seed, maxCases, events, replayIndex, nSwitch);
     }
     return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness, dylib,
                        randomAlgorithm, bfsAlgorithm, bindRandom, cover, replayIndex);
