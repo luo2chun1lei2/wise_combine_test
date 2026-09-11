@@ -1,0 +1,75 @@
+{
+  "iteration": "I3",
+  "prior_summary_sha256": "ee365b0949644ca415202cb3caaee52459f45f34c472c14c462ef48774d43455",
+  "head": "fd8b0e74ea09c014aea3773c398afcd9878bf65a",
+  "commands": [
+    {
+      "command": "make clean test",
+      "exit_code": 0
+    },
+    {
+      "command": "make sanitize",
+      "exit_code": 0
+    },
+    {
+      "command": "make coverage",
+      "exit_code": 0
+    },
+    {
+      "command": "make valgrind",
+      "exit_code": 0
+    },
+    {
+      "command": "make measure FIXTURE=fixtures/function_relations.model MODE=relation OUT=evidence/iter-3/measure.tsv",
+      "exit_code": 0
+    },
+    {
+      "command": "./bin/wise-combine-test --replay evidence/iter-3/call-trace.wct",
+      "exit_code": 0
+    }
+  ],
+  "tools": {
+    "cc": "cc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0",
+    "git": "git version 2.25.1"
+  },
+  "environment": {
+    "system": "Linux",
+    "release": "5.15.0-139-generic",
+    "machine": "x86_64",
+    "python": "3.8.10"
+  },
+  "git_delivery": {
+    "commit": "2ae76ca",
+    "push": "BLOCKED: SSH host key verification failed"
+  },
+  "artifacts": [
+    {
+      "path": "evidence/iter-3/call-trace.wct",
+      "sha256": "88bd76bcc4acd6ce8421fa691dd40b8d98cba3b906815cfbcf27999249bc6c66"
+    },
+    {
+      "path": "evidence/iter-3/commands.log",
+      "sha256": "c3fd39a7410d37137ba0d8bc18721c849ad3f303785cb87b4ae44c15f1d1fd35"
+    },
+    {
+      "path": "evidence/iter-3/measure.tsv",
+      "sha256": "743cf80122ca99871f93f22f008ec76d27b70edcca4f44dc957f1b70643031bf"
+    },
+    {
+      "path": "evidence/iter-3/relation.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "evidence/iter-3/relation.stdout",
+      "sha256": "94fd6940f768f83afea2448072b1999eed3a455c39a5a43e1e18411d93207569"
+    },
+    {
+      "path": "evidence/iter-3/replay.log",
+      "sha256": "dbe97b02f9807dfc70250bfa3eccc45f7909d36b13cd864aed3218e81a790a7d"
+    },
+    {
+      "path": "evidence/iter-3/summary.json",
+      "sha256": "fd367ece49279883556c7b9a281d9a1524445de09a6218b227920f910874efd5"
+    }
+  ]
+}

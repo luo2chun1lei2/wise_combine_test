@@ -1,0 +1,21 @@
+{
+  "iteration": "I3",
+  "status": "BLOCKED",
+  "scope": "release regression, deterministic replay, boundary fuzzing, and documentation",
+  "implementation": "integrated",
+  "checks": {
+    "clean_make_test": "PASS",
+    "asan_ubsan": "PASS",
+    "boundary_fuzz": "PASS",
+    "coverage": "PASS",
+    "trace_replay": "PASS",
+    "valgrind": "SKIP: valgrind not installed",
+    "measurement": "PASS",
+    "git_push": "BLOCKED: SSH host key verification failed"
+  },
+  "blockers": [
+    "remote publication could not be verified because SSH host key verification failed",
+    "POSIX fork/waitpid timeout isolation and full release manifest authority remain outside this implementation"
+  ],
+  "next_step": "resolve remote SSH host verification, then rerun the release gate and publish evidence"
+}
