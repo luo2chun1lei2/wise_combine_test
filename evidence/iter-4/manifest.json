@@ -1,0 +1,38 @@
+{
+  "iteration": "I4",
+  "prior_summary_sha256": "2188ebd7fa365e8b31288798c00bab9ab4d6ae527309922d69a8a2be16633607",
+  "head": "4ee9e603f52051e97b88daf2832ddc01d95ccc30",
+  "commands": [
+    {
+      "command": "make clean test",
+      "exit_code": 0
+    },
+    {
+      "command": "make sanitize",
+      "exit_code": 0
+    },
+    {
+      "command": "valgrind API and isolated relation",
+      "exit_code": 0
+    }
+  ],
+  "tools": {
+    "cc": "cc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0",
+    "valgrind": "valgrind-3.15.0"
+  },
+  "environment": {
+    "system": "Linux",
+    "release": "5.15.0-139-generic",
+    "machine": "x86_64"
+  },
+  "git_delivery": {
+    "commit": "4ee9e60",
+    "push": "PASS"
+  },
+  "artifacts": [
+    {
+      "path": "evidence/iter-4/summary.json",
+      "sha256": "7e9865d15a3a05877ea3a2f42d23db8bc3f43fa6a965006c391b7f081c65b8da"
+    }
+  ]
+}
