@@ -498,9 +498,9 @@ void Parser::parse_parameter(const std::string& text, int line, Spec& spec) {
 
 void Parser::parse_order(const std::string& text, int line, Spec& spec) {
     const auto tokens = split_ws(trim(text.substr(std::string("order").size())));
-    if (tokens.size() != 3 ||
+    if (tokens.size() < 3 ||
         (tokens[1] != "before" && tokens[1] != "after")) {
-        fail(line, "order must be: order <a> before <b> or order <a> after <b>");
+        fail(line, "order must be: order <a> before|after <b>");
     }
     OrderRel rel;
     rel.line = line;
@@ -510,6 +510,9 @@ void Parser::parse_order(const std::string& text, int line, Spec& spec) {
     } else {
         rel.before = tokens[2];
         rel.after = tokens[0];
+    }
+    if (tokens.size() != 3) {
+        fail(line, "order must be: order <a> before|after <b>");
     }
     spec.orders.push_back(rel);
 }
@@ -906,7 +909,8 @@ void Generator::state_dfs(const ObjectDecl& object, std::size_t state_index,
     }
     ++visit;
     if (state.final && !path.empty()) {
-        if (parameter_respected(path) && state_allowed(object, state.name)) {
+        if (parameter_respected(path) && order_respected(path) &&
+            state_allowed(object, state.name)) {
             out.push_back(path);
         }
     }
@@ -1008,7 +1012,12 @@ bool Generator::order_respected(const Flow& flow) const {
         pos[flow[i]] = i;
     }
     for (const auto& rel : model_.spec().orders) {
-        if (pos[rel.before] >= pos[rel.after]) {
+        const auto before_it = pos.find(rel.before);
+        const auto after_it = pos.find(rel.after);
+        if (before_it == pos.end() || after_it == pos.end()) {
+            continue;
+        }
+        if (before_it->second >= after_it->second) {
             return false;
         }
     }
