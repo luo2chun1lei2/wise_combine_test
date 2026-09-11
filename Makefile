@@ -36,8 +36,15 @@ sanitize: clean
 	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./$(API_TEST)
 	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./tests/test_fuzz.sh
 
-valgrind: all
-	@if command -v valgrind >/dev/null 2>&1; then valgrind --leak-check=full --error-exitcode=1 $(BIN) --model fixtures/smoke.model --mode state; else echo 'SKIP: valgrind not installed'; fi
+valgrind: clean
+	$(MAKE) CFLAGS='-std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude' LDFLAGS='' all $(API_TEST)
+	@if command -v valgrind >/dev/null 2>&1; then \
+		valgrind --leak-check=full --error-exitcode=1 ./$(API_TEST); \
+		valgrind --leak-check=full --error-exitcode=1 $(BIN) --model fixtures/smoke.model --mode state; \
+		valgrind --leak-check=full --error-exitcode=1 $(BIN) --model fixtures/relation.model --mode relation --isolate --timeout-ms 100; \
+	else \
+		echo 'SKIP: valgrind not installed'; \
+	fi
 
 measure: all
 	@test -n "$(OUT)" || (echo 'OUT is required, e.g. make measure OUT=evidence/iter-0/measure.tsv'; exit 2)
