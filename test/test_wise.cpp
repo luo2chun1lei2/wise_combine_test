@@ -625,6 +625,55 @@ int main() {
         assert(code.find("// b.x <- a.t") != std::string::npos);
     }
 
+    assert(expect_model_error("function f()\nconstraint count(f > 0"));
+    assert(expect_model_error("function f()\nconstraint count() > 0"));
+    assert(expect_model_error("function f()\nconstraint count(f)"));
+    assert(expect_model_error("function f()\nconstraint count(f) x 1"));
+    assert(expect_model_error("function f()\nconstraint count(f) > abc"));
+    assert(expect_parse_error("constraint"));
+
+    assert(expect_model_error(
+        "object x {\n state A initial\n state B final\n"
+        " transition A -> B by f() guard x == 0\n}\nfunction f()"));
+    assert(expect_model_error(
+        "object x {\n state A initial\n state B final\n"
+        " transition A -> B by f() guard return x 0\n}\nfunction f()"));
+    assert(expect_model_error(
+        "object x {\n state A initial\n state B final\n"
+        " transition A -> B by f() guard return ==\n}\nfunction f()"));
+    assert(expect_model_error(
+        "object x {\n state A initial\n state B final\n"
+        " transition A -> B by f() guard return == abc\n}\nfunction f()"));
+
+    assert(wct::guard_satisfied(wct::GuardExpr{"!=", 0}, 1));
+    assert(wct::guard_satisfied(wct::GuardExpr{"<", 1}, 0));
+    assert(wct::guard_satisfied(wct::GuardExpr{"<=", 1}, 1));
+    assert(wct::guard_satisfied(wct::GuardExpr{">", 1}, 2));
+    assert(wct::guard_satisfied(wct::GuardExpr{">=", 1}, 1));
+
+    assert(expect_parse_error("order a before b if"));
+    assert(expect_parse_error("parallel a"));
+    assert(expect_model_error("function a()\nfunction b()\norder a before b if c"));
+    assert(expect_model_error("parallel a b"));
+    assert(expect_model_error("function a()\nparallel a a"));
+
+    assert(expect_parse_error("function g(config c)\nconstraint value(g)"));
+    assert(expect_parse_error("function g(config c)\nconstraint value(g) == x"));
+    assert(expect_parse_error(
+        "function g(config c)\nconstraint value(g.c) x \"default\""));
+    assert(expect_parse_error("function g(config c)\nconstraint value(g.c)"));
+    assert(expect_model_error(
+        "function g(config c)\nconstraint value(g.d) == \"x\""));
+    assert(expect_model_error("constraint value(g.c) == \"x\""));
+
+    assert(expect_model_error("object x {\n state A initial\n}\nconstraint state B"));
+    assert(expect_model_error(
+        "function f(a x)\nfunction g() -> y\nfunction h() -> z\n"
+        "parameter f.x = g.y\nparameter f.x = h.z"));
+    assert(expect_model_error(
+        "object x {\n state A initial\n state B final\n"
+        " transition A -> B by f()\n}"));
+
     std::cout << "all tests passed\n";
     return 0;
 }
