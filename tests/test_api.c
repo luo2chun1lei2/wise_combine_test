@@ -510,7 +510,7 @@ static void test_relation_result_binding(void)
     graph.relations = calloc(1, sizeof *graph.relations);
     graph.relations[0] = (wct_relation){copy_string("produce"), copy_string("consume")};
     CHECK(wct_run_relation(&graph, relation_callback, &context,
-                           (wct_limits){.seed = 11}, &report) == 0,
+                           (wct_limits){.seed = 11, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == 0,
           "relation result binding should execute successfully");
     CHECK(report.steps == 2 && report.uncovered == 0 && report.seed == 11,
           "relation result binding should report complete deterministic flow");

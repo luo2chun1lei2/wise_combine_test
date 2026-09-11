@@ -1,7 +1,7 @@
 {
   "version": 1,
   "createdAt": "2026-09-11T03:20:32.090Z",
-  "updatedAt": "2026-09-11T03:20:47.932Z",
+  "updatedAt": "2026-09-11T04:50:42.310Z",
   "briefPath": ".omx/ultragoal/brief.md",
   "goalsPath": ".omx/ultragoal/goals.json",
   "ledgerPath": ".omx/ultragoal/ledger.jsonl",
@@ -11,13 +11,32 @@
       "id": "G001-wise-combine-test-c11-linux",
       "title": "完成 wise_combine_test 原始计划：在现有 C11/Linux 组合测试工具基础上，补齐并验证状态图与函数关系的完整规格。...",
       "objective": "完成 wise_combine_test 原始计划：在现有 C11/Linux 组合测试工具基础上，补齐并验证状态图与函数关系的完整规格。必须保持低依赖、版本化 DSL/C API/CLI；实现状态迁移的真实顺序语义、失败原子性、循环/步数边界；实现关系 DAG 的参数/结果绑定、typed/arity 校验、声明边覆盖、确定性 seed sampling；实现 POSIX fork/waitpid 场景隔离与超时报告；完善 trace schema/hash/replay、行列号诊断、边界/fuzz、ASan/UBSan/Valgrind、测量、覆盖率、README、每轮 evidence manifest；所有变更提交并推送。明确排除未声明参数空间穷举。最终必须有干净工作树、远端同步、所有测试和内存检查通过。",
-      "status": "in_progress",
+      "status": "review_blocked",
       "attempt": 1,
       "createdAt": "2026-09-11T03:20:32.090Z",
-      "updatedAt": "2026-09-11T03:20:47.932Z",
-      "startedAt": "2026-09-11T03:20:47.932Z"
+      "updatedAt": "2026-09-11T04:50:31.474Z",
+      "startedAt": "2026-09-11T03:20:47.932Z",
+      "reviewBlockedAt": "2026-09-11T04:50:31.474Z",
+      "evidence": "Independent code review REQUEST_CHANGES and architecture review BLOCK; see evidence/iter-6/summary.json.",
+      "reviewBlockerResolution": {
+        "resolverGoalId": "G002-resolve-final-state-transaction-and",
+        "status": "pending",
+        "evidence": "Independent code review REQUEST_CHANGES and architecture review BLOCK; see evidence/iter-6/summary.json."
+      }
+    },
+    {
+      "id": "G002-resolve-final-state-transaction-and",
+      "title": "Resolve final state transaction and trace contract blockers",
+      "objective": "Make transaction hooks mandatory or provide whole-scenario isolation, complete trace path/metadata validation, then rerun final independent reviews.",
+      "status": "in_progress",
+      "attempt": 1,
+      "createdAt": "2026-09-11T04:50:31.474Z",
+      "updatedAt": "2026-09-11T04:50:42.310Z",
+      "evidence": "Independent code review REQUEST_CHANGES and architecture review BLOCK; see evidence/iter-6/summary.json.",
+      "resolvesReviewBlockedGoalId": "G001-wise-combine-test-c11-linux",
+      "startedAt": "2026-09-11T04:50:42.310Z"
     }
   ],
   "codexObjective": "Complete the durable ultragoal plan in .omx/ultragoal/goals.json, including later accepted/appended stories, under the original brief constraints; use .omx/ultragoal/ledger.jsonl as the audit trail.",
-  "activeGoalId": "G001-wise-combine-test-c11-linux"
+  "activeGoalId": "G002-resolve-final-state-transaction-and"
 }
