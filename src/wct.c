@@ -5,12 +5,48 @@
 #include <errno.h>
 #include <limits.h>
 #include <poll.h>
+#include <time.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #define WCT_MAX_RESULT (1024u * 1024u)
 
 /* Execute one callback in a child process and transfer its result safely. */
+static long long now_ms(void) {
+    struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (long long)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+static int read_exact_deadline(int fd, void *buf, size_t n, long long deadline) {
+    size_t off = 0; char *p = (char *)buf;
+    while (off < n) {
+        int wait_ms = -1;
+        if (deadline >= 0) {
+            long long rem = deadline - now_ms();
+            if (rem <= 0) return -2;
+            wait_ms = rem > INT_MAX ? INT_MAX : (int)rem;
+        }
+        struct pollfd f = {.fd = fd, .events = POLLIN};
+        int pr = poll(&f, 1, wait_ms);
+        if (pr == 0) return -2;
+        if (pr < 0) { if (errno == EINTR) continue; return -1; }
+        ssize_t got = read(fd, p + off, n - off);
+        if (got == 0) return -1;
+        if (got < 0) { if (errno == EINTR) continue; return -1; }
+        off += (size_t)got;
+    }
+    return 0;
+}
+static int reap_deadline(pid_t pid, int *status, long long deadline) {
+    for (;;) {
+        pid_t r = waitpid(pid, status, WNOHANG);
+        if (r == pid) return 0;
+        if (r < 0) { if (errno == EINTR) continue; return -1; }
+        if (deadline >= 0 && now_ms() >= deadline) return 1;
+        struct timespec ts = {.tv_sec = 0, .tv_nsec = 1000000}; nanosleep(&ts, NULL);
+    }
+}
+static void kill_reap(pid_t pid) { (void)kill(pid, SIGKILL); while (waitpid(pid, NULL, 0) < 0 && errno == EINTR) {} }
+
 static int isolate_state_cb(wct_transition_fn fn, const char *input, char **actual,
                             void *ctx, unsigned timeout_ms, const char **why,
                             int *exit_code, int *signal_no, int *timed_out) {
@@ -25,16 +61,19 @@ static int isolate_state_cb(wct_transition_fn fn, const char *input, char **actu
         (void)write(p[1], &len, sizeof len); if (len) (void)write(p[1], out, len);
         free(out); close(p[1]); _exit(0);
     }
-    close(p[1]); struct pollfd fd = {.fd = p[0], .events = POLLIN};
-    int pr = poll(&fd, 1, timeout_ms ? (int)timeout_ms : -1);
-    if (pr == 0) { kill(pid, SIGKILL); waitpid(pid, NULL, 0); close(p[0]); *timed_out = 1; *signal_no = SIGKILL; *why = "callback timeout"; return -1; }
-    if (pr < 0) { kill(pid, SIGKILL); waitpid(pid, NULL, 0); close(p[0]); *why = "isolation wait failed"; return -1; }
-    int rc = -1, present = 0; uint64_t len = 0; ssize_t got = read(p[0], &rc, sizeof rc);
-    if (got == (ssize_t)sizeof rc && read(p[0], &present, sizeof present) == (ssize_t)sizeof present &&
-        read(p[0], &len, sizeof len) == (ssize_t)sizeof len && present && len <= WCT_MAX_RESULT) {
-        *actual = malloc((size_t)len + 1); if (*actual) { size_t off = 0; while (off < len) { ssize_t n = read(p[0], *actual + off, (size_t)len - off); if (n <= 0) break; off += (size_t)n; } if (off != len) { free(*actual); *actual = NULL; } else (*actual)[len] = '\0'; }
-    }
-    close(p[0]); int status = 0; waitpid(pid, &status, 0);
+    close(p[1]); long long deadline = timeout_ms ? now_ms() + timeout_ms : -1;
+    int rc = -1, present = 0; uint64_t len = 0;
+    int rr = read_exact_deadline(p[0], &rc, sizeof rc, deadline);
+    if (!rr) rr = read_exact_deadline(p[0], &present, sizeof present, deadline);
+    if (!rr) rr = read_exact_deadline(p[0], &len, sizeof len, deadline);
+    if (!rr && len > WCT_MAX_RESULT) rr = -3;
+    if (!rr && present) { *actual = malloc((size_t)len + 1); if (!*actual) rr = -1; else if (read_exact_deadline(p[0], *actual, (size_t)len, deadline)) { free(*actual); *actual = NULL; rr = -1; } else (*actual)[len] = '\0'; }
+    close(p[0]); int status = 0;
+    if (rr == -2) { kill_reap(pid); *timed_out = 1; *signal_no = SIGKILL; *why = "callback timeout"; return -1; }
+    if (rr) { kill_reap(pid); *why = rr == -3 ? "callback result too large" : "isolation read failed"; return -1; }
+    int wr = reap_deadline(pid, &status, deadline);
+    if (wr == 1) { kill_reap(pid); *timed_out = 1; *signal_no = SIGKILL; *why = "callback timeout"; return -1; }
+    if (wr < 0) { kill_reap(pid); *why = "isolation wait failed"; return -1; }
     if (WIFEXITED(status)) *exit_code = WEXITSTATUS(status); else if (WIFSIGNALED(status)) *signal_no = WTERMSIG(status);
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) { *why = "callback terminated"; return -1; }
     return rc;
@@ -54,16 +93,19 @@ static int isolate_relation_cb(wct_call_fn fn, const char *id, const char *const
         (void)write(p[1], &len, sizeof len); if (len) (void)write(p[1], out, len);
         free(out); close(p[1]); _exit(0);
     }
-    close(p[1]); struct pollfd fd = {.fd = p[0], .events = POLLIN};
-    int pr = poll(&fd, 1, timeout_ms ? (int)timeout_ms : -1);
-    if (pr == 0) { kill(pid, SIGKILL); waitpid(pid, NULL, 0); close(p[0]); *timed_out = 1; *signal_no = SIGKILL; *why = "callback timeout"; return -1; }
-    if (pr < 0) { kill(pid, SIGKILL); waitpid(pid, NULL, 0); close(p[0]); *why = "isolation wait failed"; return -1; }
-    int rc = -1, present = 0; uint64_t len = 0; ssize_t got = read(p[0], &rc, sizeof rc);
-    if (got == (ssize_t)sizeof rc && read(p[0], &present, sizeof present) == (ssize_t)sizeof present &&
-        read(p[0], &len, sizeof len) == (ssize_t)sizeof len && present && len <= WCT_MAX_RESULT) {
-        *result = malloc((size_t)len + 1); if (*result) { size_t off = 0; while (off < len) { ssize_t n = read(p[0], *result + off, (size_t)len - off); if (n <= 0) break; off += (size_t)n; } if (off != len) { free(*result); *result = NULL; } else (*result)[len] = '\0'; }
-    }
-    close(p[0]); int status = 0; waitpid(pid, &status, 0);
+    close(p[1]); long long deadline = timeout_ms ? now_ms() + timeout_ms : -1;
+    int rc = -1, present = 0; uint64_t len = 0;
+    int rr = read_exact_deadline(p[0], &rc, sizeof rc, deadline);
+    if (!rr) rr = read_exact_deadline(p[0], &present, sizeof present, deadline);
+    if (!rr) rr = read_exact_deadline(p[0], &len, sizeof len, deadline);
+    if (!rr && len > WCT_MAX_RESULT) rr = -3;
+    if (!rr && present) { *result = malloc((size_t)len + 1); if (!*result) rr = -1; else if (read_exact_deadline(p[0], *result, (size_t)len, deadline)) { free(*result); *result = NULL; rr = -1; } else (*result)[len] = '\0'; }
+    close(p[0]); int status = 0;
+    if (rr == -2) { kill_reap(pid); *timed_out = 1; *signal_no = SIGKILL; *why = "callback timeout"; return -1; }
+    if (rr) { kill_reap(pid); *why = rr == -3 ? "callback result too large" : "isolation read failed"; return -1; }
+    int wr = reap_deadline(pid, &status, deadline);
+    if (wr == 1) { kill_reap(pid); *timed_out = 1; *signal_no = SIGKILL; *why = "callback timeout"; return -1; }
+    if (wr < 0) { kill_reap(pid); *why = "isolation wait failed"; return -1; }
     if (WIFEXITED(status)) *exit_code = WEXITSTATUS(status); else if (WIFSIGNALED(status)) *signal_no = WTERMSIG(status);
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) { *why = "callback terminated"; return -1; }
     return rc;
@@ -319,8 +361,9 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
     unsigned char *seen = calloc(g->transition_count ? g->transition_count : 1, 1);
     unsigned char *reachable = calloc(g->state_count ? g->state_count : 1, 1);
     size_t *queue = calloc(g->state_count ? g->state_count : 1, sizeof *queue);
-    if (!seen || !reachable || !queue) {
-        free(seen); free(reachable); free(queue);
+    size_t *plan = calloc(g->transition_count ? g->transition_count + g->state_count + 1 : 1, sizeof *plan);
+    if (!seen || !reachable || !queue || !plan) {
+        free(seen); free(reachable); free(queue); free(plan);
         r->error = dupstr("out of memory"); return -1;
     }
     int initial = find_state(g, g->initial);
@@ -341,30 +384,53 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
             }
         }
     }
+    size_t plan_len = 0, plan_pos = 0;
     for (size_t step = 0; step < max; step++) {
         int picked = -1;
         size_t ready_count = 0;
+        if (plan_pos < plan_len) {
+            picked = (int)plan[plan_pos++];
+        }
         for (size_t i = 0; i < g->transition_count; i++) {
             int source = find_state(g, g->transitions[i].from);
             if (!seen[i] && source == current) ready_count++;
         }
-        /* A graph may branch or terminate. Start a new bounded scenario at
-         * the initial state (or another reachable source) rather than
-         * invoking an edge whose source is not the current object state. */
-        if (!ready_count) {
-            current = initial;
+        /* A graph may branch or terminate. Start a new scenario at the
+         * initial state and replay a valid prefix to an uncovered edge;
+         * never invoke an edge whose source is not the current state. */
+        if (picked < 0 && !ready_count) {
+            int target = -1;
             for (size_t i = 0; i < g->transition_count; ++i) {
                 int source = find_state(g, g->transitions[i].from);
-                if (!seen[i] && source >= 0 && reachable[(size_t)source]) {
-                    current = source;
-                    break;
-                }
+                if (!seen[i] && source >= 0 && reachable[(size_t)source]) { target = (int)i; break; }
             }
-            for (size_t i = 0; i < g->transition_count; ++i)
-                if (!seen[i] && find_state(g, g->transitions[i].from) == current)
-                    ready_count++;
+            if (target >= 0) {
+                size_t *pred_state = calloc(g->state_count, sizeof *pred_state);
+                size_t *pred_edge = calloc(g->state_count, sizeof *pred_edge);
+                unsigned char *vis = calloc(g->state_count, 1);
+                size_t *bq = calloc(g->state_count, sizeof *bq), bh = 0, bt = 0;
+                if (!pred_state || !pred_edge || !vis || !bq) { free(pred_state); free(pred_edge); free(vis); free(bq); r->error = dupstr("out of memory"); break; }
+                vis[(size_t)initial] = 1; bq[bt++] = (size_t)initial;
+                int goal = find_state(g, g->transitions[(size_t)target].from);
+                while (bh < bt && !vis[(size_t)goal]) {
+                    size_t st = bq[bh++];
+                    for (size_t i = 0; i < g->transition_count; ++i) {
+                        if (find_state(g, g->transitions[i].from) != (int)st) continue;
+                        int ns = find_state(g, g->transitions[i].to);
+                        if (ns >= 0 && !vis[(size_t)ns]) { vis[(size_t)ns] = 1; pred_state[(size_t)ns] = st; pred_edge[(size_t)ns] = i; bq[bt++] = (size_t)ns; }
+                    }
+                }
+                size_t rev_len = 0, st = (size_t)goal;
+                while ((int)st != initial) { rev_len++; st = pred_state[st]; }
+                plan_len = rev_len + 1; plan_pos = 0; st = (size_t)goal;
+                for (size_t k = rev_len; k > 0; --k) { plan[k - 1] = pred_edge[st]; st = pred_state[st]; }
+                plan[rev_len] = (size_t)target;
+                current = initial;
+                free(pred_state); free(pred_edge); free(vis); free(bq);
+                picked = (int)plan[plan_pos++];
+            }
         }
-        if (ready_count) {
+        if (picked < 0 && ready_count) {
             size_t choice = lim.seed ? (next_rand(&rng) % ready_count) : 0;
             for (size_t i = 0; i < g->transition_count; i++) {
                 int source = find_state(g, g->transitions[i].from);
@@ -401,7 +467,7 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
         int source = find_state(g, g->transitions[i].from);
         if (source < 0 || !reachable[(size_t)source] || !seen[i]) r->uncovered++;
     }
-    free(queue); free(reachable); free(seen);
+    free(queue); free(plan); free(reachable); free(seen);
     r->covered_edges = r->covered;
     r->uncovered_edges = r->uncovered;
     if (!r->failures && r->uncovered) { r->error = dupstr("uncovered transition"); return -1; }
