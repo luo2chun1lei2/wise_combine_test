@@ -7,6 +7,8 @@ $bin --help >/dev/null
 $bin --version | grep -q 'schema 1'
 $bin --model fixtures/smoke.model --mode state | grep -q 'steps=1 covered=1 failures=0'
 $bin --model fixtures/relation.model --mode relation | grep -q 'steps=2 covered=2 failures=0'
+$bin --model fixtures/smoke.model --mode state --isolate --timeout-ms 100 | grep -q 'process_exit=0'
+$bin --model fixtures/relation.model --mode relation --isolate --timeout-ms 100 | grep -q 'process_exit=0'
 $bin --model fixtures/function_relations.model --mode relation --trace /tmp/wct-test-trace.$$ >/dev/null
 $bin --replay /tmp/wct-test-trace.$$ | grep -q 'replay=PASS'
 sed 's/model_digest .*/model_digest 0000000000000000/' /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-tampered.$$

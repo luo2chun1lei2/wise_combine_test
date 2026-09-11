@@ -27,7 +27,12 @@ transition transition-id from-state to-state input expected-output
 relation_graph calls-id
 call function-id argument...
 relation prerequisite dependent
+contract function-id argc type...
 ```
+
+Call contracts are optional. For example, `contract fetch 2 string int`
+requires two arguments and validates their declared literal types (`int`,
+`bool`, `string`, `bytes`, `ref`, or `any`).
 
 `--mode state` executes each reachable transition once, using the input as
 the example callback's actual result. `--mode relation` executes calls in
@@ -38,6 +43,12 @@ model and rejects model, step-count, exit-code, or trace-digest changes.
 Production users should provide callbacks through the C API rather than
 relying on these example callbacks. Invalid models and callback failures
 return exit code 1; CLI usage errors return exit code 2.
+
+Use `--isolate --timeout-ms N` to execute each callback in a POSIX child
+process and terminate callbacks that exceed the deadline. Isolation status is
+included in the report (`process_exit`, `process_signal`, `timed_out`). Trace
+capture is intentionally mutually exclusive with isolation because callback
+side effects and child-process output are not replayable in the parent.
 
 ## Verification
 

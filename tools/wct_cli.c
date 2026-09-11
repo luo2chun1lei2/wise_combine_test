@@ -220,6 +220,10 @@ int main(int argc, char **argv) {
     if (strcmp(mode, "state") && strcmp(mode, "relation")) {
         fprintf(stderr, "error: --mode must be state or relation\n"); return 2;
     }
+    if (trace_path && limits.isolate) {
+        fprintf(stderr, "error: --trace cannot be combined with --isolate; replay the isolated run separately\n");
+        return 2;
+    }
 
     wct_state_graph state = {0};
     wct_relation_graph relation = {0};
@@ -239,6 +243,16 @@ int main(int argc, char **argv) {
             return 1;
         }
         context.trace = trace;
+        fprintf(trace, "selection %s\n", limits.seed ? "seeded-xorshift" : "lexical-id-order");
+        if (!strcmp(mode, "state")) {
+            for (size_t i = 0; i < state.transition_count; ++i)
+                fprintf(trace, "edge %s %s %s\n", state.transitions[i].id,
+                        state.transitions[i].from, state.transitions[i].to);
+        } else {
+            for (size_t i = 0; i < relation.relation_count; ++i)
+                fprintf(trace, "edge %s->%s\n", relation.relations[i].from,
+                        relation.relations[i].to);
+        }
     }
     wct_report report = {0};
     int rc;
@@ -257,8 +271,8 @@ int main(int argc, char **argv) {
     if (report.scenario)
         fprintf(stderr, "scenario=%s step=%zu\n", report.scenario, report.failed_step);
     if (trace) {
-        fprintf(trace, "steps %zu\ndeclared_edges %zu\ncovered_edges %zu\nuncovered_edges %zu\nexit %d\ndigest %016" PRIx64 "\n", report.steps, report.declared_edges, report.covered_edges, report.uncovered_edges,
-                rc ? 1 : 0, context.hash);
+        fprintf(trace, "steps %zu\ndeclared_edges %zu\ncovered_edges %zu\nuncovered_edges %zu\nexit %d\nprocess_exit %d\nprocess_signal %d\ntimed_out %d\ndigest %016" PRIx64 "\n", report.steps, report.declared_edges, report.covered_edges, report.uncovered_edges,
+                rc ? 1 : 0, report.process_exit, report.process_signal, report.timed_out, context.hash);
         fclose(trace);
     }
     wct_report_free(&report);
