@@ -1,0 +1,124 @@
+{
+  "iteration": "I6",
+  "prior_summary_sha256": "4612bccbce83bb870859e0ebc02f6053acebea03e3ce292c622bf1f1be249d45",
+  "head": "81cd41843b131b54a0a0858529939d82ee164751",
+  "commands": [
+    {
+      "command": "make clean test",
+      "exit_code": 0
+    },
+    {
+      "command": "make sanitize",
+      "exit_code": 0
+    },
+    {
+      "command": "make valgrind",
+      "exit_code": 0
+    },
+    {
+      "command": "make coverage",
+      "exit_code": 0
+    },
+    {
+      "command": "make measure OUT=evidence/iter-6/measure.tsv",
+      "exit_code": 0
+    },
+    {
+      "command": "./bin/wise-combine-test --model fixtures/function_relations.model --mode relation --trace evidence/iter-6/call-trace.wct",
+      "exit_code": 0
+    },
+    {
+      "command": "./bin/wise-combine-test --replay evidence/iter-6/call-trace.wct",
+      "exit_code": 0
+    }
+  ],
+  "tools": {
+    "cc": "cc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0",
+    "git": "git version 2.25.1",
+    "valgrind": "valgrind-3.15.0"
+  },
+  "environment": {
+    "system": "Linux",
+    "release": "5.15.0-139-generic",
+    "machine": "x86_64",
+    "python": "3.8.10"
+  },
+  "git_delivery": {
+    "commit": "81cd418",
+    "push": "PENDING"
+  },
+  "artifacts": [
+    {
+      "path": "evidence/iter-6/call-trace.wct",
+      "sha256": "fb054d9e8828827641a79bfdad3af88e272a496f3fbc13a038225e2079419357"
+    },
+    {
+      "path": "evidence/iter-6/commands.log",
+      "sha256": "90fa1ff33b3fc1540083e51145d9cae7afa2b70844ab53eb9ca34c585983ee81"
+    },
+    {
+      "path": "evidence/iter-6/coverage.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-6/coverage.log",
+      "sha256": "2ac32e7964840143a042449a9b71d042033f480fea23197dd66df1ee851162c5"
+    },
+    {
+      "path": "evidence/iter-6/make-clean-test.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-6/make-clean-test.log",
+      "sha256": "837e9f3aecbf2d6c8b914d5fd15f7f99889e9f6f1b58419fefee2cbc94293044"
+    },
+    {
+      "path": "evidence/iter-6/measure.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-6/measure.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "evidence/iter-6/measure.tsv",
+      "sha256": "4cd1e0f67b5e5e4b99117285fa8d2eb89e95ad80873c6049d3414c96ccb1fc76"
+    },
+    {
+      "path": "evidence/iter-6/replay.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-6/replay.log",
+      "sha256": "eba4919b9974db691d49bd9b21e091d5c14bdb4b905fba2277a9af20deaf5dcb"
+    },
+    {
+      "path": "evidence/iter-6/sanitize.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-6/sanitize.log",
+      "sha256": "b537c7eefe30edc814a86877fcbfa996b61931d04c448a6c94d3677001543a21"
+    },
+    {
+      "path": "evidence/iter-6/summary.json",
+      "sha256": "85c76c4799d8afca7b4da1e824057b0a8b843ad7e2a0e51c333f99ee16255f10"
+    },
+    {
+      "path": "evidence/iter-6/trace.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-6/trace.log",
+      "sha256": "02c89f1b7f44567add7c00cc089e4790d762ad4d343b9a22513ae93e53742222"
+    },
+    {
+      "path": "evidence/iter-6/valgrind.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/iter-6/valgrind.log",
+      "sha256": "a89f1ec38f84fbc5a0eb4106ed4b2e50d82a0967ed8bed68b320f02fb51ef438"
+    }
+  ]
+}

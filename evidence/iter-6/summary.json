@@ -1,0 +1,20 @@
+{
+  "iteration": "I6",
+  "status": "BLOCKED",
+  "scope": "fresh final verification evidence for the original-plan closure review",
+  "checks": {
+    "make_clean_test": "PASS",
+    "asan_ubsan": "PASS",
+    "valgrind": "PASS",
+    "coverage": "PASS (66.60% lines; 73.37% branches)",
+    "measurement": "PASS",
+    "trace_replay": "PASS",
+    "architecture_gate": "BLOCKED"
+  },
+  "blockers": [
+    "state callback context persistence and failure rollback remain unresolved for the original-plan atomicity requirement",
+    "trace replay does not yet validate every emitted metadata field",
+    "coverage is below the optional 80% target"
+  ],
+  "stop_reason": "Verification is fresh and reproducible, but the architectural blockers prevent a complete release claim."
+}

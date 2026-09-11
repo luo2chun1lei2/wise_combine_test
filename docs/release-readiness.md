@@ -64,3 +64,12 @@ make test
 The CLI prints completed `steps`, `covered` items and `failures`; diagnostics
 are written to stderr and the process exits non-zero for invalid models or
 callback/expectation failures.
+
+## I6 Fresh Verification (2026-09-11)
+
+`evidence/iter-6/` records a fresh verification run at the current HEAD. The
+build, sanitizer, Valgrind, measurement, and trace/replay checks passed; the
+coverage report measured 66.60% lines and 73.37% branches. The iteration remains
+`BLOCKED` because the state-context atomicity and complete trace-metadata replay
+requirements are not yet closed. Earlier iteration evidence is historical and
+has not been rewritten.
