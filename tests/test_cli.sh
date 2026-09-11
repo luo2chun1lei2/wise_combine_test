@@ -21,6 +21,9 @@ if $bin --replay /tmp/wct-test-trace-tampered.$$ >/dev/null 2>&1; then
     echo 'tampered trace unexpectedly replayed' >&2
     exit 1
 fi
+cp /tmp/wct-test-trace.$$ /tmp/wct-test-trace-garbage.$$
+echo 'garbage blah' >> /tmp/wct-test-trace-garbage.$$
+if $bin --replay /tmp/wct-test-trace-garbage.$$ >/dev/null 2>&1; then echo 'garbage trace unexpectedly replayed' >&2; exit 1; fi
 rm -f /tmp/wct-test-trace.$$ /tmp/wct-test-trace-edge-tampered.$$
 rm -f /tmp/wct-test-trace-tampered.$$
 if $bin --model fixtures/smoke.model --mode invalid >/dev/null 2>&1; then
