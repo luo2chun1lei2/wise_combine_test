@@ -133,13 +133,13 @@ static int write_trace_header(FILE *trace, const char *model, const char *mode,
 
 static int parse_trace(const char *path, char *model, size_t model_len, char *mode,
                        size_t mode_len, wct_limits *limits, size_t *steps,
-                       int *exit_code, uint64_t *digest, uint64_t *model_digest, uint64_t *ir_digest, uint64_t *metadata_digest, char *selection, size_t selection_len) {
+                       int *exit_code, uint64_t *digest, uint64_t *model_digest, uint64_t *ir_digest, uint64_t *metadata_digest, size_t *declared_edges, size_t *covered_edges, size_t *uncovered_edges, int *process_exit, int *process_signal, int *timed_out, char *selection, size_t selection_len) {
     (void)model_len;
     (void)mode_len;
     (void)selection_len;
     FILE *file = fopen(path, "r");
     char line[4096], key[64], value[2048];
-    int version = 0, got_model = 0, got_mode = 0, got_digest = 0, got_model_digest = 0, got_ir = 0, got_selection = 0;
+    int version = 0, got_model = 0, got_mode = 0, got_digest = 0, got_model_digest = 0, got_ir = 0, got_selection = 0, got_report = 0;
     cli_context stored = {.hash = trace_seed()};
     cli_context metadata = {.hash = trace_seed()};
     int got_metadata_digest = 0;
@@ -162,6 +162,12 @@ static int parse_trace(const char *path, char *model, size_t model_len, char *mo
         if (sscanf(line, "max_steps %zu", &limits->max_steps) == 1) continue;
         if (sscanf(line, "max_flows %zu", &limits->max_flows) == 1) continue;
         if (sscanf(line, "steps %zu", steps) == 1) continue;
+        if (sscanf(line, "declared_edges %zu", declared_edges) == 1) { got_report |= 1; continue; }
+        if (sscanf(line, "covered_edges %zu", covered_edges) == 1) { got_report |= 2; continue; }
+        if (sscanf(line, "uncovered_edges %zu", uncovered_edges) == 1) { got_report |= 4; continue; }
+        if (sscanf(line, "process_exit %d", process_exit) == 1) { got_report |= 8; continue; }
+        if (sscanf(line, "process_signal %d", process_signal) == 1) { got_report |= 16; continue; }
+        if (sscanf(line, "timed_out %d", timed_out) == 1) { got_report |= 32; continue; }
         if (sscanf(line, "exit %d", exit_code) == 1) continue;
         if (sscanf(line, "digest %" SCNx64, digest) == 1) { got_digest = 1; continue; }
         if (sscanf(line, "%63s %2047s", key, value) == 2 && !strcmp(key, "step")) {
@@ -171,7 +177,7 @@ static int parse_trace(const char *path, char *model, size_t model_len, char *mo
         }
     }
     fclose(file);
-    if (!got_model || !got_mode || !got_digest || !got_model_digest ||
+    if (!got_model || !got_mode || !got_digest || !got_model_digest || got_report != 63 ||
         version != 1 || !*model || !*mode || !got_ir || !got_selection || !got_metadata_digest || stored.hash != *digest || metadata.hash != *metadata_digest)
         return -1;
     return 0;
@@ -182,11 +188,13 @@ static int replay_trace(const char *path) {
     size_t expected_steps = 0;
     int expected_exit = 0;
     uint64_t expected_digest = 0, expected_model_digest = 0, expected_ir_digest = 0, expected_metadata_digest = 0;
+    size_t expected_declared = 0, expected_covered = 0, expected_uncovered = 0;
+    int expected_process_exit = 0, expected_process_signal = 0, expected_timed_out = 0;
     char selection[64] = {0};
     wct_limits limits = {0};
     if (parse_trace(path, model, sizeof model, mode, sizeof mode, &limits,
                     &expected_steps, &expected_exit, &expected_digest,
-                    &expected_model_digest, &expected_ir_digest, &expected_metadata_digest, selection, sizeof selection)) {
+                    &expected_model_digest, &expected_ir_digest, &expected_metadata_digest, &expected_declared, &expected_covered, &expected_uncovered, &expected_process_exit, &expected_process_signal, &expected_timed_out, selection, sizeof selection)) {
         fprintf(stderr, "error: invalid trace\n");
         return 1;
     }
@@ -212,7 +220,7 @@ static int replay_trace(const char *path) {
             ? wct_run_relation(&relation, relation_callback, &context, limits, &report)
             : -1;
     int ok = (rc ? 1 : 0) == expected_exit && report.steps == expected_steps &&
-             context.hash == expected_digest;
+             context.hash == expected_digest && report.declared_edges == expected_declared && report.covered_edges == expected_covered && report.uncovered_edges == expected_uncovered && report.process_exit == expected_process_exit && report.process_signal == expected_process_signal && report.timed_out == expected_timed_out;
     printf("replay=%s steps=%zu digest=%016" PRIx64 "\n", ok ? "PASS" : "FAIL",
            report.steps, context.hash);
     if (!ok) fprintf(stderr, "error: trace mismatch\n");
