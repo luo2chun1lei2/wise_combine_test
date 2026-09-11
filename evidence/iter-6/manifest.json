@@ -1,7 +1,7 @@
 {
   "iteration": "I6",
   "prior_summary_sha256": "4612bccbce83bb870859e0ebc02f6053acebea03e3ce292c622bf1f1be249d45",
-  "head": "81cd41843b131b54a0a0858529939d82ee164751",
+  "head": "d9d86d1bb8828ecdc4244373c9dd8bfc0b583e89",
   "commands": [
     {
       "command": "make clean test",
@@ -44,13 +44,13 @@
     "python": "3.8.10"
   },
   "git_delivery": {
-    "commit": "81cd418",
+    "commit": "d9d86d1",
     "push": "PENDING"
   },
   "artifacts": [
     {
       "path": "evidence/iter-6/call-trace.wct",
-      "sha256": "fb054d9e8828827641a79bfdad3af88e272a496f3fbc13a038225e2079419357"
+      "sha256": "f74164fd752b688d3dd201daec46905863dc15120393c1669f7aa561ab712c4d"
     },
     {
       "path": "evidence/iter-6/commands.log",
@@ -62,7 +62,7 @@
     },
     {
       "path": "evidence/iter-6/coverage.log",
-      "sha256": "2ac32e7964840143a042449a9b71d042033f480fea23197dd66df1ee851162c5"
+      "sha256": "72c43ba67b050c70e7b343d58869c190e953cb2ab096fbdca970b496a142add7"
     },
     {
       "path": "evidence/iter-6/make-clean-test.exit",
@@ -82,7 +82,7 @@
     },
     {
       "path": "evidence/iter-6/measure.tsv",
-      "sha256": "4cd1e0f67b5e5e4b99117285fa8d2eb89e95ad80873c6049d3414c96ccb1fc76"
+      "sha256": "2bc28a8c6810b725ddc967873f9ec325a43295ebfd6c34f210139ca4e264fa95"
     },
     {
       "path": "evidence/iter-6/replay.exit",
@@ -102,7 +102,7 @@
     },
     {
       "path": "evidence/iter-6/summary.json",
-      "sha256": "85c76c4799d8afca7b4da1e824057b0a8b843ad7e2a0e51c333f99ee16255f10"
+      "sha256": "7b293f4e44a6d7ad577b60235f27254baab7068d5cb6461d1b5a14d915632d51"
     },
     {
       "path": "evidence/iter-6/trace.exit",
@@ -118,7 +118,7 @@
     },
     {
       "path": "evidence/iter-6/valgrind.log",
-      "sha256": "a89f1ec38f84fbc5a0eb4106ed4b2e50d82a0967ed8bed68b320f02fb51ef438"
+      "sha256": "06c78dec0ebf0999eb7ea7a240885847befc8d272a4512e3c0481e3e148eee98"
     }
   ]
 }

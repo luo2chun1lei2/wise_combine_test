@@ -16,5 +16,6 @@
     "trace replay does not yet validate every emitted metadata field",
     "coverage is below the optional 80% target"
   ],
-  "stop_reason": "Verification is fresh and reproducible, but the architectural blockers prevent a complete release claim."
+  "stop_reason": "Verification is fresh and reproducible, but the architectural blockers prevent a complete release claim.",
+  "implementation_notes": "Trace now records observer-provided transition identity and hashes canonical IR with length-prefixed fields."
 }

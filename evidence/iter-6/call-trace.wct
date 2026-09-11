@@ -1,7 +1,7 @@
 WCT_TRACE 1
 model fixtures/function_relations.model
 model_digest 3b3060f8fd41bb5f
-ir_digest 07ff866f6c4b6882
+ir_digest adbbb97bee4a7b4a
 mode relation
 seed 0
 max_steps 0
