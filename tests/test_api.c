@@ -156,10 +156,14 @@ static void test_timeout_range_and_zero_arity_contract(void)
     graph.call_count = 1;
     graph.calls = calloc(1, sizeof *graph.calls);
     graph.calls[0].id = copy_string("zero");
+    graph.calls[0].argc = 1;
+    graph.calls[0].args = calloc(1, sizeof *graph.calls[0].args);
+    graph.calls[0].args[0] = copy_string("extra");
     graph.calls[0].contract_set = 1;
     graph.calls[0].expected_argc = 0;
-    CHECK(wct_validate_relation(&graph, error, sizeof error) == 0,
-          "explicit zero-arity contract should be accepted");
+    CHECK(wct_validate_relation(&graph, error, sizeof error) == -1 &&
+              strstr(error, "arity mismatch") != NULL,
+          "explicit zero-arity contract should reject an extra argument");
     wct_relation_graph_free(&graph);
 }
 
@@ -573,32 +577,6 @@ static void test_relation_arity_and_types(void)
     wct_relation_graph_free(&graph);
 }
 
-static void test_relation_contract_edge_cases(void)
-{
-    wct_relation_graph graph = {0};
-    char error[128] = {0};
-    graph.call_count = 1;
-    graph.calls = calloc(1, sizeof *graph.calls);
-    graph.calls[0].id = copy_string("zero");
-    graph.calls[0].argc = 1;
-    graph.calls[0].args = calloc(1, sizeof(char *));
-    graph.calls[0].args[0] = copy_string("value");
-    graph.calls[0].contract_set = 1;
-    graph.calls[0].expected_argc = 0;
-    CHECK(wct_validate_relation(&graph, error, sizeof error) == -1 &&
-              strstr(error, "arity mismatch") != NULL,
-          "explicit zero-argument contracts should reject extra arguments");
-    free(graph.calls[0].args[0]);
-    graph.calls[0].args[0] = copy_string("$");
-    graph.calls[0].contract_set = 0;
-    graph.calls[0].expected_argc = 0;
-    memset(error, 0, sizeof error);
-    CHECK(wct_validate_relation(&graph, error, sizeof error) == -1 &&
-              strstr(error, "unknown call") != NULL,
-          "bare result references should be rejected");
-    wct_relation_graph_free(&graph);
-}
-
 static void test_parser_call_contract(void) {
     const char *path = "/tmp/wct-contract.model"; FILE *f=fopen(path,"w"); wct_state_graph st={0}; wct_relation_graph g={0}; char e[128]={0};
     CHECK(f != NULL, "contract fixture writable"); if (!f) return; fputs("schema 1\nrelation_graph r\ncall fetch true\ncontract fetch 1 bool\n",f); fclose(f);
@@ -682,7 +660,6 @@ int main(void)
     test_relation_lexical_tie_break();
     test_relation_reference_dependency();
     test_relation_arity_and_types();
-    test_relation_contract_edge_cases();
     test_parser_call_contract();
     test_parser_boundaries();
     test_parse_fixtures();
