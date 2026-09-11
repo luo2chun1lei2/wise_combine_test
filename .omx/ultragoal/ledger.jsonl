@@ -1,2 +1,4 @@
 {"ts":"2026-09-11T03:20:32.090Z","event":"plan_created","message":"1 goal(s) created"}
 {"ts":"2026-09-11T03:20:47.932Z","event":"goal_started","goalId":"G001-wise-combine-test-c11-linux","status":"in_progress","message":"Attempt 1"}
+{"ts":"2026-09-11T04:23:40.086Z","event":"goal_resumed","goalId":"G001-wise-combine-test-c11-linux","status":"in_progress","message":"Resuming active ultragoal"}
+{"ts":"2026-09-11T04:25:10.424Z","event":"goal_resumed","goalId":"G001-wise-combine-test-c11-linux","status":"in_progress","message":"Resuming active ultragoal"}
