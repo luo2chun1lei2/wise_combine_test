@@ -1,0 +1,13 @@
+{
+  "iteration":"I5",
+  "status":"BLOCKED",
+  "scope":"original-plan closure review",
+  "checks":{"make_clean_test":"PASS","asan_ubsan":"PASS","valgrind_api_state_isolated_relation":"PASS","git_push":"PASS"},
+  "blockers":[
+    "per-callback fork isolation cannot preserve mutable state across a multi-transition scenario",
+    "direct callback failure cannot roll back opaque user context without a snapshot/rollback hook",
+    "trace replay does not validate all emitted metadata fields",
+    "prior iteration evidence summaries remain historical and require regeneration for a clean release gate"
+  ],
+  "stop_reason":"The state-context isolation/atomicity blocker was independently reported three times; stop per task instruction and preserve analysis."
+}
