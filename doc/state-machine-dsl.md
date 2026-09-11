@@ -107,13 +107,13 @@ machine Connection {
 
 ## 6. 当前实现与限制
 
-- `guard` 支持形如 `result == OK` 的单个比较表达式，左操作数为标识符，右操作数可为标识符、整数或字符串；工具当前保存该表达式，但在生成路径和 `--events` 执行时不进行求值。
-- `entry`、`exit`、`action` 只记录动作文本，不调用外部函数。
+- `guard` 支持形如 `result == OK` 的单个比较表达式；`--events` 执行时可用 `--guard 名称=值` 提供左操作数变量值，右操作数按字面量/提供的值比较；未提供变量时 guard 视为成立。
+- `entry`、`exit`、`action` 在 `--events` 执行时作为动作轨迹输出，不调用外部函数。
 - 路径生成算法默认 DFS 枚举长度 1 到 `--max-length` 的路径；支持 `--algorithm dfs|bfs|random|tour`。
 - `--events e1,e2,...` 按事件序列执行并输出最终状态；若同一状态和事件存在多个转换，当前选择第一条匹配转换。
 - `--coverage` 输出状态覆盖和转换覆盖统计；`--n-switch N` 输出 N-switch 覆盖；`--cover` 用贪心算法求覆盖全部转换的最小路径集。
 - 并发状态在路径生成和 `--events` 执行中均以活动叶子状态集合建模。
-- 未实现 guard 的运行时求值。
+- 路径生成不进行 guard 求值；guard 只在 `--events` 执行时求值。
 
 ## 7. 相关决定
 

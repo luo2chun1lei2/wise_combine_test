@@ -46,7 +46,7 @@ make test
 ## 使用
 
 ```sh
-./build/wise_combine_test <模型文件> [--max-length N] [--seed N] [--json] [--negative] [--coverage] [--cover] [--algorithm dfs|bfs|random|tour] [--bind enumerate|random] [--n-switch N] [--harness] [--dylib] [--events e1,e2,...] [--replay N] [--max-cases N]
+./build/wise_combine_test <模型文件> [--max-length N] [--seed N] [--json] [--negative] [--coverage] [--cover] [--algorithm dfs|bfs|random|tour] [--bind enumerate|random] [--n-switch N] [--guard k=v] [--harness] [--harness-json] [--dylib] [--events e1,e2,...] [--replay N] [--max-cases N]
 ```
 
 常用选项：
@@ -60,8 +60,10 @@ make test
 - `--algorithm dfs|bfs|random|tour`：生成算法；`tour` 仅状态机。
 - `--bind enumerate|random`：资源实例绑定策略（仅函数模型）。
 - `--n-switch N`：输出状态机 N-switch 覆盖统计（含转换对 N=2）。
+- `--guard k=v`：为状态机 `--events` 执行提供 guard 变量的取值（可重复）。
 - `--negative`：生成负向函数调用序列。
 - `--harness`：输出 C harness 代码而不是直接执行。
+- `--harness-json`：harness 失败时输出结构化 JSON。
 - `--dylib`：输出动态加载被测库的 C harness 代码。
 - `--events e1,e2,...`：按给定事件序列执行状态机。
 - `--replay N`：输出第 N 个函数序列的 harness，或第 N 个状态机路径及其事件序列。
