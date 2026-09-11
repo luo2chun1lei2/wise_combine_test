@@ -13,7 +13,7 @@ SRC_CPP := $(shell find src -name '*.cpp')
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -I$(ANTLR_RUNTIME) -I$(GEN_DIR)/src/grammar
 
-.PHONY: all test clean
+.PHONY: all test install clean
 
 all: $(BIN)
 
@@ -27,6 +27,12 @@ $(BIN): $(STAMP) $(RUNTIME_CPP) $(SRC_CPP)
 
 test: $(BIN)
 	bash test/run.sh
+
+PREFIX ?= /usr/local
+
+install: $(BIN)
+	install -d $(DESTDIR)$(PREFIX)/bin
+	install -m 0755 $(BIN) $(DESTDIR)$(PREFIX)/bin/
 
 clean:
 	rm -rf $(BUILD_DIR)

@@ -668,7 +668,12 @@ int main(int argc, char **argv) {
   const std::string text = ss.str();
 
   try {
-    if (firstKeyword(text) == "machine") {
+    const bool isMachine = (firstKeyword(text) == "machine");
+    if (isMachine && (negative || harness || dylib || bindRandom)) {
+      std::cerr << "warning: --negative/--harness/--dylib/--bind are ignored for state machine models"
+                << std::endl;
+    }
+    if (isMachine) {
       return runStateMachine(text, maxLength, json, coverage, cover, randomAlgorithm, tourAlgorithm,
                              bfsAlgorithm, seed, maxCases, events, replayIndex, nSwitch);
     }
