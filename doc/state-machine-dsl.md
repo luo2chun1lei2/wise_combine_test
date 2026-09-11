@@ -112,7 +112,7 @@ machine Connection {
 - 路径生成算法默认 DFS 枚举长度 1 到 `--max-length` 的路径；支持 `--algorithm dfs|bfs|random|tour`。
 - `--events e1,e2,...` 按事件序列执行并输出最终状态；若同一状态和事件存在多个转换，当前选择第一条匹配转换。
 - `--coverage` 输出状态覆盖和转换覆盖统计；`--n-switch N` 输出 N-switch 覆盖；`--cover` 用贪心算法求覆盖全部转换的最小路径集。
-- 并发状态目前仅在 `--events` 执行时建模，静态路径生成仍按单状态近似。
+- 并发状态在路径生成和 `--events` 执行中均以活动叶子状态集合建模。
 - 未实现 guard 的运行时求值。
 
 ## 7. 相关决定

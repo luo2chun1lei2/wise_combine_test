@@ -7,17 +7,36 @@ namespace spath {
 
 namespace {
 
+using Active = std::set<std::string>;
+
 std::string transitionKey(const smodel::Transition &transition) {
   return transition.from + " -" + transition.event + "-> " + transition.to;
 }
 
-bool matchesFrom(const smodel::StateMachine &machine, const std::string &state,
-                 const smodel::Transition &transition) {
-  return state == transition.from || smodel::isDescendantOf(machine, state, transition.from);
+bool matches(const smodel::StateMachine &machine, const Active &active,
+             const smodel::Transition &transition) {
+  for (const auto &leaf : active) {
+    if (leaf == transition.from || smodel::isDescendantOf(machine, leaf, transition.from)) {
+      return true;
+    }
+  }
+  return false;
 }
 
-std::string targetLeaf(const smodel::StateMachine &machine, const smodel::Transition &transition) {
-  return smodel::leafOf(machine, transition.to);
+Active fire(const smodel::StateMachine &machine, const Active &active,
+            const smodel::Transition &transition) {
+  Active next = active;
+  for (auto it = next.begin(); it != next.end();) {
+    if (*it == transition.from || smodel::isDescendantOf(machine, *it, transition.from)) {
+      it = next.erase(it);
+    } else {
+      ++it;
+    }
+  }
+  for (const auto &leaf : smodel::enterLeaves(machine, transition.to)) {
+    next.insert(leaf);
+  }
+  return next;
 }
 
 }  // namespace
@@ -45,20 +64,20 @@ std::vector<Path> StateMachinePathGenerator::generate() {
   results_.clear();
   seen_.clear();
   Path path;
-  dfs(smodel::leafOf(machine_, machine_.initial), path);
+  dfs(smodel::enterLeaves(machine_, machine_.initial), path);
   return results_;
 }
 
 std::vector<Path> StateMachinePathGenerator::generateBfs() {
   struct Node {
-    std::string state;
+    Active active;
     Path path;
   };
 
   std::vector<Path> out;
   std::set<std::string> seen;
   std::deque<Node> queue;
-  queue.push_back({smodel::leafOf(machine_, machine_.initial), {}});
+  queue.push_back({smodel::enterLeaves(machine_, machine_.initial), {}});
 
   while (!queue.empty()) {
     Node node = queue.front();
@@ -67,7 +86,7 @@ std::vector<Path> StateMachinePathGenerator::generateBfs() {
       continue;
     }
     for (const auto &transition : machine_.transitions) {
-      if (!matchesFrom(machine_, node.state, transition)) {
+      if (!matches(machine_, node.active, transition)) {
         continue;
       }
       Path next = node.path;
@@ -76,7 +95,7 @@ std::vector<Path> StateMachinePathGenerator::generateBfs() {
       next.steps.push_back(step);
       if (seen.insert(next.text()).second) {
         out.push_back(next);
-        queue.push_back({targetLeaf(machine_, transition), next});
+        queue.push_back({fire(machine_, node.active, transition), next});
       }
     }
   }
@@ -91,11 +110,11 @@ std::vector<Path> StateMachinePathGenerator::generateRandom(unsigned seed, int c
 
   for (int i = 0; i < attempts; ++i) {
     Path path;
-    std::string state = smodel::leafOf(machine_, machine_.initial);
+    Active active = smodel::enterLeaves(machine_, machine_.initial);
     while (static_cast<int>(path.steps.size()) < maxLength_) {
       std::vector<const smodel::Transition *> outgoing;
       for (const auto &transition : machine_.transitions) {
-        if (matchesFrom(machine_, state, transition)) {
+        if (matches(machine_, active, transition)) {
           outgoing.push_back(&transition);
         }
       }
@@ -106,7 +125,7 @@ std::vector<Path> StateMachinePathGenerator::generateRandom(unsigned seed, int c
       Step step;
       step.transition = *transition;
       path.steps.push_back(step);
-      state = targetLeaf(machine_, *transition);
+      active = fire(machine_, active, *transition);
     }
     if (!path.steps.empty() && seen.insert(path.text()).second) {
       out.push_back(path);
@@ -122,14 +141,14 @@ std::vector<Path> StateMachinePathGenerator::generateTour() {
   }
 
   Path path;
-  std::string state = smodel::leafOf(machine_, machine_.initial);
+  Active active = smodel::enterLeaves(machine_, machine_.initial);
   std::set<std::string> covered;
   const std::size_t maxSteps = machine_.transitions.size() * 32 + 64;
 
   while (covered.size() < machine_.transitions.size() && path.steps.size() < maxSteps) {
     const smodel::Transition *pick = nullptr;
     for (const auto &transition : machine_.transitions) {
-      if (matchesFrom(machine_, state, transition) &&
+      if (matches(machine_, active, transition) &&
           covered.find(transitionKey(transition)) == covered.end()) {
         pick = &transition;
         break;
@@ -137,7 +156,7 @@ std::vector<Path> StateMachinePathGenerator::generateTour() {
     }
     if (pick == nullptr) {
       for (const auto &transition : machine_.transitions) {
-        if (matchesFrom(machine_, state, transition)) {
+        if (matches(machine_, active, transition)) {
           pick = &transition;
           break;
         }
@@ -150,7 +169,7 @@ std::vector<Path> StateMachinePathGenerator::generateTour() {
     step.transition = *pick;
     path.steps.push_back(step);
     covered.insert(transitionKey(*pick));
-    state = targetLeaf(machine_, *pick);
+    active = fire(machine_, active, *pick);
   }
 
   if (!path.steps.empty()) {
@@ -159,25 +178,23 @@ std::vector<Path> StateMachinePathGenerator::generateTour() {
   return out;
 }
 
-void StateMachinePathGenerator::dfs(const std::string &state, Path &path) {
+void StateMachinePathGenerator::dfs(const Active &active, Path &path) {
   if (static_cast<int>(path.steps.size()) >= maxLength_) {
     return;
   }
 
   for (const auto &transition : machine_.transitions) {
-    if (!matchesFrom(machine_, state, transition)) {
+    if (!matches(machine_, active, transition)) {
       continue;
     }
-
     Path next = path;
     Step step;
     step.transition = transition;
     next.steps.push_back(step);
 
-    const std::string key = next.text();
-    if (seen_.insert(key).second) {
+    if (seen_.insert(next.text()).second) {
       results_.push_back(next);
-      dfs(targetLeaf(machine_, transition), next);
+      dfs(fire(machine_, active, transition), next);
     }
   }
 }

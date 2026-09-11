@@ -31,7 +31,7 @@ class StateMachinePathGenerator {
   std::vector<Path> results_;
   std::set<std::string> seen_;
 
-  void dfs(const std::string &state, Path &path);
+  void dfs(const std::set<std::string> &active, Path &path);
 };
 
 }  // namespace spath

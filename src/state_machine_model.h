@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -66,6 +67,21 @@ inline bool isDescendantOf(const StateMachine &machine, const std::string &state
     current = info->parent;
   }
   return false;
+}
+
+inline std::set<std::string> enterLeaves(const StateMachine &machine, const std::string &state) {
+  const StateInfo *info = findState(machine, state);
+  if (info != nullptr && info->concurrent) {
+    std::set<std::string> out;
+    for (const auto &child : info->children) {
+      out.insert(leafOf(machine, child));
+    }
+    if (out.empty()) {
+      out.insert(leafOf(machine, state));
+    }
+    return out;
+  }
+  return {leafOf(machine, state)};
 }
 
 }  // namespace smodel
