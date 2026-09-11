@@ -15,14 +15,14 @@
 ```text
 object <对象名> {
   state <状态名> [initial] [final]
-  transition <源状态> -> <目标状态> by <函数名> [guard return <比较符> <整数>]
+  transition <源状态> -> <目标状态> by <函数名> [expect <整数>] [guard return <比较符> <整数>]
 }
 ```
 
 字段说明：
 
 - `state`：声明一个状态。`initial` 表示初始状态，`final` 表示终止状态。
-- `transition`：声明一条状态迁移。`by` 后为触发迁移的函数，`guard` 为可选守卫条件；当前守卫只支持 `return <比较符> <整数>`，比较符可以是 `==`、`!=`、`<`、`<=`、`>`、`>=`。
+- `transition`：声明一条状态迁移。`by` 后为触发迁移的函数；`expect <整数>` 声明预期返回值；`guard` 为可选守卫条件，当前守卫只支持 `return <比较符> <整数>`，比较符可以是 `==`、`!=`、`<`、`<=`、`>`、`>=`。
 
 示例见 [examples/connection.ct](examples/connection.ct)。
 

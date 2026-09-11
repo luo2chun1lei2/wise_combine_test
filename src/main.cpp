@@ -172,13 +172,15 @@ int main(int argc, char** argv) {
         wct::RunnerOptions runner_options{o.lib_path, o.dry_run, 10, {}};
         for (const auto& object : model.spec().objects) {
             for (const auto& tr : object.transitions) {
-                if (tr.guard.empty()) {
-                    continue;
+                if (!tr.guard.empty()) {
+                    wct::GuardExpr guard;
+                    std::string err;
+                    wct::parse_guard(tr.guard, guard, err);
+                    runner_options.guards[tr.func] = guard;
                 }
-                wct::GuardExpr guard;
-                std::string err;
-                wct::parse_guard(tr.guard, guard, err);
-                runner_options.guards[tr.func] = guard;
+                if (tr.expect_present) {
+                    runner_options.expected_returns[tr.func] = tr.expect_return;
+                }
             }
         }
 

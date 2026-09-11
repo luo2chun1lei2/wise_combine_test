@@ -373,18 +373,33 @@ void Parser::parse_object_body(ObjectDecl& object) {
                 fail(line, "transition missing function");
             }
             tr.func = base_name(tokens[i++]);
-            if (i < tokens.size() && tokens[i] == "guard") {
-                ++i;
-                std::ostringstream g;
-                while (i < tokens.size()) {
-                    if (!g.str().empty()) {
-                        g << ' ';
+            while (i < tokens.size()) {
+                if (tokens[i] == "expect") {
+                    ++i;
+                    if (i >= tokens.size()) {
+                        fail(line, "transition expect missing value");
                     }
-                    g << tokens[i++];
+                    try {
+                        tr.expect_return = std::stol(tokens[i]);
+                    } catch (...) {
+                        fail(line, "transition expect must be an integer: " +
+                                        tokens[i]);
+                    }
+                    tr.expect_present = true;
+                    ++i;
+                } else if (tokens[i] == "guard") {
+                    ++i;
+                    std::ostringstream g;
+                    while (i < tokens.size()) {
+                        if (!g.str().empty()) {
+                            g << ' ';
+                        }
+                        g << tokens[i++];
+                    }
+                    tr.guard = g.str();
+                } else {
+                    fail(line, "unexpected transition token: " + tokens[i]);
                 }
-                tr.guard = g.str();
-            } else if (i < tokens.size()) {
-                fail(line, "unexpected transition token: " + tokens[i]);
             }
             object.transitions.push_back(tr);
             ++pos_;
@@ -1066,10 +1081,25 @@ FlowResult Runner::run_direct(const Flow& flow) const {
                 close(pipefd[1]);
                 _exit(125);
             }
-            if (ret != 0) {
-                const std::string msg = "function returned non-zero: " + name + " (" + std::to_string(ret) + ")";
-                const ssize_t ignored3 = write(pipefd[1], msg.c_str(), msg.size());
-                (void)ignored3;
+            const auto expected = options_.expected_returns.find(name);
+            bool mismatch = false;
+            if (expected != options_.expected_returns.end() &&
+                expected->second.has_value()) {
+                mismatch = ret != expected->second.value();
+            } else {
+                mismatch = ret != 0;
+            }
+            if (mismatch) {
+                const std::string msg =
+                    expected != options_.expected_returns.end() &&
+                            expected->second.has_value()
+                        ? "return mismatch: expected " +
+                              std::to_string(expected->second.value()) +
+                              ", got " + std::to_string(ret) + " for " + name
+                        : "function returned non-zero: " + name + " (" +
+                              std::to_string(ret) + ")";
+                const ssize_t ignored4 = write(pipefd[1], msg.c_str(), msg.size());
+                (void)ignored4;
                 dlclose(handle);
                 close(pipefd[1]);
                 _exit(1);
@@ -1128,7 +1158,22 @@ std::string Runner::generate_standalone(const std::vector<Flow>& flows) const {
     for (std::size_t i = 0; i < flows.size(); ++i) {
         out << "static int run_flow_" << i << "() {\n";
         for (const auto& name : flows[i]) {
-            out << "  if (" << name << "() != 0) return 1;\n";
+            out << "  {\n";
+            out << "    int r = " << name << "();\n";
+            const auto guard = options_.guards.find(name);
+            if (guard != options_.guards.end()) {
+                out << "    if (!(r " << guard->second.op << " "
+                    << guard->second.value << ")) return 1;\n";
+            }
+            const auto expected = options_.expected_returns.find(name);
+            if (expected != options_.expected_returns.end() &&
+                expected->second.has_value()) {
+                out << "    if (r != " << expected->second.value()
+                    << ") return 1;\n";
+            } else {
+                out << "    if (r != 0) return 1;\n";
+            }
+            out << "  }\n";
         }
         out << "  return 0;\n";
         out << "}\n\n";

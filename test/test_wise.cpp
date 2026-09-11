@@ -369,6 +369,56 @@ int main() {
         assert(!generator.truncated());
     }
 
+    {
+        const std::string path = write_tmp(
+            "object x {\n"
+            " state A initial\n"
+            " state B final\n"
+            " transition A -> B by f() expect 0 guard return==0\n"
+            "}\n"
+            "function f()");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        assert(spec.objects[0].transitions[0].expect_present);
+        assert(spec.objects[0].transitions[0].expect_return == 0);
+        assert(spec.objects[0].transitions[0].guard == "return==0");
+        wct::Model model(std::move(spec));
+        model.validate();
+    }
+
+    {
+        wct::RunnerOptions opts;
+        opts.lib_path = "test/out/libtest.so";
+        opts.expected_returns["h"] = 0;
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"h"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "failed");
+        assert(results[0].detail.find("return mismatch") != std::string::npos);
+    }
+
+    {
+        wct::RunnerOptions opts;
+        opts.lib_path = "test/out/libtest.so";
+        opts.expected_returns["h"] = 1;
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"h"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "passed");
+    }
+
+    {
+        wct::RunnerOptions opts;
+        wct::GuardExpr guard{"==", 0};
+        opts.guards["f"] = guard;
+        opts.expected_returns["f"] = 0;
+        wct::Runner runner(opts);
+        const std::string code = runner.generate_standalone({{"f"}});
+        assert(code.find("int r = f();") != std::string::npos);
+        assert(code.find("if (!(r == 0)) return 1;") != std::string::npos);
+        assert(code.find("if (r != 0) return 1;") != std::string::npos);
+    }
+
     std::cout << "all tests passed\n";
     return 0;
 }

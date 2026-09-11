@@ -39,6 +39,8 @@ struct TransitionDecl {
     std::string dst;
     std::string func;
     std::string guard;
+    bool expect_present = false;
+    long expect_return = 0;
     int line = 0;
 };
 
@@ -197,7 +199,8 @@ struct RunnerOptions {
     std::string lib_path;
     bool dry_run = false;
     int timeout_seconds = 10;
-    std::unordered_map<std::string, GuardExpr> guards;
+    std::unordered_map<std::string, GuardExpr> guards = {};
+    std::unordered_map<std::string, std::optional<long>> expected_returns = {};
 };
 
 class Runner {
