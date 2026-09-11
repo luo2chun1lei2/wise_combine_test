@@ -1,0 +1,17 @@
+rm -rf build bin
+make CFLAGS='-std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude -fsanitize=address,undefined -fno-omit-frame-pointer' LDFLAGS='-fsanitize=address,undefined' all build/test_api
+make[1]: 进入目录“/home/workspace_data/works/myprojects/wise_combine_test.omx”
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude -fsanitize=address,undefined -fno-omit-frame-pointer -g -c src/wct.c -o build/wct.o
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude -fsanitize=address,undefined -fno-omit-frame-pointer -g -c tools/wct_cli.c -o build/wct_cli.o
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude -fsanitize=address,undefined -fno-omit-frame-pointer build/wct.o build/wct_cli.o -fsanitize=address,undefined -o bin/wise-combine-test
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude -fsanitize=address,undefined -fno-omit-frame-pointer -g tests/test_api.c src/wct.c -o build/test_api -fsanitize=address,undefined
+make[1]: 离开目录“/home/workspace_data/works/myprojects/wise_combine_test.omx”
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./tests/test_cli.sh
+CLI smoke tests passed
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./build/test_api
+API contract tests: PASS
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./tests/test_fuzz.sh
+DSL boundary fuzz tests passed
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./tests/sanitizer_sentinels.sh
+SANITIZER SENTINEL PASS: oob (expected AddressSanitizer|runtime error, exit=1)
+SANITIZER SENTINEL PASS: leak (expected LeakSanitizer|detected memory leaks, exit=134)

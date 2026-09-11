@@ -1,0 +1,30 @@
+{
+  "iteration": "I9",
+  "status": "PASS",
+  "scope": "final clean-checkout regression, whole-scenario isolation, bounded flows, replay and release evidence",
+  "head": "1af6dcc9c32de7f2b20a28485310b83810be8bda",
+  "checks": {
+    "replay": 0,
+    "measure-3": 0,
+    "measure-1": 0,
+    "make_coverage": 0,
+    "make_clean_test": 0,
+    "trace": 0,
+    "measure-2": 0,
+    "sentinels": 0,
+    "make_valgrind": 0,
+    "make_sanitize": 0
+  },
+  "build_gate": "PASS",
+  "memory_gate": "PASS (ASan/UBSan, intentional sentinel classification, and Valgrind error summaries zero)",
+  "measurement_repetitions": 3,
+  "measurement_fields": [
+    "wall_seconds",
+    "user_seconds",
+    "sys_seconds",
+    "max_rss_kb"
+  ],
+  "measurement_summary": "measure-1.tsv.summary.tsv (median/min/max/range)",
+  "trace_replay": "PASS",
+  "blockers": []
+}

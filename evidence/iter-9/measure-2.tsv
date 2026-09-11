@@ -1,0 +1,4 @@
+command	wall_seconds	user_seconds	sys_seconds	max_rss_kb	run
+./bin/wise-combine-test --model fixtures/smoke.model --mode state	0.00	0.00	0.00	1716	1
+./bin/wise-combine-test --model fixtures/smoke.model --mode state	0.00	0.00	0.00	1588	2
+./bin/wise-combine-test --model fixtures/smoke.model --mode state	0.00	0.00	0.00	1788	3

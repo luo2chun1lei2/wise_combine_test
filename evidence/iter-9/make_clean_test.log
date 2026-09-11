@@ -1,0 +1,11 @@
+rm -rf build bin
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude -g -c src/wct.c -o build/wct.o
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude -g -c tools/wct_cli.c -o build/wct_cli.o
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude build/wct.o build/wct_cli.o  -o bin/wise-combine-test
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude -g tests/test_api.c src/wct.c -o build/test_api 
+./tests/test_cli.sh
+CLI smoke tests passed
+./build/test_api
+API contract tests: PASS
+./tests/test_fuzz.sh
+DSL boundary fuzz tests passed
