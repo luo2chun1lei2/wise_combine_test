@@ -26,8 +26,10 @@ Branch coverage may replay a prefix from `initial`; provide the optional
 `wct_limits.state_reset` hook to restore mutable callback context before each
 scenario. For mutable contexts, pair `wct_limits.state_snapshot` and
 `wct_limits.state_restore` to make each transition transactional: successful
-isolated callbacks commit their serialized post-state, while failed callbacks
-are rolled back. Edges whose source state cannot be reached are counted in
+isolated callbacks commit their serialized post-state only after the callback
+result satisfies the transition expectation; callback failures and expectation
+mismatches leave caller context unchanged. The restore hook applies serialized
+state for either commit or rollback. Edges whose source state cannot be reached are counted in
 `report.uncovered`. A callback error or expectation mismatch returns `-1`,
 records the failed step/scenario and expected/actual strings, and does not count
 the failed transition as a completed step or covered edge.

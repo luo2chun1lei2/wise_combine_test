@@ -64,6 +64,10 @@ static int state_callback_fail_second(const char *input, char **actual, void *op
     *actual = copy_string("ok");
     return *actual ? 0 : -1;
 }
+static int state_callback_bad_result(const char *input, char **actual, void *opaque) {
+    state_context *context = opaque; (void)input; context->count++;
+    *actual = copy_string("wrong"); return *actual ? 0 : -1;
+}
 
 static void init_state_graph(wct_state_graph *graph)
 {
@@ -166,6 +170,15 @@ static void test_isolated_state_snapshot_commit(void)
                                     .state_restore = restore_count}, &report) == -1,
           "isolated callback failure should fail run");
     CHECK(context.count == 1, "failed isolated transition must not commit child state");
+    wct_report_free(&report); wct_state_graph_free(&graph);
+
+    init_state_graph(&graph); context = (state_context){0};
+    CHECK(wct_run_state(&graph, state_callback_bad_result, &context,
+                        (wct_limits){.isolate = 1, .timeout_ms = 100,
+                                    .state_snapshot = snapshot_count,
+                                    .state_restore = restore_count}, &report) == -1,
+          "isolated expectation mismatch should fail run");
+    CHECK(context.count == 0, "expectation mismatch must not commit child state");
     wct_report_free(&report); wct_state_graph_free(&graph);
 }
 

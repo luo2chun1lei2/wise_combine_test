@@ -63,7 +63,7 @@ static void kill_reap(pid_t pid) { (void)kill(pid, SIGKILL); while (waitpid(pid,
 static int isolate_state_cb(wct_transition_fn fn, const char *input, char **actual,
                             void *ctx, unsigned timeout_ms,
                             wct_state_snapshot_fn snapshot_fn,
-                            wct_state_restore_fn restore_fn, const char **why,
+                            void **state_out, size_t *state_out_size, const char **why,
                             int *exit_code, int *signal_no, int *timed_out) {
     if (timeout_ms > (unsigned)INT_MAX) { *why = "timeout exceeds poll limit"; return -1; }
     int p[2]; if (pipe(p) < 0) { *why = "isolation pipe failed"; return -1; }
@@ -106,8 +106,10 @@ static int isolate_state_cb(wct_transition_fn fn, const char *input, char **actu
     if (wr < 0) { free(state); kill_reap(pid); *why = "isolation wait failed"; return -1; }
     if (WIFEXITED(status)) *exit_code = WEXITSTATUS(status); else if (WIFSIGNALED(status)) *signal_no = WTERMSIG(status);
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) { free(state); *why = "callback terminated"; return -1; }
-    if (!rc && restore_fn && restore_fn(ctx, state, (size_t)state_size)) {
-        free(state); *why = "state commit failed"; return -1;
+    if (!rc && state_out) {
+        *state_out = state;
+        *state_out_size = (size_t)state_size;
+        state = NULL;
     }
     free(state);
     return rc;
@@ -516,12 +518,13 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
         const wct_transition *t = &g->transitions[(size_t)picked];
         char *actual = NULL;
         void *before = NULL; size_t before_size = 0;
+        void *after = NULL; size_t after_size = 0;
         if (!lim.isolate && lim.state_snapshot && lim.state_snapshot(ctx, &before, &before_size)) {
             r->error = dupstr("state snapshot failed"); r->failures = 1; break;
         }
         const char *isolation_error = NULL;
         int rc = lim.isolate ? isolate_state_cb(fn, t->input, &actual, ctx, lim.timeout_ms,
-                                                lim.state_snapshot, lim.state_restore, &isolation_error,
+                                                lim.state_snapshot, &after, &after_size, &isolation_error,
                                                 &r->process_exit, &r->process_signal, &r->timed_out)
                              : (fn ? fn(t->input, &actual, ctx) : 0);
         if (rc || !actual || strcmp(actual, t->expect)) {
@@ -535,10 +538,20 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
             r->error = dupstr(isolation_error ? isolation_error : (rc ? "transition callback failed" : "transition expectation failed"));
             free(actual);
             free(before);
+            free(after);
+            break;
+        }
+        if (lim.isolate && lim.state_restore &&
+            lim.state_restore(ctx, after, after_size)) {
+            free(actual); free(before); free(after);
+            r->failures++; r->failed_step = step + 1;
+            r->scenario = dupstr(t->id);
+            r->error = dupstr("state commit failed");
             break;
         }
         free(actual);
         free(before);
+        free(after);
         if (!seen[(size_t)picked]) {
             seen[(size_t)picked] = 1;
             r->covered++;
