@@ -27,6 +27,16 @@ make
 
 生成的二进制位于 `build/wise_combine_test`。
 
+## 安装
+
+当前版本没有单独的 `make install` 目标，可直接把生成的 `build/wise_combine_test` 复制到 `PATH` 中的目录使用：
+
+```sh
+cp build/wise_combine_test /usr/local/bin/
+```
+
+如无系统目录写入权限，可改为复制到用户目录并加入 `PATH`。
+
 ## 测试
 
 ```sh
@@ -38,6 +48,21 @@ make test
 ```sh
 ./build/wise_combine_test <模型文件> [--max-length N] [--seed N] [--json] [--negative] [--coverage] [--cover] [--algorithm random|tour] [--harness] [--dylib] [--events e1,e2,...] [--replay N] [--max-cases N]
 ```
+
+常用选项：
+
+- `--max-length N`：生成序列或路径的最大长度，默认 3。
+- `--seed N`：随机种子，默认 0。
+- `--max-cases N`：最大用例数；随机算法下同时作为尝试次数。
+- `--json`：输出 JSON 报告。
+- `--coverage`：输出函数覆盖或状态/转换覆盖统计。
+- `--cover`：输出贪心计算出的最小覆盖用例集。
+- `--algorithm random`：随机游走；`--algorithm tour`：状态机转换游。
+- `--negative`：生成负向函数调用序列。
+- `--harness`：输出 C harness 代码而不是直接执行。
+- `--dylib`：输出动态加载被测库的 C harness 代码。
+- `--events e1,e2,...`：按给定事件序列执行状态机。
+- `--replay N`：输出第 N 个函数序列的 harness，或第 N 个状态机路径及其事件序列。
 
 示例：
 

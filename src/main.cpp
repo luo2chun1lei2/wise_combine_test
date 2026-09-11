@@ -433,7 +433,8 @@ int main(int argc, char **argv) {
   std::string events;
   std::string modelPath;
 
-  for (int i = 1; i < argc; ++i) {
+  try {
+    for (int i = 1; i < argc; ++i) {
     const std::string arg = argv[i];
     if (arg == "--json") {
       json = true;
@@ -445,8 +446,14 @@ int main(int argc, char **argv) {
       cover = true;
     } else if (arg == "--algorithm" && i + 1 < argc) {
       const std::string algorithm = argv[++i];
-      randomAlgorithm = (algorithm == "random");
-      tourAlgorithm = (algorithm == "tour");
+      if (algorithm == "random") {
+        randomAlgorithm = true;
+      } else if (algorithm == "tour") {
+        tourAlgorithm = true;
+      } else {
+        std::cerr << "unknown algorithm: " << algorithm << std::endl;
+        return 2;
+      }
     } else if (arg == "--harness") {
       harness = true;
     } else if (arg == "--dylib") {
@@ -468,6 +475,10 @@ int main(int argc, char **argv) {
       std::cerr << "unknown argument: " << arg << std::endl;
       return 2;
     }
+    }
+  } catch (const std::exception &) {
+    std::cerr << "invalid numeric argument" << std::endl;
+    return 2;
   }
 
   if (modelPath.empty()) {
