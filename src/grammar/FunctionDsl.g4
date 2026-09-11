@@ -2,7 +2,7 @@ grammar FunctionDsl;
 
 model: block* EOF;
 
-block: typesBlock | valuesBlock | resourceBlock | funcBlock;
+block: typesBlock | valuesBlock | resourceBlock | funcBlock | setupBlock;
 
 typesBlock: 'types' '{' typeMap* '}';
 typeMap: ID '->' STRING;
@@ -29,6 +29,10 @@ signatureDecl: 'signature' ':' STRING;
 requiresDecl: 'requires' ':' (cond (',' cond)*)?;
 effectsDecl: 'effects' ':' (effect (',' effect)*)?;
 successDecl: 'success' ':' successExpr;
+
+setupBlock: 'setup' '{' setupEntry* '}';
+setupEntry: ID ':' ID '(' (setupArg (',' setupArg)*)? ')' 'x' INT;
+setupArg: STRING | INT;
 
 cond: ID 'is' ID;
 effect: target '->' ID;

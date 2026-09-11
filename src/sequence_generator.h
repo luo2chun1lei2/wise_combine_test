@@ -50,6 +50,7 @@ class SequenceGenerator {
   std::set<std::string> negativeSeen_;
 
   void dfs(std::vector<Instance> &env, Sequence &seq, int nextId);
+  void applySetups(std::vector<Instance> &env, int &nextId);
   std::string sampleValue(const model::ValueSource &source);
   bool hasAnyBinding(const model::Function &fn, const std::vector<Instance> &env,
                      std::size_t paramIndex, std::vector<bool> &used) const;

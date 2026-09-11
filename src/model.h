@@ -54,11 +54,19 @@ struct Function {
   SuccessExpr success;
 };
 
+struct SetupEntry {
+  std::string name;
+  std::string function;
+  std::vector<std::string> args;
+  int count = 0;
+};
+
 struct Model {
   std::map<std::string, std::string> typeMap;
   std::map<std::string, ValueSource> values;
   std::map<std::string, Resource> resources;
   std::vector<Function> functions;
+  std::vector<SetupEntry> setups;
   std::vector<std::string> errors;
 };
 

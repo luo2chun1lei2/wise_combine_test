@@ -76,6 +76,36 @@ SigParts parseSig(const std::string &signature) {
   return {ret, params};
 }
 
+void emitSetups(std::ostringstream &out, const model::Model &model, int &nextHandle, bool dylib) {
+  for (const auto &setup : model.setups) {
+    auto it = std::find_if(model.functions.begin(), model.functions.end(),
+                           [&](const model::Function &fn) { return fn.name == setup.function; });
+    if (it == model.functions.end()) {
+      continue;
+    }
+    const std::string ctype = cTypeOf(model, it->returnType);
+    const std::string symbol = dylib ? it->symbol + "_p" : it->symbol;
+    for (int k = 0; k < setup.count; ++k) {
+      out << "  " << ctype << " h" << nextHandle << " = " << symbol << "(";
+      for (std::size_t i = 0; i < setup.args.size(); ++i) {
+        if (i > 0) {
+          out << ", ";
+        }
+        bool numeric = !setup.args[i].empty();
+        for (char ch : setup.args[i]) {
+          if (!std::isdigit(static_cast<unsigned char>(ch)) && ch != '-') {
+            numeric = false;
+            break;
+          }
+        }
+        out << (numeric ? setup.args[i] : "\"" + escapeCString(setup.args[i]) + "\"");
+      }
+      out << ");\n";
+      ++nextHandle;
+    }
+  }
+}
+
 std::string translateSuccess(const std::map<std::string, std::string> &paramExpr,
                              const std::string &returnVar, const std::string &expr) {
   std::string out;
@@ -181,6 +211,7 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
     out << "  char buf[256] = {0};\n";
 
     int nextHandle = 0;
+    emitSetups(out, model, nextHandle, dylib);
     for (std::size_t c = 0; c < seq.calls.size(); ++c) {
       const gen::Call &call = seq.calls[c];
       auto fnIt = std::find_if(model.functions.begin(), model.functions.end(),

@@ -1,5 +1,6 @@
 #include "sequence_generator.h"
 
+#include <algorithm>
 #include <deque>
 #include <sstream>
 
@@ -65,8 +66,10 @@ std::vector<Sequence> SequenceGenerator::generate() {
   negativeSeen_.clear();
 
   std::vector<Instance> env;
+  int nextId = 0;
+  applySetups(env, nextId);
   Sequence seq;
-  dfs(env, seq, 0);
+  dfs(env, seq, nextId);
   return results_;
 }
 
@@ -80,7 +83,10 @@ std::vector<Sequence> SequenceGenerator::generateBfs() {
   results_.clear();
   seen_.clear();
   std::deque<Node> queue;
-  queue.push_back({{}, {}, 0});
+  std::vector<Instance> initialEnv;
+  int initialNextId = 0;
+  applySetups(initialEnv, initialNextId);
+  queue.push_back({initialEnv, {}, initialNextId});
 
   while (!queue.empty()) {
     Node node = queue.front();
@@ -142,6 +148,7 @@ std::vector<Sequence> SequenceGenerator::generateRandom(unsigned seed, int count
     std::vector<Instance> env;
     Sequence seq;
     int nextId = 0;
+    applySetups(env, nextId);
 
     while (static_cast<int>(seq.calls.size()) < maxLength_) {
       std::vector<const model::Function *> applicable;
@@ -422,6 +429,20 @@ void SequenceGenerator::apply(const model::Function &fn, const std::vector<int> 
     if (paramIndex >= 0 && bindings[paramIndex] >= 0 &&
         bindings[paramIndex] < static_cast<int>(env.size())) {
       env[bindings[paramIndex]].state = effect.state;
+    }
+  }
+}
+
+void SequenceGenerator::applySetups(std::vector<Instance> &env, int &nextId) {
+  for (const auto &setup : model_.setups) {
+    auto it = std::find_if(model_.functions.begin(), model_.functions.end(),
+                           [&](const model::Function &fn) { return fn.name == setup.function; });
+    if (it == model_.functions.end()) {
+      continue;
+    }
+    std::vector<int> bindings(it->params.size(), -1);
+    for (int i = 0; i < setup.count; ++i) {
+      apply(*it, bindings, env, nextId);
     }
   }
 }

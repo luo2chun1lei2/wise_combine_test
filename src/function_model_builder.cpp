@@ -129,6 +129,24 @@ std::any FunctionModelBuilder::visitFuncBlock(FunctionDslParser::FuncBlockContex
   return nullptr;
 }
 
+std::any FunctionModelBuilder::visitSetupBlock(FunctionDslParser::SetupBlockContext *ctx) {
+  for (auto *entry : ctx->setupEntry()) {
+    model::SetupEntry setup;
+    setup.name = entry->ID(0)->getText();
+    setup.function = entry->ID(1)->getText();
+    for (auto *arg : entry->setupArg()) {
+      if (arg->STRING() != nullptr) {
+        setup.args.push_back(unquote(arg->STRING()->getText()));
+      } else if (arg->INT() != nullptr) {
+        setup.args.push_back(arg->INT()->getText());
+      }
+    }
+    setup.count = std::stoi(entry->INT()->getText());
+    model_.setups.push_back(setup);
+  }
+  return nullptr;
+}
+
 std::string FunctionModelBuilder::unquote(const std::string &s) {
   if (s.size() >= 2 && s.front() == '"' && s.back() == '"') {
     return s.substr(1, s.size() - 2);
