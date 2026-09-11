@@ -35,4 +35,14 @@ if $bin --model fixtures/smoke.model --isolate --timeout-ms 2147483648 >/dev/nul
     echo 'timeout overflow unexpectedly accepted' >&2
     exit 1
 fi
+space_dir="/tmp/wct model.$$"
+space_trace="/tmp/wct-space-trace.$$"
+mkdir -p "$space_dir"
+cp fixtures/smoke.model "$space_dir/model.txt"
+if $bin --model "$space_dir/model.txt" --trace "$space_trace" >/dev/null 2>&1; then
+    echo 'trace unexpectedly accepted a model path containing whitespace' >&2
+    rm -rf "$space_dir" "$space_trace"
+    exit 1
+fi
+rm -rf "$space_dir" "$space_trace"
 echo 'CLI smoke tests passed'

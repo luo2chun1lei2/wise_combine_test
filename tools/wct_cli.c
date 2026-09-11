@@ -2,6 +2,7 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <errno.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +12,13 @@ static char *copy_string(const char *value) {
     char *copy = malloc(size);
     if (copy) memcpy(copy, value, size);
     return copy;
+}
+
+static int contains_whitespace(const char *value) {
+    if (!value) return 0;
+    for (const unsigned char *p = (const unsigned char *)value; *p; ++p)
+        if (isspace(*p)) return 1;
+    return 0;
 }
 
 static void usage(FILE *out) {
@@ -315,6 +323,12 @@ int main(int argc, char **argv) {
     limits.transition_observer = state_observer;
     if (trace_path && limits.isolate) {
         fprintf(stderr, "error: --trace cannot be combined with --isolate; replay the isolated run separately\n");
+        return 2;
+    }
+    /* The trace format stores the model path as a whitespace-delimited field.
+       Reject such paths rather than emitting a trace that cannot be replayed. */
+    if (trace_path && contains_whitespace(model)) {
+        fprintf(stderr, "error: model paths containing whitespace are not supported with --trace\n");
         return 2;
     }
 
