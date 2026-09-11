@@ -15,7 +15,7 @@ RUNTIME_OBJ := $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(RUNTIME_CPP))
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -I$(ANTLR_RUNTIME) -I$(GEN_DIR)/src/grammar
 
-.PHONY: all test install clean
+.PHONY: all test install uninstall clean
 
 all: $(BIN)
 
@@ -39,6 +39,9 @@ PREFIX ?= /usr/local
 install: $(BIN)
 	install -d $(DESTDIR)$(PREFIX)/bin
 	install -m 0755 $(BIN) $(DESTDIR)$(PREFIX)/bin/
+
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/bin/wise_combine_test
 
 clean:
 	rm -rf $(BUILD_DIR)

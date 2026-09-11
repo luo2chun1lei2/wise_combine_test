@@ -318,6 +318,18 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
     for (const auto &seq : negativeSequences) {
       negTexts.push_back(seq.text());
     }
+    std::set<std::string> coveredFunctions;
+    std::set<std::string> coveredPairs;
+    if (coverage) {
+      for (const auto &seq : sequences) {
+        for (std::size_t i = 0; i < seq.calls.size(); ++i) {
+          coveredFunctions.insert(seq.calls[i].function);
+          if (i + 1 < seq.calls.size()) {
+            coveredPairs.insert(seq.calls[i].function + " ; " + seq.calls[i + 1].function);
+          }
+        }
+      }
+    }
     std::cout << "{\"kind\":\"function\"";
     std::cout << ",\"types\":" << m.typeMap.size();
     std::cout << ",\"values\":" << m.values.size();
@@ -327,6 +339,13 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
     printJsonStrings(seqTexts);
     std::cout << ",\"negative_sequences\":";
     printJsonStrings(negTexts);
+    if (coverage) {
+      std::cout << ",\"coverage\":{";
+      std::cout << "\"functions\":" << coveredFunctions.size() << "/" << m.functions.size();
+      std::cout << ",\"function_pairs\":" << coveredPairs.size() << "/"
+                << (m.functions.size() * m.functions.size());
+      std::cout << "}";
+    }
     std::cout << ",\"errors\":";
     printJsonStrings(m.errors);
     std::cout << "}" << std::endl;
@@ -620,6 +639,34 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
     for (const auto &path : paths) {
       pathTexts.push_back(path.text());
     }
+    std::set<std::string> coveredStates;
+    std::set<std::string> coveredTransitions;
+    std::set<std::string> coveredNswitch;
+    std::set<std::string> totalNswitch;
+    if (coverage) {
+      for (const auto &path : paths) {
+        for (const auto &step : path.steps) {
+          coveredStates.insert(step.transition.from);
+          coveredStates.insert(step.transition.to);
+          coveredTransitions.insert(transitionKey(step.transition));
+        }
+        if (nSwitch >= 1) {
+          for (std::size_t i = 0; i + nSwitch <= path.steps.size(); ++i) {
+            std::string key;
+            for (int k = 0; k < nSwitch; ++k) {
+              if (k > 0) key += " ; ";
+              key += transitionKey(path.steps[i + k].transition);
+            }
+            coveredNswitch.insert(key);
+          }
+        }
+      }
+      if (nSwitch >= 1) {
+        for (const auto &state : m.states) {
+          collectNswitch(m, state, nSwitch, "", totalNswitch);
+        }
+      }
+    }
     std::cout << "{\"kind\":\"state_machine\"";
     std::cout << ",\"machine\":\"" << jsonEscape(m.name) << "\"";
     std::cout << ",\"states\":" << m.states.size();
@@ -627,6 +674,17 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
     std::cout << ",\"transitions\":" << m.transitions.size();
     std::cout << ",\"paths\":";
     printJsonStrings(pathTexts);
+    if (coverage) {
+      std::cout << ",\"coverage\":{";
+      std::cout << "\"states\":" << coveredStates.size() << "/" << m.states.size();
+      std::cout << ",\"transitions\":" << coveredTransitions.size() << "/"
+                << m.transitions.size();
+      if (nSwitch >= 1) {
+        std::cout << ",\"nswitch_" << nSwitch << "\":" << coveredNswitch.size() << "/"
+                  << totalNswitch.size();
+      }
+      std::cout << "}";
+    }
     std::cout << ",\"errors\":";
     printJsonStrings(m.errors);
     std::cout << "}" << std::endl;
