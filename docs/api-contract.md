@@ -87,3 +87,8 @@ before callbacks run. DSL models can declare the same metadata after a call with
 `string`, `bytes`, `ref`, and `any`. The parser reports syntax failures with a one-based line and
 column (currently column 1 for directive-level errors), making malformed models
 easier to locate.
+
+Contracts may append `result=<type>` to validate a callback's returned value and
+`expect=<text>` for an exact result assertion. A producer's declared result type
+is also used when checking `$producer` argument references. Both fields are
+optional and preserve legacy contract syntax.

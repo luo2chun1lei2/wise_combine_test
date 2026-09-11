@@ -171,6 +171,7 @@ static int addstr(char ***a, size_t *n, const char *s) {
 }
 static int find_state(const wct_state_graph *g, const char *id) { for (size_t i=0;i<g->state_count;i++) if (!strcmp(g->states[i], id)) return (int)i; return -1; }
 static int find_call(const wct_relation_graph *g, const char *id) { for (size_t i=0;i<g->call_count;i++) if (!strcmp(g->calls[i].id,id)) return (int)i; return -1; }
+static int parse_value_type(const char *name, wct_value_type *type);
 static unsigned next_rand(unsigned *state) {
     unsigned x = *state ? *state : 1u;
     x ^= x << 13; x ^= x >> 17; x ^= x << 5; *state = x; return x;
@@ -192,7 +193,7 @@ static int call_depends_on(const wct_relation_graph *g, size_t dependent,
 }
 
 void wct_state_graph_free(wct_state_graph *g) { if (!g) return; free(g->id); free(g->initial); for(size_t i=0;i<g->state_count;i++) free(g->states[i]); free(g->states); for(size_t i=0;i<g->transition_count;i++){free(g->transitions[i].id);free(g->transitions[i].from);free(g->transitions[i].to);free(g->transitions[i].input);free(g->transitions[i].expect);} free(g->transitions); memset(g,0,sizeof *g); }
-void wct_relation_graph_free(wct_relation_graph *g) { if (!g) return; free(g->id); for(size_t i=0;i<g->call_count;i++){free(g->calls[i].id);for(size_t j=0;j<g->calls[i].argc;j++)free(g->calls[i].args[j]);free(g->calls[i].args);free(g->calls[i].arg_types);} free(g->calls); for(size_t i=0;i<g->relation_count;i++){free(g->relations[i].from);free(g->relations[i].to);} free(g->relations); memset(g,0,sizeof *g); }
+void wct_relation_graph_free(wct_relation_graph *g) { if (!g) return; free(g->id); for(size_t i=0;i<g->call_count;i++){free(g->calls[i].id);for(size_t j=0;j<g->calls[i].argc;j++)free(g->calls[i].args[j]);free(g->calls[i].args);free(g->calls[i].arg_types);free(g->calls[i].expected_result);} free(g->calls); for(size_t i=0;i<g->relation_count;i++){free(g->relations[i].from);free(g->relations[i].to);} free(g->relations); memset(g,0,sizeof *g); }
 void wct_report_free(wct_report *r) {
     if (r) {
         free(r->error);
@@ -222,7 +223,7 @@ int wct_parse_file(const char *path, wct_state_graph *s, wct_relation_graph *r, 
         else if(!strcmp(tok,"transition")){ char *a[5]; for(int i=0;i<5;i++)a[i]=strtok_r(NULL," \t\r\n",&save); if(!a[4]){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing transition fields",ln, col); seterr(err,errlen,msg);goto fail;} wct_transition *t=realloc(s->transitions,(s->transition_count+1)*sizeof *t); if(!t)goto oom; s->transitions=t; t=&t[s->transition_count]; memset(t,0,sizeof *t); t->id=dupstr(a[0]);t->from=dupstr(a[1]);t->to=dupstr(a[2]);t->input=dupstr(a[3]);t->expect=dupstr(a[4]); if(!t->id||!t->from||!t->to||!t->input||!t->expect)goto oom; s->transition_count++; }
         else if(!strcmp(tok,"relation_graph")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing relation_graph id",ln, col); seterr(err,errlen,msg);goto fail;} free(r->id); r->id=dupstr(id); if(!r->id)goto oom; }
         else if(!strcmp(tok,"call")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing call id",ln, col); seterr(err,errlen,msg);goto fail;} wct_call *c=realloc(r->calls,(r->call_count+1)*sizeof *c); if(!c)goto oom; r->calls=c; c=&c[r->call_count]; memset(c,0,sizeof *c); c->id=dupstr(id); if(!c->id)goto oom; char *arg; while((arg=strtok_r(NULL," \t\r\n",&save))){ if(addstr(&c->args,&c->argc,arg))goto oom; } r->call_count++; }
-        else if(!strcmp(tok,"contract")){ char *id=strtok_r(NULL," \t\r\n",&save), *argc_s=strtok_r(NULL," \t\r\n",&save); int ci=id ? find_call(r,id) : -1; size_t argc=0; if(!id || !argc_s || ci < 0 || sscanf(argc_s,"%zu",&argc) != 1){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid call contract",ln, col); seterr(err,errlen,msg);goto fail;} wct_call *c=&r->calls[(size_t)ci]; c->expected_argc=argc; c->contract_set=1; char *typ; size_t count=0; while((typ=strtok_r(NULL," \t\r\n",&save))){ wct_value_type t=WCT_ANY; if(!strcmp(typ,"int")) t=WCT_INT; else if(!strcmp(typ,"bool")) t=WCT_BOOL; else if(!strcmp(typ,"string")) t=WCT_STRING; else if(!strcmp(typ,"bytes")) t=WCT_BYTES; else if(!strcmp(typ,"ref")) t=WCT_REF; else if(!strcmp(typ,"any")) t=WCT_ANY; else {char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: unknown argument type",ln, col); seterr(err,errlen,msg);goto fail;} wct_value_type *types=realloc(c->arg_types,(count+1)*sizeof *types); if(!types)goto oom; c->arg_types=types; c->arg_types[count++]=t; } c->arg_type_count=count; }
+        else if(!strcmp(tok,"contract")){ char *id=strtok_r(NULL," \t\r\n",&save), *argc_s=strtok_r(NULL," \t\r\n",&save); int ci=id ? find_call(r,id) : -1; size_t argc=0; if(!id || !argc_s || ci < 0 || sscanf(argc_s,"%zu",&argc) != 1){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid call contract",ln, col); seterr(err,errlen,msg);goto fail;} wct_call *c=&r->calls[(size_t)ci]; c->expected_argc=argc; c->contract_set=1; char *typ; size_t count=0; while((typ=strtok_r(NULL," \t\r\n",&save))){ if (!strncmp(typ,"result=",7)) { if (parse_value_type(typ+7, &c->result_type)) { seterr(err,errlen,"unknown result type"); goto fail; } c->result_type_set=1; continue; } if (!strncmp(typ,"expect=",7)) { free(c->expected_result); c->expected_result=dupstr(typ+7); if (!c->expected_result) goto oom; continue; } wct_value_type t=WCT_ANY; if(parse_value_type(typ,&t)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: unknown argument type",ln, col); seterr(err,errlen,msg);goto fail;} wct_value_type *types=realloc(c->arg_types,(count+1)*sizeof *types); if(!types)goto oom; c->arg_types=types; c->arg_types[count++]=t; } c->arg_type_count=count; }
         else if(!strcmp(tok,"relation")){ char *a=strtok_r(NULL," \t\r\n",&save), *b=strtok_r(NULL," \t\r\n",&save); if(!a||!b){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing relation fields",ln, col); seterr(err,errlen,msg);goto fail;} wct_relation *x=realloc(r->relations,(r->relation_count+1)*sizeof *x);if(!x)goto oom;r->relations=x;x=&x[r->relation_count];x->from=dupstr(a);x->to=dupstr(b);if(!x->from||!x->to)goto oom;r->relation_count++; }
         else { char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: unknown directive",ln, col);seterr(err,errlen,msg);goto fail; }
     }
@@ -287,6 +288,25 @@ static wct_value_type infer_arg_type(const char *arg) {
     if (!strncmp(arg, "0x", 2) && arg[2] != '\0') return WCT_BYTES;
     return WCT_STRING;
 }
+static wct_value_type infer_graph_arg_type(const wct_relation_graph *g, const char *arg) {
+    if (arg && arg[0] == '$' && arg[1]) {
+        int i = find_call(g, arg + 1);
+        if (i >= 0 && g->calls[(size_t)i].result_type_set)
+            return g->calls[(size_t)i].result_type;
+    }
+    return infer_arg_type(arg);
+}
+
+static int parse_value_type(const char *name, wct_value_type *type) {
+    if (!strcmp(name, "int")) *type = WCT_INT;
+    else if (!strcmp(name, "bool")) *type = WCT_BOOL;
+    else if (!strcmp(name, "string")) *type = WCT_STRING;
+    else if (!strcmp(name, "bytes")) *type = WCT_BYTES;
+    else if (!strcmp(name, "ref")) *type = WCT_REF;
+    else if (!strcmp(name, "any")) *type = WCT_ANY;
+    else return -1;
+    return 0;
+}
 
 int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) {
     if (!g || (g->call_count && !g->calls) ||
@@ -317,7 +337,7 @@ int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) {
             }
             for (size_t j = 0; j < g->calls[i].argc; ++j) {
                 wct_value_type want = g->calls[i].arg_types[j];
-                if (want != WCT_ANY && want != infer_arg_type(g->calls[i].args[j])) {
+                if (want != WCT_ANY && want != infer_graph_arg_type(g, g->calls[i].args[j])) {
                     char msg[128];
                     snprintf(msg, sizeof msg, "call %s argument %zu type mismatch",
                              g->calls[i].id, j + 1);
@@ -325,6 +345,9 @@ int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) {
                     return -1;
                 }
             }
+        }
+        if (g->calls[i].expected_result && !g->calls[i].result_type_set) {
+            /* An exact result assertion is meaningful without a type annotation. */
         }
         for (size_t j = 0; j < g->calls[i].argc; ++j) {
             const char *arg = g->calls[i].args[j];
@@ -659,6 +682,25 @@ int wct_run_relation(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
             r->failed_step = step + 1;
             r->scenario = dupstr(c->id);
             r->error = dupstr(isolation_error ? isolation_error : (rc ? "call callback failed" : "call callback returned no result"));
+            free(out);
+            break;
+        }
+        if (c->result_type_set && c->result_type != WCT_ANY &&
+            c->result_type != infer_arg_type(out)) {
+            r->failures++;
+            r->failed_step = step + 1;
+            r->scenario = dupstr(c->id);
+            r->error = dupstr("call result type mismatch");
+            free(out);
+            break;
+        }
+        if (c->expected_result && strcmp(c->expected_result, out) != 0) {
+            r->failures++;
+            r->failed_step = step + 1;
+            r->scenario = dupstr(c->id);
+            r->expected = dupstr(c->expected_result);
+            r->actual = dupstr(out);
+            r->error = dupstr("call result assertion failed");
             free(out);
             break;
         }

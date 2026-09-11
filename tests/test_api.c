@@ -514,6 +514,53 @@ static void test_relation_result_binding(void)
           "relation result binding should execute successfully");
     CHECK(report.steps == 2 && report.uncovered == 0 && report.seed == 11,
           "relation result binding should report complete deterministic flow");
+    CHECK(report.declared_edges == 1 && report.covered_edges == 1 &&
+              report.uncovered_edges == 0,
+          "relation result binding should cover its declared edge");
+    wct_report_free(&report);
+    wct_relation_graph_free(&graph);
+}
+
+static int result_contract_callback(const char *id, const char *const *args,
+                                    size_t argc, char **result, void *ctx)
+{
+    (void)args; (void)argc; (void)ctx;
+    *result = copy_string(strcmp(id, "number") == 0 ? "42" : "false");
+    return *result == NULL ? -1 : 0;
+}
+
+static void test_relation_result_contracts(void)
+{
+    wct_relation_graph graph = {0};
+    wct_report report;
+    graph.id = copy_string("results");
+    graph.call_count = 1;
+    graph.calls = calloc(1, sizeof *graph.calls);
+    graph.calls[0].id = copy_string("number");
+    graph.calls[0].result_type = WCT_INT;
+    graph.calls[0].result_type_set = 1;
+    graph.calls[0].expected_result = copy_string("42");
+    CHECK(wct_run_relation(&graph, result_contract_callback, NULL,
+                           (wct_limits){.max_flows = 1}, &report) == 0,
+          "matching typed result and exact assertion should pass");
+    wct_report_free(&report);
+
+    graph.calls[0].result_type = WCT_BOOL;
+    CHECK(wct_run_relation(&graph, result_contract_callback, NULL,
+                           (wct_limits){.max_flows = 1}, &report) == -1 &&
+              report.failures == 1 && report.failed_step == 1 &&
+              strstr(report.error, "type mismatch") != NULL,
+          "runtime result type mismatch should fail at the producing call");
+    wct_report_free(&report);
+
+    graph.calls[0].result_type = WCT_INT;
+    free(graph.calls[0].expected_result);
+    graph.calls[0].expected_result = copy_string("41");
+    CHECK(wct_run_relation(&graph, result_contract_callback, NULL,
+                           (wct_limits){.max_flows = 1}, &report) == -1 &&
+              strcmp(report.expected, "41") == 0 &&
+              strcmp(report.actual, "42") == 0,
+          "exact result mismatch should expose expected and actual values");
     wct_report_free(&report);
     wct_relation_graph_free(&graph);
 }
@@ -685,6 +732,19 @@ static void test_parser_call_contract(void) {
     wct_state_graph_free(&st); wct_relation_graph_free(&g); remove(path);
 }
 
+static void test_parser_result_contract(void) {
+    const char *path = "/tmp/wct-result-contract.model"; FILE *f=fopen(path,"w"); wct_state_graph st={0}; wct_relation_graph g={0}; char e[128]={0};
+    CHECK(f != NULL, "result contract fixture writable"); if (!f) return;
+    fputs("schema 1\nrelation_graph r\ncall produce\ncontract produce 0 result=int expect=42\ncall consume $produce\ncontract consume 1 int result=bool expect=false\nrelation produce consume\n",f); fclose(f);
+    CHECK(wct_parse_file(path,&st,&g,e,sizeof e)==0 &&
+              wct_validate_relation(&g,e,sizeof e)==0 &&
+              g.calls[0].result_type_set && g.calls[0].result_type==WCT_INT &&
+              strcmp(g.calls[0].expected_result,"42")==0 &&
+              g.calls[1].arg_types[0]==WCT_INT,
+          "parser should load producer result contracts and type result references");
+    wct_state_graph_free(&st); wct_relation_graph_free(&g); remove(path);
+}
+
 static void test_parser_boundaries(void)
 {
     wct_state_graph state = {0};
@@ -760,11 +820,13 @@ int main(void)
     test_empty_ids_rejected();
     test_relation_order_and_failure();
     test_relation_result_binding();
+    test_relation_result_contracts();
     test_relation_cycle();
     test_relation_lexical_tie_break();
     test_relation_reference_dependency();
     test_relation_arity_and_types();
     test_parser_call_contract();
+    test_parser_result_contract();
     test_parser_boundaries();
     test_parse_fixtures();
     if (failures != 0) {

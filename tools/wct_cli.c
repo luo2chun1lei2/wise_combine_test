@@ -135,7 +135,7 @@ static uint64_t canonical_ir_digest(const wct_state_graph *state, const wct_rela
         for (size_t i = 0; i < state->transition_count; ++i) { const wct_transition *t=&state->transitions[i]; hash_field(&c,t->id); hash_field(&c,t->from); hash_field(&c,t->to); hash_field(&c,t->input); hash_field(&c,t->expect); }
     } else if (relation) {
         hash_field(&c, relation->id); hash_num(&c, relation->call_count);
-        for (size_t i = 0; i < relation->call_count; ++i) { const wct_call *x=&relation->calls[i]; hash_field(&c,x->id); hash_num(&c,x->argc); for(size_t j=0;j<x->argc;++j) hash_field(&c,x->args[j]); hash_num(&c,x->expected_argc); hash_num(&c,x->arg_type_count); hash_num(&c,(uint64_t)x->contract_set); for(size_t j=0;j<x->arg_type_count;++j) hash_num(&c,(uint64_t)(int)x->arg_types[j]); }
+        for (size_t i = 0; i < relation->call_count; ++i) { const wct_call *x=&relation->calls[i]; hash_field(&c,x->id); hash_num(&c,x->argc); for(size_t j=0;j<x->argc;++j) hash_field(&c,x->args[j]); hash_num(&c,x->expected_argc); hash_num(&c,x->arg_type_count); hash_num(&c,(uint64_t)x->contract_set); for(size_t j=0;j<x->arg_type_count;++j) hash_num(&c,(uint64_t)(int)x->arg_types[j]); hash_num(&c,(uint64_t)x->result_type_set); hash_num(&c,(uint64_t)(int)x->result_type); hash_field(&c,x->expected_result); }
         hash_num(&c, relation->relation_count); for (size_t i = 0; i < relation->relation_count; ++i) { hash_field(&c,relation->relations[i].from); hash_field(&c,relation->relations[i].to); }
     }
     return c.hash;

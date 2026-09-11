@@ -32,6 +32,10 @@ typedef struct {
     wct_value_type *arg_types;
     size_t arg_type_count;
     int contract_set;
+    /* Optional callback-result contract. expected_result is an exact assertion. */
+    wct_value_type result_type;
+    int result_type_set;
+    char *expected_result;
 } wct_call;
 typedef struct { char *from; char *to; } wct_relation;
 typedef int (*wct_call_fn)(const char *id, const char *const *args, size_t argc, char **result, void *ctx);
