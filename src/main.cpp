@@ -266,7 +266,8 @@ void collectNswitch(const smodel::StateMachine &machine, const std::string &stat
 
 int runFunction(const std::string &text, int maxLength, unsigned seed, bool json, bool negative,
                 int maxCases, bool coverage, bool harness, bool dylib, bool randomAlgorithm,
-                bool bfsAlgorithm, bool bindRandom, bool cover, int replayIndex, bool harnessJson) {
+                bool bfsAlgorithm, bool bindRandom, bool cover, int replayIndex, bool harnessJson,
+                int tWay) {
   antlr4::ANTLRInputStream input(text);
   FunctionDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -320,12 +321,21 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
     }
     std::set<std::string> coveredFunctions;
     std::set<std::string> coveredPairs;
+    std::set<std::string> coveredTway;
     if (coverage) {
       for (const auto &seq : sequences) {
         for (std::size_t i = 0; i < seq.calls.size(); ++i) {
           coveredFunctions.insert(seq.calls[i].function);
           if (i + 1 < seq.calls.size()) {
             coveredPairs.insert(seq.calls[i].function + " ; " + seq.calls[i + 1].function);
+          }
+          if (tWay >= 1 && i + tWay <= seq.calls.size()) {
+            std::string key;
+            for (int k = 0; k < tWay; ++k) {
+              if (k > 0) key += " ; ";
+              key += seq.calls[i + k].function;
+            }
+            coveredTway.insert(key);
           }
         }
       }
@@ -344,6 +354,13 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
       std::cout << "\"functions\":" << coveredFunctions.size() << "/" << m.functions.size();
       std::cout << ",\"function_pairs\":" << coveredPairs.size() << "/"
                 << (m.functions.size() * m.functions.size());
+      if (tWay >= 1) {
+        std::size_t total = 1;
+        for (int k = 0; k < tWay; ++k) {
+          total *= m.functions.size();
+        }
+        std::cout << ",\"tway_" << tWay << "\":" << coveredTway.size() << "/" << total;
+      }
       std::cout << "}";
     }
     std::cout << ",\"errors\":";
@@ -429,6 +446,7 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
   if (coverage) {
     std::set<std::string> covered;
     std::set<std::string> coveredPairs;
+    std::set<std::string> coveredTway;
     for (const auto &seq : sequences) {
       for (std::size_t i = 0; i < seq.calls.size(); ++i) {
         const auto &call = seq.calls[i];
@@ -436,11 +454,27 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
         if (i + 1 < seq.calls.size()) {
           coveredPairs.insert(call.function + " ; " + seq.calls[i + 1].function);
         }
+        if (tWay >= 1 && i + tWay <= seq.calls.size()) {
+          std::string key;
+          for (int k = 0; k < tWay; ++k) {
+            if (k > 0) key += " ; ";
+            key += seq.calls[i + k].function;
+          }
+          coveredTway.insert(key);
+        }
       }
     }
     std::cout << "covered_functions: " << covered.size() << "/" << m.functions.size() << std::endl;
     std::cout << "covered_function_pairs: " << coveredPairs.size() << "/"
               << (m.functions.size() * m.functions.size()) << std::endl;
+    if (tWay >= 1) {
+      std::size_t total = 1;
+      for (int k = 0; k < tWay; ++k) {
+        total *= m.functions.size();
+      }
+      std::cout << "covered_tway_" << tWay << ": " << coveredTway.size() << "/" << total
+                << std::endl;
+    }
   }
   std::cout << "OK" << std::endl;
   return 0;
@@ -878,7 +912,7 @@ int main(int argc, char **argv) {
     std::cerr << "usage: " << argv[0]
               << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--coverage]"
               << " [--cover] [--algorithm dfs|bfs|random|tour] [--harness] [--harness-json] [--dylib] [--events e1,e2,...]"
-              << " [--bind enumerate|random] [--n-switch N] [--guard k=v] [--replay N] [--max-cases N]"
+              << " [--bind enumerate|random] [--n-switch N] [--t-way N] [--guard k=v] [--replay N] [--max-cases N]"
               << std::endl;
     return 2;
   }
@@ -897,6 +931,7 @@ int main(int argc, char **argv) {
   bool bfsAlgorithm = false;
   bool bindRandom = false;
   int nSwitch = 0;
+  int tWay = 0;
   int maxCases = 0;
   int replayIndex = -1;
   std::string events;
@@ -938,6 +973,9 @@ int main(int argc, char **argv) {
       }
     } else if (arg == "--n-switch" && i + 1 < argc) {
       nSwitch = std::stoi(argv[++i]);
+      coverage = true;
+    } else if (arg == "--t-way" && i + 1 < argc) {
+      tWay = std::stoi(argv[++i]);
       coverage = true;
     } else if (arg == "--harness") {
       harness = true;
@@ -1004,7 +1042,8 @@ int main(int argc, char **argv) {
                              negative, harness);
     }
     return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness, dylib,
-                       randomAlgorithm, bfsAlgorithm, bindRandom, cover, replayIndex, harnessJson);
+                       randomAlgorithm, bfsAlgorithm, bindRandom, cover, replayIndex, harnessJson,
+                       tWay);
   } catch (const std::exception &e) {
     std::cerr << "exception: " << e.what() << std::endl;
     return 3;

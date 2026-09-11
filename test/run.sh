@@ -48,6 +48,9 @@ echo "$guard_fail" | grep -q 'no transition for event connected_ok'
 pair_out="$("$BIN" doc/examples/file-functions.dsl --max-length 3 --coverage)"
 echo "$pair_out" | grep -q 'covered_function_pairs:'
 
+tway_out="$("$BIN" doc/examples/file-functions.dsl --max-length 3 --t-way 2)"
+echo "$tway_out" | grep -q 'covered_tway_2:'
+
 concurrent_paths="$("$BIN" doc/examples/concurrent.dsl --max-length 2)"
 echo "$concurrent_paths" | grep -q 'paths: 4'
 
