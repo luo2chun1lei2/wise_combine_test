@@ -36,6 +36,19 @@ static int read_exact_deadline(int fd, void *buf, size_t n, long long deadline) 
     }
     return 0;
 }
+static int write_all(int fd, const void *buf, size_t n) {
+    size_t off = 0;
+    const char *p = (const char *)buf;
+    while (off < n) {
+        ssize_t sent = write(fd, p + off, n - off);
+        if (sent < 0) {
+            if (errno == EINTR) continue;
+            return -1;
+        }
+        off += (size_t)sent;
+    }
+    return 0;
+}
 static int reap_deadline(pid_t pid, int *status, long long deadline) {
     for (;;) {
         pid_t r = waitpid(pid, status, WNOHANG);
@@ -57,8 +70,10 @@ static int isolate_state_cb(wct_transition_fn fn, const char *input, char **actu
     if (pid == 0) {
         close(p[0]); char *out = NULL; int rc = fn ? fn(input, &out, ctx) : 0;
         int present = out != NULL; uint64_t len = out ? strlen(out) : 0;
-        (void)write(p[1], &rc, sizeof rc); (void)write(p[1], &present, sizeof present);
-        (void)write(p[1], &len, sizeof len); if (len) (void)write(p[1], out, len);
+        if (write_all(p[1], &rc, sizeof rc) ||
+            write_all(p[1], &present, sizeof present) ||
+            write_all(p[1], &len, sizeof len) ||
+            (len && write_all(p[1], out, (size_t)len))) _exit(111);
         free(out); close(p[1]); _exit(0);
     }
     close(p[1]); long long deadline = timeout_ms ? now_ms() + timeout_ms : -1;
@@ -89,8 +104,10 @@ static int isolate_relation_cb(wct_call_fn fn, const char *id, const char *const
     if (pid == 0) {
         close(p[0]); char *out = NULL; int rc = fn ? fn(id, args, argc, &out, ctx) : 0;
         int present = out != NULL; uint64_t len = out ? strlen(out) : 0;
-        (void)write(p[1], &rc, sizeof rc); (void)write(p[1], &present, sizeof present);
-        (void)write(p[1], &len, sizeof len); if (len) (void)write(p[1], out, len);
+        if (write_all(p[1], &rc, sizeof rc) ||
+            write_all(p[1], &present, sizeof present) ||
+            write_all(p[1], &len, sizeof len) ||
+            (len && write_all(p[1], out, (size_t)len))) _exit(111);
         free(out); close(p[1]); _exit(0);
     }
     close(p[1]); long long deadline = timeout_ms ? now_ms() + timeout_ms : -1;
@@ -170,20 +187,21 @@ int wct_parse_file(const char *path, wct_state_graph *s, wct_relation_graph *r, 
     if (!f) { seterr(err,errlen,"cannot open model"); return -1; }
     while (fgets(line,sizeof line,f)) {
         ln++;
+        size_t col = strspn(line, " \t") + 1;
         if (!strchr(line, '\n') && !feof(f)) {
-            char msg[128]; snprintf(msg, sizeof msg, "line %zu column 1: line too long", ln);
+            char msg[128]; snprintf(msg, sizeof msg, "line %zu column %zu: line too long", ln, col);
             seterr(err, errlen, msg); goto fail;
         }
         char *save=NULL, *tok=strtok_r(line," \t\r\n",&save); if(!tok || tok[0]=='#') continue;
-        if(!strcmp(tok,"schema")){ char *v=strtok_r(NULL," \t\r\n",&save); schema_line=ln; if(!v || sscanf(v,"%u",&schema)!=1 || schema!=WCT_SCHEMA_VERSION){char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: unsupported schema",ln); seterr(err,errlen,msg);goto fail;} }
-        else if(!strcmp(tok,"state_graph")){ char *id=strtok_r(NULL," \t\r\n",&save), *init=strtok_r(NULL," \t\r\n",&save); if(!id||!init){char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: missing state_graph fields",ln); seterr(err,errlen,msg);goto fail;} free(s->id); free(s->initial); s->id=dupstr(id);s->initial=dupstr(init); if(!s->id||!s->initial)goto oom; }
-        else if(!strcmp(tok,"state")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: missing state id",ln); seterr(err,errlen,msg);goto fail;} if(addstr(&s->states,&s->state_count,id)){goto oom;} }
-        else if(!strcmp(tok,"transition")){ char *a[5]; for(int i=0;i<5;i++)a[i]=strtok_r(NULL," \t\r\n",&save); if(!a[4]){char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: missing transition fields",ln); seterr(err,errlen,msg);goto fail;} wct_transition *t=realloc(s->transitions,(s->transition_count+1)*sizeof *t); if(!t)goto oom; s->transitions=t; t=&t[s->transition_count]; memset(t,0,sizeof *t); t->id=dupstr(a[0]);t->from=dupstr(a[1]);t->to=dupstr(a[2]);t->input=dupstr(a[3]);t->expect=dupstr(a[4]); if(!t->id||!t->from||!t->to||!t->input||!t->expect)goto oom; s->transition_count++; }
-        else if(!strcmp(tok,"relation_graph")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: missing relation_graph id",ln); seterr(err,errlen,msg);goto fail;} free(r->id); r->id=dupstr(id); if(!r->id)goto oom; }
-        else if(!strcmp(tok,"call")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: missing call id",ln); seterr(err,errlen,msg);goto fail;} wct_call *c=realloc(r->calls,(r->call_count+1)*sizeof *c); if(!c)goto oom; r->calls=c; c=&c[r->call_count]; memset(c,0,sizeof *c); c->id=dupstr(id); if(!c->id)goto oom; char *arg; while((arg=strtok_r(NULL," \t\r\n",&save))){ if(addstr(&c->args,&c->argc,arg))goto oom; } r->call_count++; }
-        else if(!strcmp(tok,"contract")){ char *id=strtok_r(NULL," \t\r\n",&save), *argc_s=strtok_r(NULL," \t\r\n",&save); int ci=id ? find_call(r,id) : -1; size_t argc=0; if(!id || !argc_s || ci < 0 || sscanf(argc_s,"%zu",&argc) != 1){char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: invalid call contract",ln); seterr(err,errlen,msg);goto fail;} wct_call *c=&r->calls[(size_t)ci]; c->expected_argc=argc; c->contract_set=1; char *typ; size_t count=0; while((typ=strtok_r(NULL," \t\r\n",&save))){ wct_value_type t=WCT_ANY; if(!strcmp(typ,"int")) t=WCT_INT; else if(!strcmp(typ,"bool")) t=WCT_BOOL; else if(!strcmp(typ,"string")) t=WCT_STRING; else if(!strcmp(typ,"bytes")) t=WCT_BYTES; else if(!strcmp(typ,"ref")) t=WCT_REF; else if(!strcmp(typ,"any")) t=WCT_ANY; else {char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: unknown argument type",ln); seterr(err,errlen,msg);goto fail;} wct_value_type *types=realloc(c->arg_types,(count+1)*sizeof *types); if(!types)goto oom; c->arg_types=types; c->arg_types[count++]=t; } c->arg_type_count=count; }
-        else if(!strcmp(tok,"relation")){ char *a=strtok_r(NULL," \t\r\n",&save), *b=strtok_r(NULL," \t\r\n",&save); if(!a||!b){char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: missing relation fields",ln); seterr(err,errlen,msg);goto fail;} wct_relation *x=realloc(r->relations,(r->relation_count+1)*sizeof *x);if(!x)goto oom;r->relations=x;x=&x[r->relation_count];x->from=dupstr(a);x->to=dupstr(b);if(!x->from||!x->to)goto oom;r->relation_count++; }
-        else { char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: unknown directive",ln);seterr(err,errlen,msg);goto fail; }
+        if(!strcmp(tok,"schema")){ char *v=strtok_r(NULL," \t\r\n",&save); schema_line=ln; if(!v || sscanf(v,"%u",&schema)!=1 || schema!=WCT_SCHEMA_VERSION){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: unsupported schema",ln, col); seterr(err,errlen,msg);goto fail;} }
+        else if(!strcmp(tok,"state_graph")){ char *id=strtok_r(NULL," \t\r\n",&save), *init=strtok_r(NULL," \t\r\n",&save); if(!id||!init){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing state_graph fields",ln, col); seterr(err,errlen,msg);goto fail;} free(s->id); free(s->initial); s->id=dupstr(id);s->initial=dupstr(init); if(!s->id||!s->initial)goto oom; }
+        else if(!strcmp(tok,"state")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing state id",ln, col); seterr(err,errlen,msg);goto fail;} if(addstr(&s->states,&s->state_count,id)){goto oom;} }
+        else if(!strcmp(tok,"transition")){ char *a[5]; for(int i=0;i<5;i++)a[i]=strtok_r(NULL," \t\r\n",&save); if(!a[4]){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing transition fields",ln, col); seterr(err,errlen,msg);goto fail;} wct_transition *t=realloc(s->transitions,(s->transition_count+1)*sizeof *t); if(!t)goto oom; s->transitions=t; t=&t[s->transition_count]; memset(t,0,sizeof *t); t->id=dupstr(a[0]);t->from=dupstr(a[1]);t->to=dupstr(a[2]);t->input=dupstr(a[3]);t->expect=dupstr(a[4]); if(!t->id||!t->from||!t->to||!t->input||!t->expect)goto oom; s->transition_count++; }
+        else if(!strcmp(tok,"relation_graph")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing relation_graph id",ln, col); seterr(err,errlen,msg);goto fail;} free(r->id); r->id=dupstr(id); if(!r->id)goto oom; }
+        else if(!strcmp(tok,"call")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing call id",ln, col); seterr(err,errlen,msg);goto fail;} wct_call *c=realloc(r->calls,(r->call_count+1)*sizeof *c); if(!c)goto oom; r->calls=c; c=&c[r->call_count]; memset(c,0,sizeof *c); c->id=dupstr(id); if(!c->id)goto oom; char *arg; while((arg=strtok_r(NULL," \t\r\n",&save))){ if(addstr(&c->args,&c->argc,arg))goto oom; } r->call_count++; }
+        else if(!strcmp(tok,"contract")){ char *id=strtok_r(NULL," \t\r\n",&save), *argc_s=strtok_r(NULL," \t\r\n",&save); int ci=id ? find_call(r,id) : -1; size_t argc=0; if(!id || !argc_s || ci < 0 || sscanf(argc_s,"%zu",&argc) != 1){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid call contract",ln, col); seterr(err,errlen,msg);goto fail;} wct_call *c=&r->calls[(size_t)ci]; c->expected_argc=argc; c->contract_set=1; char *typ; size_t count=0; while((typ=strtok_r(NULL," \t\r\n",&save))){ wct_value_type t=WCT_ANY; if(!strcmp(typ,"int")) t=WCT_INT; else if(!strcmp(typ,"bool")) t=WCT_BOOL; else if(!strcmp(typ,"string")) t=WCT_STRING; else if(!strcmp(typ,"bytes")) t=WCT_BYTES; else if(!strcmp(typ,"ref")) t=WCT_REF; else if(!strcmp(typ,"any")) t=WCT_ANY; else {char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: unknown argument type",ln, col); seterr(err,errlen,msg);goto fail;} wct_value_type *types=realloc(c->arg_types,(count+1)*sizeof *types); if(!types)goto oom; c->arg_types=types; c->arg_types[count++]=t; } c->arg_type_count=count; }
+        else if(!strcmp(tok,"relation")){ char *a=strtok_r(NULL," \t\r\n",&save), *b=strtok_r(NULL," \t\r\n",&save); if(!a||!b){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing relation fields",ln, col); seterr(err,errlen,msg);goto fail;} wct_relation *x=realloc(r->relations,(r->relation_count+1)*sizeof *x);if(!x)goto oom;r->relations=x;x=&x[r->relation_count];x->from=dupstr(a);x->to=dupstr(b);if(!x->from||!x->to)goto oom;r->relation_count++; }
+        else { char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: unknown directive",ln, col);seterr(err,errlen,msg);goto fail; }
     }
     fclose(f);
     if (schema != WCT_SCHEMA_VERSION) {
