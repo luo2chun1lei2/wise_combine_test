@@ -121,6 +121,25 @@ static uint64_t canonical_ir_digest(const wct_state_graph *state, const wct_rela
     return c.hash;
 }
 
+static uint64_t canonical_metadata_digest(const wct_state_graph *state, const wct_relation_graph *relation, const char *mode, unsigned seed) {
+    cli_context c = {.hash = trace_seed()};
+    char line[4096];
+    snprintf(line, sizeof line, "selection %s", seed ? "seeded-xorshift" : "lexical-id-order");
+    hash_bytes(&c, line);
+    if (!strcmp(mode, "state") && state) {
+        for (size_t i = 0; i < state->transition_count; ++i) {
+            snprintf(line, sizeof line, "edge %s %s %s", state->transitions[i].id, state->transitions[i].from, state->transitions[i].to);
+            hash_bytes(&c, line);
+        }
+    } else if (relation) {
+        for (size_t i = 0; i < relation->relation_count; ++i) {
+            snprintf(line, sizeof line, "edge %s->%s", relation->relations[i].from, relation->relations[i].to);
+            hash_bytes(&c, line);
+        }
+    }
+    return c.hash;
+}
+
 static int write_trace_header(FILE *trace, const char *model, const char *mode,
                               wct_limits limits, uint64_t ir_digest) {
     uint64_t model_digest = hash_file(model);
@@ -212,6 +231,7 @@ static int replay_trace(const char *path) {
     }
     if (strcmp(selection, limits.seed ? "seeded-xorshift" : "lexical-id-order")) { fprintf(stderr, "error: trace selection mismatch\n"); wct_state_graph_free(&state); wct_relation_graph_free(&relation); return 1; }
     if (canonical_ir_digest(&state, &relation, mode) != expected_ir_digest) { fprintf(stderr, "error: trace IR checksum mismatch\n"); wct_state_graph_free(&state); wct_relation_graph_free(&relation); return 1; }
+    if (canonical_metadata_digest(&state, &relation, mode, limits.seed) != expected_metadata_digest) { fprintf(stderr, "error: trace metadata checksum mismatch\n"); wct_state_graph_free(&state); wct_relation_graph_free(&relation); return 1; }
     cli_context context = {.hash = trace_seed(), .quiet = 1, .state_graph = &state, .state_current = 0};
     wct_report report = {0};
     int rc = !strcmp(mode, "state")

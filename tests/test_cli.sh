@@ -12,11 +12,16 @@ $bin --model fixtures/relation.model --mode relation --isolate --timeout-ms 100 
 $bin --model fixtures/function_relations.model --mode relation --trace /tmp/wct-test-trace.$$ >/dev/null
 $bin --replay /tmp/wct-test-trace.$$ | grep -q 'replay=PASS'
 sed 's/model_digest .*/model_digest 0000000000000000/' /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-tampered.$$
+sed 's/edge fetch->transform/edge altered->transform/' /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-edge-tampered.$$
+if $bin --replay /tmp/wct-test-trace-edge-tampered.$$ >/dev/null 2>&1; then
+    echo 'altered edge metadata unexpectedly replayed' >&2
+    exit 1
+fi
 if $bin --replay /tmp/wct-test-trace-tampered.$$ >/dev/null 2>&1; then
     echo 'tampered trace unexpectedly replayed' >&2
     exit 1
 fi
-rm -f /tmp/wct-test-trace.$$
+rm -f /tmp/wct-test-trace.$$ /tmp/wct-test-trace-edge-tampered.$$
 rm -f /tmp/wct-test-trace-tampered.$$
 if $bin --model fixtures/smoke.model --mode invalid >/dev/null 2>&1; then
     echo 'invalid mode unexpectedly succeeded' >&2
