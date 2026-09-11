@@ -1,0 +1,31 @@
+{
+  "iteration": "I15",
+  "status": "PASS",
+  "scope": "final release readiness with state/relation repeated measurements",
+  "head": "b8e5d68808ba573bb6e5c13b465ee214a2428043",
+  "tested_source_commit": "b8e5d68808ba573bb6e5c13b465ee214a2428043",
+  "prior_summary_sha256": "8e0fba0ee53d3fe3586416490e4711102e7267074ff8da49ec9ab991e2107a79",
+  "checks": {
+    "replay": 0,
+    "relation-measure-2": 0,
+    "valgrind": 0,
+    "sanitize": 0,
+    "state-measure-2": 0,
+    "state-measure-3": 0,
+    "test": 0,
+    "trace": 0,
+    "relation-measure-3": 0,
+    "relation-measure-1": 0,
+    "sentinels": 0,
+    "state-measure-1": 0,
+    "coverage": 0
+  },
+  "measurement_repetitions": 3,
+  "measurement_modes": [
+    "state",
+    "relation"
+  ],
+  "valid_replay": "PASS",
+  "tampered_replay": "REJECTED",
+  "blockers": []
+}
