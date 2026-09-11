@@ -531,7 +531,7 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
             }
         }
         if (picked < 0 && ready_count) {
-            size_t choice = lim.seed ? (next_rand(&rng) % ready_count) : 0;
+            size_t choice = lim.seed ? (next_rand(&rng) % ready_count) : (step % ready_count);
             for (size_t i = 0; i < g->transition_count; i++) {
                 int source = find_state(g, g->transitions[i].from);
                 if (!seen[i] && source == current) {
@@ -651,7 +651,7 @@ int wct_run_relation(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
             if (ready) ready_count++;
         }
         if (ready_count) {
-            size_t choice = lim.seed ? (next_rand(&rng) % ready_count) : (step % ready_count);
+            size_t choice = lim.seed ? (next_rand(&rng) % ready_count) : (flow % ready_count);
             for (size_t i = 0; i < n; i++) {
                 if (done[i]) continue;
                 int ready = 1;

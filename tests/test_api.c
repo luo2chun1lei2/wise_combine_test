@@ -565,6 +565,30 @@ static void test_relation_result_contracts(void)
     wct_relation_graph_free(&graph);
 }
 
+static void test_multiple_bounded_relation_flows(void)
+{
+    wct_relation_graph graph = {0};
+    wct_report report;
+    relation_context context = {0};
+    graph.id = copy_string("alternatives");
+    graph.call_count = 3;
+    graph.calls = calloc(3, sizeof *graph.calls);
+    graph.calls[0].id = copy_string("a");
+    graph.calls[1].id = copy_string("b");
+    graph.calls[2].id = copy_string("c");
+    CHECK(wct_run_relation(&graph, relation_callback, &context,
+                           (wct_limits){.max_flows = 2, .max_steps = 3}, &report) == 0,
+          "bounded runner should execute multiple legal topological flows");
+    CHECK(report.flows == 2 && report.steps == 6 && report.covered == 3 &&
+              report.uncovered == 0 && context.count == 6,
+          "multi-flow report should separate flows, total steps, and unique coverage");
+    CHECK(strcmp(context.ids[0], "a") == 0 && strcmp(context.ids[1], "b") == 0 &&
+              strcmp(context.ids[2], "c") == 0 && strcmp(context.ids[3], "b") == 0,
+          "unseeded alternative flow should deterministically differ from lexical flow");
+    wct_report_free(&report);
+    wct_relation_graph_free(&graph);
+}
+
 static void init_relation_graph(wct_relation_graph *graph)
 {
     memset(graph, 0, sizeof *graph);
@@ -821,6 +845,7 @@ int main(void)
     test_relation_order_and_failure();
     test_relation_result_binding();
     test_relation_result_contracts();
+    test_multiple_bounded_relation_flows();
     test_relation_cycle();
     test_relation_lexical_tie_break();
     test_relation_reference_dependency();
