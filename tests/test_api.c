@@ -131,6 +131,8 @@ static void test_isolation_timeout(void)
           "isolated callback timeout should fail run");
     CHECK(report.error && strstr(report.error, "timeout") != NULL,
           "isolated timeout should be reported");
+    CHECK(report.timed_out == 1 && report.process_signal != 0,
+          "isolated timeout should retain process termination metadata");
     wct_report_free(&report);
     wct_state_graph_free(&graph);
 }
