@@ -192,6 +192,27 @@ static int call_depends_on(const wct_relation_graph *g, size_t dependent,
     return 0;
 }
 
+static int relation_call_is_ready(const wct_relation_graph *g,
+                                  const unsigned char *done, size_t candidate) {
+    for (size_t i = 0; i < g->relation_count; ++i) {
+        int target = find_call(g, g->relations[i].to);
+        if (target != (int)candidate)
+            continue;
+        int source = find_call(g, g->relations[i].from);
+        if (source < 0 || !done[(size_t)source])
+            return 0;
+    }
+    for (size_t i = 0; i < g->calls[candidate].argc; ++i) {
+        const char *arg = g->calls[candidate].args[i];
+        if (arg && arg[0] == '$') {
+            int source = find_call(g, arg + 1);
+            if (source < 0 || !done[(size_t)source])
+                return 0;
+        }
+    }
+    return 1;
+}
+
 void wct_state_graph_free(wct_state_graph *g) { if (!g) return; free(g->id); free(g->initial); for(size_t i=0;i<g->state_count;i++) free(g->states[i]); free(g->states); for(size_t i=0;i<g->transition_count;i++){free(g->transitions[i].id);free(g->transitions[i].from);free(g->transitions[i].to);free(g->transitions[i].input);free(g->transitions[i].expect);} free(g->transitions); memset(g,0,sizeof *g); }
 void wct_relation_graph_free(wct_relation_graph *g) { if (!g) return; free(g->id); for(size_t i=0;i<g->call_count;i++){free(g->calls[i].id);for(size_t j=0;j<g->calls[i].argc;j++)free(g->calls[i].args[j]);free(g->calls[i].args);free(g->calls[i].arg_types);free(g->calls[i].expected_result);} free(g->calls); for(size_t i=0;i<g->relation_count;i++){free(g->relations[i].from);free(g->relations[i].to);} free(g->relations); memset(g,0,sizeof *g); }
 void wct_report_free(wct_report *r) {
@@ -682,32 +703,13 @@ static int wct_run_relation_impl(const wct_relation_graph *g, wct_call_fn fn, vo
         int pick = -1;
         size_t ready_count = 0;
         for (size_t i = 0; i < n; i++) {
-            if (done[i]) continue;
-            int ready = 1;
-            for (size_t j = 0; j < g->relation_count; j++) {
-                int target = find_call(g, g->relations[j].to);
-                if (target == (int)i) {
-                    int source = find_call(g, g->relations[j].from);
-                    if (source < 0 || !done[(size_t)source]) ready = 0;
-                }
-            }
-            for (size_t j = 0; j < g->calls[i].argc; j++) {
-                const char *arg = g->calls[i].args[j];
-                if (arg && arg[0] == '$') {
-                    int source = find_call(g, arg + 1);
-                    if (source < 0 || !done[(size_t)source]) ready = 0;
-                }
-            }
-            if (ready) ready_count++;
+            if (!done[i] && relation_call_is_ready(g, done, i))
+                ready_count++;
         }
         if (ready_count) {
             size_t choice = lim.seed ? (next_rand(&rng) % ready_count) : (flow % ready_count);
             for (size_t i = 0; i < n; i++) {
-                if (done[i]) continue;
-                int ready = 1;
-                for (size_t j = 0; j < g->relation_count; j++) if (find_call(g, g->relations[j].to) == (int)i) { int source = find_call(g, g->relations[j].from); if (source < 0 || !done[(size_t)source]) ready = 0; }
-                for (size_t j = 0; j < g->calls[i].argc; j++) { const char *arg = g->calls[i].args[j]; if (arg && arg[0] == '$') { int source = find_call(g, arg + 1); if (source < 0 || !done[(size_t)source]) ready = 0; } }
-                if (ready) {
+                if (!done[i] && relation_call_is_ready(g, done, i)) {
                     if (!lim.seed && flow == 0) {
                         if (pick < 0 || strcmp(g->calls[i].id, g->calls[(size_t)pick].id) < 0) pick = (int)i;
                     } else if (choice == 0) { pick = (int)i; break; }
