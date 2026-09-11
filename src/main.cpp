@@ -293,6 +293,37 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
     bool failed = false;
     std::string failure;
 
+    std::map<std::string, std::string> historyOwner;
+    for (const auto &[name, info] : m.stateInfo) {
+      (void)name;
+      if (!info.history.empty()) {
+        historyOwner[info.history] = name;
+      }
+    }
+    std::map<std::string, std::string> lastLeaf;
+
+    auto resolveTarget = [&](const std::string &to) -> std::string {
+      auto history = historyOwner.find(to);
+      if (history != historyOwner.end()) {
+        auto last = lastLeaf.find(history->second);
+        return last != lastLeaf.end() ? last->second : smodel::leafOf(m, history->second);
+      }
+      return smodel::leafOf(m, to);
+    };
+
+    auto updateHistory = [&](const std::string &leaf) {
+      std::string currentState = leaf;
+      while (!currentState.empty()) {
+        const smodel::StateInfo *info = smodel::findState(m, currentState);
+        if (info == nullptr || info->parent.empty()) {
+          break;
+        }
+        lastLeaf[info->parent] = leaf;
+        currentState = info->parent;
+      }
+    };
+    updateHistory(current);
+
     for (const auto &event : splitCsv(events)) {
       const auto it =
           std::find_if(m.transitions.begin(), m.transitions.end(), [&](const smodel::Transition &t) {
@@ -304,7 +335,8 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
         break;
       }
       trace.push_back(current + " -" + event + "-> " + it->to);
-      current = smodel::leafOf(m, it->to);
+      current = resolveTarget(it->to);
+      updateHistory(current);
     }
 
     if (json) {

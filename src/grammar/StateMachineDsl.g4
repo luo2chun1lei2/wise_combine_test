@@ -7,9 +7,10 @@ statesDecl: 'states' ':' ID (',' ID)*;
 initialDecl: 'initial' ':' ID;
 eventsDecl: 'events' ':' ID (',' ID)*;
 
-stateBlock: 'state' ID '{' (entryDecl | exitDecl | initialDecl | stateBlock)* '}';
+stateBlock: 'state' ID '{' (entryDecl | exitDecl | initialDecl | historyDecl | stateBlock)* '}';
 entryDecl: 'entry' ':' action;
 exitDecl: 'exit' ':' action;
+historyDecl: 'history' ':' ID;
 
 transition: 'transition' ID '->' ID 'on' ID '{' (guardDecl | actionDecl)* '}';
 guardDecl: 'guard' ':' expr;

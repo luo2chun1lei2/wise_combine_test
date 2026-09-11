@@ -21,6 +21,9 @@ echo "$cover_out" | grep -q 'covered transitions: 5/5'
 nested_out="$("$BIN" doc/examples/nested.dsl --events power_on,start,stop,power_off)"
 echo "$nested_out" | grep -q 'final: OFF'
 
+history_out="$("$BIN" doc/examples/nested-history.dsl --events power_on,start,power_off,resume)"
+echo "$history_out" | grep -q 'final: ON_WORKING'
+
 harness_c="$("$BIN" doc/examples/file-functions.dsl --max-length 2 --seed 42 --max-cases 3 --harness)"
 echo "$harness_c" | gcc -x c - -o /tmp/wise_harness
 (

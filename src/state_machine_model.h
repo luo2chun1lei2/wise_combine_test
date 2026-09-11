@@ -20,6 +20,7 @@ struct StateInfo {
   std::string parent;
   std::vector<std::string> children;
   std::string initial;
+  std::string history;
 };
 
 struct StateMachine {
