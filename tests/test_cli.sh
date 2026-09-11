@@ -26,4 +26,8 @@ if $bin --model fixtures/missing.model >/dev/null 2>&1; then
     echo 'missing model unexpectedly succeeded' >&2
     exit 1
 fi
+if $bin --model fixtures/smoke.model --isolate --timeout-ms 2147483648 >/dev/null 2>&1; then
+    echo 'timeout overflow unexpectedly accepted' >&2
+    exit 1
+fi
 echo 'CLI smoke tests passed'

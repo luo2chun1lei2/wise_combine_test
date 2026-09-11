@@ -1,5 +1,7 @@
 #include "wct.h"
 #include <inttypes.h>
+#include <limits.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -196,8 +198,11 @@ int main(int argc, char **argv) {
         if ((!strcmp(argv[i], "--seed") || !strcmp(argv[i], "--max-steps") ||
              !strcmp(argv[i], "--max-flows") || !strcmp(argv[i], "--timeout-ms")) && i + 1 < argc) {
             char *end = NULL;
+            errno = 0;
             unsigned long value = strtoul(argv[++i], &end, 10);
-            if (!*argv[i] || *end || value > (unsigned long)SIZE_MAX) {
+            if (!*argv[i] || *end || errno == ERANGE || value > (unsigned long)SIZE_MAX ||
+                (!strcmp(argv[i - 1], "--seed") && value > (unsigned long)UINT_MAX) ||
+                (!strcmp(argv[i - 1], "--timeout-ms") && value > (unsigned long)INT_MAX)) {
                 fprintf(stderr, "error: numeric option requires a non-negative integer\n");
                 return 2;
             }

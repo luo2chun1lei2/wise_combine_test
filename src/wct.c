@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 #include <poll.h>
 #include <signal.h>
 #include <sys/wait.h>
@@ -13,6 +14,7 @@
 static int isolate_state_cb(wct_transition_fn fn, const char *input, char **actual,
                             void *ctx, unsigned timeout_ms, const char **why,
                             int *exit_code, int *signal_no, int *timed_out) {
+    if (timeout_ms > (unsigned)INT_MAX) { *why = "timeout exceeds poll limit"; return -1; }
     int p[2]; if (pipe(p) < 0) { *why = "isolation pipe failed"; return -1; }
     pid_t pid = fork();
     if (pid < 0) { close(p[0]); close(p[1]); *why = "isolation fork failed"; return -1; }
@@ -41,6 +43,7 @@ static int isolate_state_cb(wct_transition_fn fn, const char *input, char **actu
 static int isolate_relation_cb(wct_call_fn fn, const char *id, const char *const *args,
                                size_t argc, char **result, void *ctx, unsigned timeout_ms,
                                const char **why, int *exit_code, int *signal_no, int *timed_out) {
+    if (timeout_ms > (unsigned)INT_MAX) { *why = "timeout exceeds poll limit"; return -1; }
     int p[2]; if (pipe(p) < 0) { *why = "isolation pipe failed"; return -1; }
     pid_t pid = fork();
     if (pid < 0) { close(p[0]); close(p[1]); *why = "isolation fork failed"; return -1; }
@@ -136,7 +139,7 @@ int wct_parse_file(const char *path, wct_state_graph *s, wct_relation_graph *r, 
         else if(!strcmp(tok,"transition")){ char *a[5]; for(int i=0;i<5;i++)a[i]=strtok_r(NULL," \t\r\n",&save); if(!a[4]){char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: missing transition fields",ln); seterr(err,errlen,msg);goto fail;} wct_transition *t=realloc(s->transitions,(s->transition_count+1)*sizeof *t); if(!t)goto oom; s->transitions=t; t=&t[s->transition_count]; memset(t,0,sizeof *t); t->id=dupstr(a[0]);t->from=dupstr(a[1]);t->to=dupstr(a[2]);t->input=dupstr(a[3]);t->expect=dupstr(a[4]); if(!t->id||!t->from||!t->to||!t->input||!t->expect)goto oom; s->transition_count++; }
         else if(!strcmp(tok,"relation_graph")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: missing relation_graph id",ln); seterr(err,errlen,msg);goto fail;} free(r->id); r->id=dupstr(id); if(!r->id)goto oom; }
         else if(!strcmp(tok,"call")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: missing call id",ln); seterr(err,errlen,msg);goto fail;} wct_call *c=realloc(r->calls,(r->call_count+1)*sizeof *c); if(!c)goto oom; r->calls=c; c=&c[r->call_count]; memset(c,0,sizeof *c); c->id=dupstr(id); if(!c->id)goto oom; char *arg; while((arg=strtok_r(NULL," \t\r\n",&save))){ if(addstr(&c->args,&c->argc,arg))goto oom; } r->call_count++; }
-        else if(!strcmp(tok,"contract")){ char *id=strtok_r(NULL," \t\r\n",&save), *argc_s=strtok_r(NULL," \t\r\n",&save); int ci=id ? find_call(r,id) : -1; size_t argc=0; if(!id || !argc_s || ci < 0 || sscanf(argc_s,"%zu",&argc) != 1){char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: invalid call contract",ln); seterr(err,errlen,msg);goto fail;} wct_call *c=&r->calls[(size_t)ci]; c->expected_argc=argc; char *typ; size_t count=0; while((typ=strtok_r(NULL," \t\r\n",&save))){ wct_value_type t=WCT_ANY; if(!strcmp(typ,"int")) t=WCT_INT; else if(!strcmp(typ,"bool")) t=WCT_BOOL; else if(!strcmp(typ,"string")) t=WCT_STRING; else if(!strcmp(typ,"bytes")) t=WCT_BYTES; else if(!strcmp(typ,"ref")) t=WCT_REF; else if(!strcmp(typ,"any")) t=WCT_ANY; else {char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: unknown argument type",ln); seterr(err,errlen,msg);goto fail;} wct_value_type *types=realloc(c->arg_types,(count+1)*sizeof *types); if(!types)goto oom; c->arg_types=types; c->arg_types[count++]=t; } c->arg_type_count=count; }
+        else if(!strcmp(tok,"contract")){ char *id=strtok_r(NULL," \t\r\n",&save), *argc_s=strtok_r(NULL," \t\r\n",&save); int ci=id ? find_call(r,id) : -1; size_t argc=0; if(!id || !argc_s || ci < 0 || sscanf(argc_s,"%zu",&argc) != 1){char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: invalid call contract",ln); seterr(err,errlen,msg);goto fail;} wct_call *c=&r->calls[(size_t)ci]; c->expected_argc=argc; c->contract_set=1; char *typ; size_t count=0; while((typ=strtok_r(NULL," \t\r\n",&save))){ wct_value_type t=WCT_ANY; if(!strcmp(typ,"int")) t=WCT_INT; else if(!strcmp(typ,"bool")) t=WCT_BOOL; else if(!strcmp(typ,"string")) t=WCT_STRING; else if(!strcmp(typ,"bytes")) t=WCT_BYTES; else if(!strcmp(typ,"ref")) t=WCT_REF; else if(!strcmp(typ,"any")) t=WCT_ANY; else {char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: unknown argument type",ln); seterr(err,errlen,msg);goto fail;} wct_value_type *types=realloc(c->arg_types,(count+1)*sizeof *types); if(!types)goto oom; c->arg_types=types; c->arg_types[count++]=t; } c->arg_type_count=count; }
         else if(!strcmp(tok,"relation")){ char *a=strtok_r(NULL," \t\r\n",&save), *b=strtok_r(NULL," \t\r\n",&save); if(!a||!b){char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: missing relation fields",ln); seterr(err,errlen,msg);goto fail;} wct_relation *x=realloc(r->relations,(r->relation_count+1)*sizeof *x);if(!x)goto oom;r->relations=x;x=&x[r->relation_count];x->from=dupstr(a);x->to=dupstr(b);if(!x->from||!x->to)goto oom;r->relation_count++; }
         else { char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: unknown directive",ln);seterr(err,errlen,msg);goto fail; }
     }
@@ -216,7 +219,8 @@ int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) {
             seterr(err, n, "call arguments missing");
             return -1;
         }
-        if (g->calls[i].expected_argc && g->calls[i].argc != g->calls[i].expected_argc) {
+        if ((g->calls[i].contract_set || g->calls[i].expected_argc != 0) &&
+            g->calls[i].argc != g->calls[i].expected_argc) {
             char msg[128];
             snprintf(msg, sizeof msg, "call %s arity mismatch: expected %zu, got %zu",
                      g->calls[i].id, g->calls[i].expected_argc, g->calls[i].argc);
@@ -245,8 +249,8 @@ int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) {
                 seterr(err, n, "null call argument");
                 return -1;
             }
-            if (arg && arg[0] == '$' && arg[1] != '\0' &&
-                find_call(g, arg + 1) < 0) {
+            if (arg && arg[0] == '$' && (arg[1] == '\0' ||
+                find_call(g, arg + 1) < 0)) {
                 seterr(err, n, "call argument references unknown call");
                 return -1;
             }

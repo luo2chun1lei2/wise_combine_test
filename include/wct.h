@@ -20,10 +20,11 @@ typedef struct {
     char *id;
     char **args;
     size_t argc;
-    /* Optional contract metadata. A zero expected_argc/type_count disables that check. */
+    /* Optional contract metadata; contract_set preserves an explicit zero-arity contract. */
     size_t expected_argc;
     wct_value_type *arg_types;
     size_t arg_type_count;
+    int contract_set;
 } wct_call;
 typedef struct { char *from; char *to; } wct_relation;
 typedef int (*wct_call_fn)(const char *id, const char *const *args, size_t argc, char **result, void *ctx);
