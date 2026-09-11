@@ -46,7 +46,7 @@ make test
 ## 使用
 
 ```sh
-./build/wise_combine_test <模型文件> [--max-length N] [--seed N] [--json] [--negative] [--coverage] [--cover] [--algorithm dfs|bfs|random|tour] [--bind enumerate|random] [--n-switch N] [--guard k=v] [--harness] [--harness-json] [--dylib] [--events e1,e2,...] [--replay N] [--max-cases N]
+./build/wise_combine_test <模型文件> [--max-length N] [--seed N] [--json] [--negative] [--coverage] [--cover] [--algorithm dfs|bfs|random|tour] [--bind enumerate|random] [--n-switch N] [--t-way N] [--guard k=v] [--harness] [--harness-json] [--dylib] [--events e1,e2,...] [--replay N] [--max-cases N]
 ```
 
 常用选项：

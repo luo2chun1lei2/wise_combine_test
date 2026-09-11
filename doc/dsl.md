@@ -175,6 +175,7 @@ func close(h: FileHandle) -> int {
 - `--max-cases N`：最大用例数上限；`--algorithm random` 时同时作为尝试次数。
 - `--negative`：追加负向序列。
 - `--coverage`：输出函数覆盖统计。
+- `--t-way N`：输出相邻 N 函数窗口的覆盖统计。
 - `--cover`：用贪心算法求覆盖全部函数的最小序列集。
 - `--algorithm dfs|bfs|random`：生成算法；`random` 用随机游走。
 - `--bind enumerate|random`：资源实例绑定策略，默认枚举全部合法绑定。
