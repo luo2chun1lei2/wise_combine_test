@@ -1,7 +1,7 @@
 {
   "version": 1,
   "createdAt": "2026-09-11T03:20:32.090Z",
-  "updatedAt": "2026-09-11T04:50:42.310Z",
+  "updatedAt": "2026-09-11T05:09:28.101Z",
   "briefPath": ".omx/ultragoal/brief.md",
   "goalsPath": ".omx/ultragoal/goals.json",
   "ledgerPath": ".omx/ultragoal/ledger.jsonl",
@@ -28,15 +28,33 @@
       "id": "G002-resolve-final-state-transaction-and",
       "title": "Resolve final state transaction and trace contract blockers",
       "objective": "Make transaction hooks mandatory or provide whole-scenario isolation, complete trace path/metadata validation, then rerun final independent reviews.",
-      "status": "in_progress",
+      "status": "review_blocked",
       "attempt": 1,
       "createdAt": "2026-09-11T04:50:31.474Z",
-      "updatedAt": "2026-09-11T04:50:42.310Z",
-      "evidence": "Independent code review REQUEST_CHANGES and architecture review BLOCK; see evidence/iter-6/summary.json.",
+      "updatedAt": "2026-09-11T05:09:15.646Z",
+      "evidence": "G002 code review APPROVE, but aggregate original-plan architecture review identifies relation result assertions/flow semantics and sequential evidence gates still incomplete.",
       "resolvesReviewBlockedGoalId": "G001-wise-combine-test-c11-linux",
-      "startedAt": "2026-09-11T04:50:42.310Z"
+      "startedAt": "2026-09-11T04:50:42.310Z",
+      "reviewBlockedAt": "2026-09-11T05:09:15.646Z",
+      "reviewBlockerResolution": {
+        "resolverGoalId": "G003-close-original-plan-relation-and-evi",
+        "status": "pending",
+        "evidence": "G002 code review APPROVE, but aggregate original-plan architecture review identifies relation result assertions/flow semantics and sequential evidence gates still incomplete."
+      }
+    },
+    {
+      "id": "G003-close-original-plan-relation-and-evi",
+      "title": "Close original-plan relation and evidence gates",
+      "objective": "Complete relation result contracts/flow semantics, strict evidence regeneration, and final original-plan architecture review.",
+      "status": "in_progress",
+      "attempt": 1,
+      "createdAt": "2026-09-11T05:09:15.646Z",
+      "updatedAt": "2026-09-11T05:09:28.101Z",
+      "evidence": "G002 code review APPROVE, but aggregate original-plan architecture review identifies relation result assertions/flow semantics and sequential evidence gates still incomplete.",
+      "resolvesReviewBlockedGoalId": "G002-resolve-final-state-transaction-and",
+      "startedAt": "2026-09-11T05:09:28.101Z"
     }
   ],
   "codexObjective": "Complete the durable ultragoal plan in .omx/ultragoal/goals.json, including later accepted/appended stories, under the original brief constraints; use .omx/ultragoal/ledger.jsonl as the audit trail.",
-  "activeGoalId": "G002-resolve-final-state-transaction-and"
+  "activeGoalId": "G003-close-original-plan-relation-and-evi"
 }

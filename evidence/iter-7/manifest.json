@@ -1,0 +1,87 @@
+{
+  "iteration": "I7",
+  "prior_summary_sha256": "15e381ea30621bab80992a7ede565187550f71c2bf83728d83f2b9f750658194",
+  "head": "2a716915f1ed23141fe09f9f30d58c0824a3c198",
+  "commands": [
+    {
+      "command": "make_clean_test",
+      "exit_code": 0
+    },
+    {
+      "command": "make_sanitize",
+      "exit_code": 0
+    },
+    {
+      "command": "make_valgrind",
+      "exit_code": 0
+    },
+    {
+      "command": "make_coverage",
+      "exit_code": 0
+    },
+    {
+      "command": "measure-1",
+      "exit_code": 0
+    },
+    {
+      "command": "measure-2",
+      "exit_code": 0
+    },
+    {
+      "command": "measure-3",
+      "exit_code": 0
+    },
+    {
+      "command": "trace",
+      "exit_code": 0
+    },
+    {
+      "command": "replay",
+      "exit_code": 0
+    }
+  ],
+  "tools": {
+    "cc": "cc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0",
+    "valgrind": "valgrind-3.15.0"
+  },
+  "environment": {
+    "system": "Linux",
+    "release": "5.15.0-139-generic",
+    "machine": "x86_64",
+    "python": "3.8.10"
+  },
+  "git": {
+    "commit": "2a716915f1ed23141fe09f9f30d58c0824a3c198",
+    "push": "PASS (origin/omx)"
+  },
+  "artifacts": [
+    {
+      "path": "evidence/iter-7/call-trace.wct",
+      "sha256": "ed8d4951cec5f3d800a8a50504c440a1afa66b7736ab0cc3e335d0ba7a50c109"
+    },
+    {
+      "path": "evidence/iter-7/commands.log",
+      "sha256": "fe1e54c87af3b732c364cc091520f79206d7136343658549c9059c1ba0513947"
+    },
+    {
+      "path": "evidence/iter-7/measure-1.tsv",
+      "sha256": "2bc28a8c6810b725ddc967873f9ec325a43295ebfd6c34f210139ca4e264fa95"
+    },
+    {
+      "path": "evidence/iter-7/measure-2.tsv",
+      "sha256": "199441a87c949317798e762840907e385c5ba4999a57fb888d8862bbb025ebfe"
+    },
+    {
+      "path": "evidence/iter-7/measure-3.tsv",
+      "sha256": "9c5a4db41d4441a8c25f9718ddca243d38c33bba69ea1d493851ff8ffc0a1cbe"
+    },
+    {
+      "path": "evidence/iter-7/replay.log",
+      "sha256": "eba4919b9974db691d49bd9b21e091d5c14bdb4b905fba2277a9af20deaf5dcb"
+    },
+    {
+      "path": "evidence/iter-7/trace.log",
+      "sha256": "02c89f1b7f44567add7c00cc089e4790d762ad4d343b9a22513ae93e53742222"
+    }
+  ]
+}

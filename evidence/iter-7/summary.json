@@ -1,0 +1,22 @@
+{
+  "iteration": "I7",
+  "status": "PASS",
+  "scope": "G003 relation contracts and final verification",
+  "head": "2a716915f1ed23141fe09f9f30d58c0824a3c198",
+  "checks": {
+    "make_clean_test": 0,
+    "make_sanitize": 0,
+    "make_valgrind": 0,
+    "make_coverage": 0,
+    "measure-1": 0,
+    "measure-2": 0,
+    "measure-3": 0,
+    "trace": 0,
+    "replay": 0
+  },
+  "build_gate": "PASS",
+  "memory_gate": "PASS (ASan/UBSan and Valgrind error summaries zero)",
+  "measurement_repetitions": 3,
+  "coverage": "reported; optional 80% stretch target not adopted",
+  "blockers": []
+}
