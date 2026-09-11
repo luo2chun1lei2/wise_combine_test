@@ -1,7 +1,7 @@
 {
   "iteration": "I3",
   "prior_summary_sha256": "ee365b0949644ca415202cb3caaee52459f45f34c472c14c462ef48774d43455",
-  "head": "fd8b0e74ea09c014aea3773c398afcd9878bf65a",
+  "head": "2ae76ca1c80893cf38b189c07331c64031d1deb4",
   "commands": [
     {
       "command": "make clean test",
@@ -40,7 +40,7 @@
   },
   "git_delivery": {
     "commit": "2ae76ca",
-    "push": "BLOCKED: SSH host key verification failed"
+    "push": "PASS"
   },
   "artifacts": [
     {
@@ -69,7 +69,7 @@
     },
     {
       "path": "evidence/iter-3/summary.json",
-      "sha256": "fd367ece49279883556c7b9a281d9a1524445de09a6218b227920f910874efd5"
+      "sha256": "035191117d96f3c4875d914d7d86406e4796f43bffee36886e813982e3fe91f3"
     }
   ]
 }
