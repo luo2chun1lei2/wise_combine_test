@@ -634,6 +634,7 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
     if(!rr && state_present && lens[4]){final_state=malloc((size_t)lens[4]);if(!final_state||read_exact_deadline(p[0],final_state,(size_t)lens[4],deadline))rr=-1;}
     close(p[0]); int status=0; if(rr==-2){free(final_state);kill_reap(pid);if(parent_before_valid)lim.state_restore(ctx,parent_before,parent_before_size);free(parent_before);wct_report_free(r);r->timed_out=1;r->process_signal=SIGKILL;r->error=dupstr("scenario timeout");return -1;} if(rr){free(final_state);kill_reap(pid);if(parent_before_valid)lim.state_restore(ctx,parent_before,parent_before_size);free(parent_before);wct_report_free(r);r->error=dupstr("scenario isolation read failed");return -1;}
     int wr=reap_deadline(pid,&status,deadline);if(wr==1){free(final_state);kill_reap(pid);if(parent_before_valid)lim.state_restore(ctx,parent_before,parent_before_size);free(parent_before);wct_report_free(r);r->timed_out=1;r->process_signal=SIGKILL;r->error=dupstr("scenario timeout");return -1;}if(wr<0||!WIFEXITED(status)||WEXITSTATUS(status)!=0){free(final_state);kill_reap(pid);if(parent_before_valid)lim.state_restore(ctx,parent_before,parent_before_size);free(parent_before);wct_report_free(r);r->error=dupstr("scenario terminated");return -1;}
+    if(rc){if(parent_before_valid)lim.state_restore(ctx,parent_before,parent_before_size);free(parent_before);free(final_state);r->process_exit=WEXITSTATUS(status);return rc;}
     if(state_present && lim.state_restore && lim.state_restore(ctx,final_state,(size_t)lens[4])){free(final_state);free(parent_before);r->failures++;r->error=dupstr("scenario commit failed");return -1;}free(parent_before);free(final_state);r->process_exit=WEXITSTATUS(status);return rc;
 }
 
@@ -651,6 +652,10 @@ static int wct_run_relation_impl(const wct_relation_graph *g, wct_call_fn fn, vo
     size_t n = g->call_count;
     size_t max = lim.max_steps ? lim.max_steps : n;
     size_t flow_limit = lim.max_flows ? lim.max_flows : 1;
+    if (flow_limit > 1 && (!lim.state_snapshot || !lim.state_restore)) {
+        r->error = dupstr("multiple relation flows require snapshot/restore hooks");
+        return -1;
+    }
     r->declared_edges = g->relation_count;
     unsigned char *done = calloc(n ? n : 1, 1);
     unsigned char *ever_done = calloc(n ? n : 1, 1);
@@ -659,7 +664,17 @@ static int wct_run_relation_impl(const wct_relation_graph *g, wct_call_fn fn, vo
     if (!done || !ever_done || !edge_seen || !res) {
         free(done); free(ever_done); free(edge_seen); free(res); r->error = dupstr("out of memory"); return -1;
     }
+    void *flow_baseline = NULL; size_t flow_baseline_size = 0; int flow_baseline_valid = 0;
+    if (flow_limit > 1 && lim.state_snapshot && lim.state_restore) {
+        if (lim.state_snapshot(ctx, &flow_baseline, &flow_baseline_size)) {
+            free(done); free(ever_done); free(edge_seen); free(res); r->error=dupstr("relation flow snapshot failed"); return -1;
+        }
+        flow_baseline_valid = 1;
+    }
     for (size_t flow = 0; flow < flow_limit; flow++) {
+      if (flow > 0 && flow_baseline_valid && lim.state_restore(ctx, flow_baseline, flow_baseline_size)) {
+          r->failures++; r->error=dupstr("relation flow reset failed"); break;
+      }
       memset(done, 0, n ? n : 1);
       for (size_t i = 0; i < n; i++) { free(res[i]); res[i] = NULL; }
       size_t flow_steps = 0;
@@ -769,6 +784,7 @@ static int wct_run_relation_impl(const wct_relation_graph *g, wct_call_fn fn, vo
     free(done);
     free(ever_done);
     free(edge_seen);
+    free(flow_baseline);
     if (!r->failures && r->uncovered) {
         r->error = dupstr("uncovered call");
         return -1;

@@ -181,7 +181,7 @@ static void test_isolated_state_snapshot_commit(void)
                                     .state_snapshot = snapshot_count,
                                     .state_restore = restore_count}, &report) == -1,
           "isolated callback failure should fail run");
-    CHECK(context.count == 1, "failed isolated transition must not commit child state");
+    CHECK(context.count == 0, "failed isolated scenario must roll back all child state");
     wct_report_free(&report); wct_state_graph_free(&graph);
 
     init_state_graph(&graph); context = (state_context){0};
@@ -529,6 +529,23 @@ static int result_contract_callback(const char *id, const char *const *args,
     return *result == NULL ? -1 : 0;
 }
 
+static int relation_snapshot(void *opaque, void **snapshot, size_t *size)
+{
+    relation_context *context = opaque;
+    *snapshot = malloc(sizeof *context);
+    if (!*snapshot) return -1;
+    memcpy(*snapshot, context, sizeof *context);
+    *size = sizeof *context;
+    return 0;
+}
+
+static int relation_restore(void *opaque, const void *snapshot, size_t size)
+{
+    if (size != sizeof(relation_context) || !snapshot) return -1;
+    memcpy(opaque, snapshot, size);
+    return 0;
+}
+
 static void test_relation_result_contracts(void)
 {
     wct_relation_graph graph = {0};
@@ -577,13 +594,15 @@ static void test_multiple_bounded_relation_flows(void)
     graph.calls[1].id = copy_string("b");
     graph.calls[2].id = copy_string("c");
     CHECK(wct_run_relation(&graph, relation_callback, &context,
-                           (wct_limits){.max_flows = 2, .max_steps = 3}, &report) == 0,
+                           (wct_limits){.max_flows = 2, .max_steps = 3,
+                                        .state_snapshot = relation_snapshot,
+                                        .state_restore = relation_restore}, &report) == 0,
           "bounded runner should execute multiple legal topological flows");
     CHECK(report.flows == 2 && report.steps == 6 && report.covered == 3 &&
-              report.uncovered == 0 && context.count == 6,
+              report.uncovered == 0 && context.count == 3,
           "multi-flow report should separate flows, total steps, and unique coverage");
-    CHECK(strcmp(context.ids[0], "a") == 0 && strcmp(context.ids[1], "b") == 0 &&
-              strcmp(context.ids[2], "c") == 0 && strcmp(context.ids[3], "b") == 0,
+    CHECK(strcmp(context.ids[0], "b") == 0 && strcmp(context.ids[1], "c") == 0 &&
+              strcmp(context.ids[2], "a") == 0,
           "unseeded alternative flow should deterministically differ from lexical flow");
     wct_report_free(&report);
     wct_relation_graph_free(&graph);
