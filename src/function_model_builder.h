@@ -12,6 +12,7 @@ class FunctionModelBuilder : public FunctionDslBaseVisitor {
   std::any visitResourceBlock(FunctionDslParser::ResourceBlockContext *ctx) override;
   std::any visitFuncBlock(FunctionDslParser::FuncBlockContext *ctx) override;
   std::any visitSetupBlock(FunctionDslParser::SetupBlockContext *ctx) override;
+  std::any visitClassBlock(FunctionDslParser::ClassBlockContext *ctx) override;
 
  private:
   model::Model model_;

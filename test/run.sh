@@ -88,4 +88,9 @@ echo "$hjson_c" | gcc -x c - -o /tmp/hjson
 /tmp/hjson | grep -q '"kind":"failure"' || true
 rm -f /tmp/hjson /tmp/a.txt /tmp/b.txt /tmp/c.txt
 
+cpp_c="$("$BIN" doc/examples/cpp-class.dsl --max-length 2 --seed 0 --max-cases 3 --harness)"
+echo "$cpp_c" | g++ -x c++ -Itest test/store_sut.cpp -o /tmp/cppharness -
+/tmp/cppharness | grep -q 'ALL PASS'
+rm -f /tmp/cppharness
+
 echo "PASS"

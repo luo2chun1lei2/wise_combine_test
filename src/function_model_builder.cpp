@@ -122,6 +122,8 @@ std::any FunctionModelBuilder::visitFuncBlock(FunctionDslParser::FuncBlockContex
       }
     } else if (member->successDecl() != nullptr) {
       function.success.expr = member->successDecl()->successExpr()->getText();
+    } else if (member->receiverDecl() != nullptr) {
+      function.receiver = member->receiverDecl()->ID()->getText();
     }
   }
 
@@ -144,6 +146,15 @@ std::any FunctionModelBuilder::visitSetupBlock(FunctionDslParser::SetupBlockCont
     setup.count = std::stoi(entry->INT()->getText());
     model_.setups.push_back(setup);
   }
+  return nullptr;
+}
+
+std::any FunctionModelBuilder::visitClassBlock(FunctionDslParser::ClassBlockContext *ctx) {
+  model::ClassEntry entry;
+  entry.name = ctx->ID()->getText();
+  entry.cpp = unquote(ctx->cppDecl()->STRING()->getText());
+  entry.header = unquote(ctx->headerDecl()->STRING()->getText());
+  model_.classes[entry.name] = entry;
   return nullptr;
 }
 
@@ -189,6 +200,9 @@ void FunctionModelBuilder::validate() {
     }
     if (function.symbol.empty()) {
       model_.errors.push_back("function " + function.name + " has no symbol");
+    }
+    if (!function.receiver.empty() && model_.classes.find(function.receiver) == model_.classes.end()) {
+      model_.errors.push_back("function " + function.name + " references unknown class: " + function.receiver);
     }
 
     for (const auto &param : function.params) {

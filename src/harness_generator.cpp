@@ -172,6 +172,12 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
   out << "#include <stddef.h>\n";
   out << "#include <stdio.h>\n";
   out << "#include <string.h>\n";
+  for (const auto &[name, cls] : model.classes) {
+    (void)name;
+    if (!cls.header.empty()) {
+      out << "#include \"" << cls.header << "\"\n";
+    }
+  }
   if (dylib) {
     out << "#include <dlfcn.h>\n";
   }
@@ -185,6 +191,9 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
       }
     }
     for (const auto &function : model.functions) {
+      if (!function.receiver.empty()) {
+        continue;
+      }
       if (!function.signature.empty()) {
         const SigParts sig = parseSig(function.signature);
         out << "static " << sig.ret << " (*" << function.symbol << "_p)" << sig.params << ";\n";
@@ -198,6 +207,9 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
       }
     }
     for (const auto &function : model.functions) {
+      if (!function.receiver.empty()) {
+        continue;
+      }
       if (!function.signature.empty()) {
         out << function.signature << ";\n";
       }
@@ -209,6 +221,10 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
     const gen::Sequence &seq = sequences[s];
     out << "static int test_" << s << "(void) {\n";
     out << "  char buf[256] = {0};\n";
+    for (const auto &[name, cls] : model.classes) {
+      (void)name;
+      out << "  " << cls.cpp << " obj_" << cls.name << ";\n";
+    }
 
     int nextHandle = 0;
     emitSetups(out, model, nextHandle, dylib);
@@ -249,16 +265,18 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
       const bool resourceReturn = isResource(model, fn.returnType);
       std::string returnVar;
       std::string callStmt;
-      const std::string symbol = dylib ? fn.symbol + "_p" : fn.symbol;
+      const std::string callee =
+          fn.receiver.empty() ? (dylib ? fn.symbol + "_p" : fn.symbol)
+                              : "obj_" + fn.receiver + "." + fn.symbol;
 
       if (resourceReturn) {
         returnVar = "h" + std::to_string(nextHandle++);
-        callStmt = cTypeOf(model, fn.returnType) + " " + returnVar + " = " + symbol + "(";
+        callStmt = cTypeOf(model, fn.returnType) + " " + returnVar + " = " + callee + "(";
       } else if (!fn.returnType.empty()) {
         returnVar = "r" + std::to_string(c);
-        callStmt = cTypeOf(model, fn.returnType) + " " + returnVar + " = " + symbol + "(";
+        callStmt = cTypeOf(model, fn.returnType) + " " + returnVar + " = " + callee + "(";
       } else {
-        callStmt = symbol + "(";
+        callStmt = callee + "(";
       }
 
       for (std::size_t i = 0; i < args.size(); ++i) {
@@ -334,6 +352,9 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
       }
     }
     for (const auto &function : model.functions) {
+      if (!function.receiver.empty()) {
+        continue;
+      }
       if (!function.signature.empty()) {
         out << "  *(void**)(&" << function.symbol << "_p) = dlsym(lib, \"" << function.symbol
             << "\");\n";

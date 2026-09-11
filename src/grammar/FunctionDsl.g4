@@ -2,7 +2,7 @@ grammar FunctionDsl;
 
 model: block* EOF;
 
-block: typesBlock | valuesBlock | resourceBlock | funcBlock | setupBlock;
+block: typesBlock | valuesBlock | resourceBlock | funcBlock | setupBlock | classBlock;
 
 typesBlock: 'types' '{' typeMap* '}';
 typeMap: ID '->' STRING;
@@ -23,7 +23,7 @@ params: param (',' param)*;
 param: 'out'? ID ':' typeName ('from' ID)?;
 typeName: ID;
 
-funcMember: symbolDecl | signatureDecl | requiresDecl | effectsDecl | successDecl;
+funcMember: symbolDecl | signatureDecl | requiresDecl | effectsDecl | successDecl | receiverDecl;
 symbolDecl: 'symbol' ':' STRING;
 signatureDecl: 'signature' ':' STRING;
 requiresDecl: 'requires' ':' (cond (',' cond)*)?;
@@ -33,6 +33,11 @@ successDecl: 'success' ':' successExpr;
 setupBlock: 'setup' '{' setupEntry* '}';
 setupEntry: ID ':' ID '(' (setupArg (',' setupArg)*)? ')' 'x' INT;
 setupArg: STRING | INT;
+
+classBlock: 'class' ID '{' cppDecl headerDecl '}';
+cppDecl: 'cpp' ':' STRING;
+headerDecl: 'header' ':' STRING;
+receiverDecl: 'receiver' ':' ID;
 
 cond: ID 'is' ID;
 effect: target '->' ID;

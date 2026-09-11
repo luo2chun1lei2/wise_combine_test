@@ -49,9 +49,16 @@ struct Function {
   std::string returnType;
   std::string symbol;
   std::string signature;
+  std::string receiver;
   std::vector<Cond> requiresConds;
   std::vector<Effect> effects;
   SuccessExpr success;
+};
+
+struct ClassEntry {
+  std::string name;
+  std::string cpp;
+  std::string header;
 };
 
 struct SetupEntry {
@@ -66,6 +73,7 @@ struct Model {
   std::map<std::string, ValueSource> values;
   std::map<std::string, Resource> resources;
   std::vector<Function> functions;
+  std::map<std::string, ClassEntry> classes;
   std::vector<SetupEntry> setups;
   std::vector<std::string> errors;
 };
