@@ -1,0 +1,2 @@
+SANITIZER SENTINEL PASS: oob (expected AddressSanitizer|runtime error, exit=1)
+SANITIZER SENTINEL PASS: leak (expected LeakSanitizer|detected memory leaks, exit=134)

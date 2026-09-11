@@ -1,0 +1,25 @@
+{
+  "iteration": "I13",
+  "status": "PASS",
+  "scope": "final trace isolation and complete verification",
+  "head": "1fbd9f44216d57570819047c83abed58db1b446e",
+  "tested_source_commit": "1fbd9f44216d57570819047c83abed58db1b446e",
+  "prior_summary_sha256": "414a8ac79050e0ede6cc84d5110a12d863cf7745b052ae3c1a3b0980671b4778",
+  "checks": {
+    "replay": 0,
+    "valgrind": 0,
+    "sanitize": 0,
+    "measure-3": 0,
+    "measure-1": 0,
+    "test": 0,
+    "trace": 0,
+    "measure-2": 0,
+    "sentinels": 0,
+    "coverage": 0
+  },
+  "build_gate": "PASS",
+  "memory_gate": "PASS",
+  "measurement_repetitions": 3,
+  "trace_replay": "PASS",
+  "blockers": []
+}
