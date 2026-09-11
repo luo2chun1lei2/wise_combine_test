@@ -348,6 +348,35 @@ int main() {
     {
         const std::string path = write_tmp(
             "object x {\n"
+            " state S0 initial\n"
+            " state S1\n"
+            " state S2\n"
+            " state S3 final\n"
+            " transition S0 -> S1 by a()\n"
+            " transition S0 -> S1 by b()\n"
+            " transition S1 -> S2 by c()\n"
+            " transition S2 -> S3 by b()\n"
+            " transition S2 -> S3 by a()\n"
+            "}\n"
+            "function a()\n"
+            "function b()\n"
+            "function c()\n"
+            "order a before b if c");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::Generator generator(model);
+        const auto flows = generator.generate_state_flows();
+        assert(flows.size() == 3);
+        for (const auto& flow : flows) {
+            assert(!(flow == (wct::Flow{"b", "c", "a"})));
+        }
+    }
+
+    {
+        const std::string path = write_tmp(
+            "object x {\n"
             " state A initial\n"
             " state B final\n"
             " state C final\n"

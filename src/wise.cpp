@@ -503,7 +503,7 @@ void Parser::parse_order(const std::string& text, int line, Spec& spec) {
     const auto tokens = split_ws(trim(text.substr(std::string("order").size())));
     if (tokens.size() < 3 ||
         (tokens[1] != "before" && tokens[1] != "after")) {
-        fail(line, "order must be: order <a> before|after <b>");
+        fail(line, "order must be: order <a> before|after <b> [if <func>]");
     }
     OrderRel rel;
     rel.line = line;
@@ -514,8 +514,11 @@ void Parser::parse_order(const std::string& text, int line, Spec& spec) {
         rel.before = tokens[2];
         rel.after = tokens[0];
     }
-    if (tokens.size() != 3) {
-        fail(line, "order must be: order <a> before|after <b>");
+    if (tokens.size() > 3) {
+        if (tokens.size() != 5 || tokens[3] != "if" || tokens[4].empty()) {
+            fail(line, "order condition must be: if <func>");
+        }
+        rel.condition = tokens[4];
     }
     spec.orders.push_back(rel);
 }
@@ -765,6 +768,13 @@ void Model::validate() {
         if (!has_function(rel.before) || !has_function(rel.after)) {
             throw ModelError{"order references unknown function"};
         }
+        if (!rel.condition.empty() && !has_function(rel.condition)) {
+            throw ModelError{"order condition references unknown function: " +
+                             rel.condition};
+        }
+        if (!rel.condition.empty()) {
+            continue;
+        }
         edges[rel.before].push_back(rel.after);
         ++indeg[rel.after];
     }
@@ -978,7 +988,9 @@ std::vector<Flow> Generator::generate_function_flows() const {
         indeg[fn.name] = 0;
     }
     for (const auto& rel : model_.spec().orders) {
-        ++indeg[rel.after];
+        if (rel.condition.empty()) {
+            ++indeg[rel.after];
+        }
     }
     std::vector<std::string> current;
     topo_enumerate(current, indeg, out);
@@ -1010,13 +1022,13 @@ void Generator::topo_enumerate(std::vector<std::string>& current,
         current.push_back(name);
         indeg[name] = static_cast<std::size_t>(-1);
         for (const auto& rel : model_.spec().orders) {
-            if (rel.before == name) {
+            if (rel.condition.empty() && rel.before == name) {
                 --indeg[rel.after];
             }
         }
         topo_enumerate(current, indeg, out);
         for (const auto& rel : model_.spec().orders) {
-            if (rel.before == name) {
+            if (rel.condition.empty() && rel.before == name) {
                 ++indeg[rel.after];
             }
         }
@@ -1035,6 +1047,9 @@ bool Generator::order_respected(const Flow& flow) const {
         pos[flow[i]] = i;
     }
     for (const auto& rel : model_.spec().orders) {
+        if (!rel.condition.empty() && pos.count(rel.condition) == 0) {
+            continue;
+        }
         const auto before_it = pos.find(rel.before);
         const auto after_it = pos.find(rel.after);
         if (before_it == pos.end() || after_it == pos.end()) {

@@ -64,6 +64,7 @@ struct ParameterRel {
 struct OrderRel {
     std::string before;
     std::string after;
+    std::string condition;
     int line = 0;
 };
 
