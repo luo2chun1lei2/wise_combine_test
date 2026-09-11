@@ -1,5 +1,4 @@
 #include "wct.h"
-#include "../src/wct_internal.h"
 #include <inttypes.h>
 #include <limits.h>
 #include <errno.h>
@@ -7,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static char *copy_string(const char *value) {
     size_t size = strlen(value) + 1;
@@ -284,13 +284,27 @@ static int replay_trace(const char *path) {
     if (canonical_ir_digest(&state, &relation, mode) != expected_ir_digest) { fprintf(stderr, "error: trace IR checksum mismatch\n"); wct_state_graph_free(&state); wct_relation_graph_free(&relation); return 1; }
     if (canonical_metadata_digest(&state, &relation, mode, limits.seed) != expected_metadata_digest) { fprintf(stderr, "error: trace metadata checksum mismatch\n"); wct_state_graph_free(&state); wct_relation_graph_free(&relation); return 1; }
     cli_context context = {.hash = trace_seed(), .quiet = 1, .state_graph = &state, .state_current = 0};
+    char replay_tmp[] = "/tmp/wct-replay-XXXXXX";
+    int replay_fd = mkstemp(replay_tmp);
+    FILE *replay_trace_file = replay_fd >= 0 ? fdopen(replay_fd, "w+") : NULL;
+    if (!replay_trace_file) {
+        if (replay_fd >= 0) close(replay_fd);
+        wct_state_graph_free(&state); wct_relation_graph_free(&relation);
+        fprintf(stderr, "error: cannot create replay trace\n");
+        return 1;
+    }
+    setvbuf(replay_trace_file, NULL, _IONBF, 0);
+    context.trace = replay_trace_file;
     wct_report report = {0};
     int rc = !strcmp(mode, "state")
         ? wct_run_state(&state, state_callback, &context, limits, &report)
         : !strcmp(mode, "relation")
             ? wct_run_relation(&relation, relation_callback, &context, limits, &report)
             : -1;
-    context.hash = trace_steps_digest(path);
+    fflush(replay_trace_file);
+    fclose(replay_trace_file);
+    context.hash = trace_steps_digest(replay_tmp);
+    unlink(replay_tmp);
     int ok = (rc ? 1 : 0) == expected_exit && report.steps == expected_steps &&
              context.hash == expected_digest && report.declared_edges == expected_declared && report.covered_edges == expected_covered && report.uncovered_edges == expected_uncovered && report.process_exit == expected_process_exit && report.process_signal == expected_process_signal && report.timed_out == expected_timed_out;
     printf("replay=%s steps=%zu digest=%016" PRIx64 "\n", ok ? "PASS" : "FAIL",
@@ -350,8 +364,7 @@ int main(int argc, char **argv) {
     limits.state_snapshot = state_snapshot;
     limits.state_restore = state_restore;
     limits.transition_observer = state_observer;
-    /* CLI scenarios are isolated by default; trace capture remains an
-       explicit in-process compatibility mode so it can replay side effects. */
+    /* CLI scenarios, including trace capture, are isolated by default. */
     if (!trace_path) limits.isolate = 1;
     /* The trace format stores the model path as a whitespace-delimited field.
        Reject such paths rather than emitting a trace that cannot be replayed. */
@@ -371,13 +384,18 @@ int main(int argc, char **argv) {
     cli_context context = {.hash = trace_seed(), .state_graph = &state, .state_current = 0};
     if (trace_path) {
         trace = fopen(trace_path, "w");
-        if (!trace || write_trace_header(trace, model, mode, limits, canonical_ir_digest(&state, &relation, mode))) {
-            if (trace) fclose(trace);
+        if (!trace) {
             fprintf(stderr, "error: cannot write trace\n");
             wct_state_graph_free(&state); wct_relation_graph_free(&relation);
             return 1;
         }
         setvbuf(trace, NULL, _IONBF, 0);
+        if (write_trace_header(trace, model, mode, limits, canonical_ir_digest(&state, &relation, mode))) {
+            if (trace) fclose(trace);
+            fprintf(stderr, "error: cannot write trace\n");
+            wct_state_graph_free(&state); wct_relation_graph_free(&relation);
+            return 1;
+        }
         context.trace = trace;
         cli_context metadata = {.hash = trace_seed()};
         char metadata_line[4096];
