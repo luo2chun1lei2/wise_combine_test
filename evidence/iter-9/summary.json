@@ -27,5 +27,7 @@
   "measurement_summary": "measure-1.tsv.summary.tsv (median/min/max/range)",
   "trace_replay": "PASS",
   "blockers": [],
-  "tested_source_commit": "1af6dcc9c32de7f2b20a28485310b83810be8bda"
+  "tested_source_commit": "1af6dcc9c32de7f2b20a28485310b83810be8bda",
+  "prior_iteration": "I7",
+  "prior_summary_sha256": "badf965ddadccfe25f32270086b8da8cf0760ecaa3cf5e4eda5ffb8bee275577"
 }
