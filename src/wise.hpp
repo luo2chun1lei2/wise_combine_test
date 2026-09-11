@@ -54,6 +54,8 @@ struct ParameterRel {
     std::string lhs_param;
     std::string rhs_func;
     std::string rhs_param;
+    bool rhs_is_const = false;
+    std::string rhs_const;
     int line = 0;
 };
 
@@ -64,14 +66,18 @@ struct OrderRel {
 };
 
 struct MutexRel {
-    std::string a;
-    std::string b;
+    std::vector<std::string> funcs;
     int line = 0;
 };
 
 struct ConstraintRel {
     std::string expr;
     int line = 0;
+};
+
+struct GuardExpr {
+    std::string op;
+    long value = 0;
 };
 
 struct Spec {
@@ -142,17 +148,30 @@ private:
     std::unordered_map<std::string, std::size_t> object_index_;
 };
 
-class Generator {
+class GenerationStrategy {
+public:
+    virtual ~GenerationStrategy() = default;
+    virtual std::vector<Flow> generate_state_flows() const = 0;
+    virtual std::vector<Flow> generate_function_flows() const = 0;
+    virtual bool truncated() const = 0;
+};
+
+class Generator : public GenerationStrategy {
 public:
     explicit Generator(const Model& model, const GenerationOptions& options = {});
 
-    std::vector<Flow> generate_state_flows() const;
-    std::vector<Flow> generate_function_flows() const;
-    bool truncated() const { return options_.truncated; }
+    std::vector<Flow> generate_state_flows() const override;
+    std::vector<Flow> generate_function_flows() const override;
+    bool truncated() const override;
+
+    void set_strategy(std::shared_ptr<GenerationStrategy> strategy) {
+        strategy_ = std::move(strategy);
+    }
 
 private:
     const Model& model_;
     mutable GenerationOptions options_;
+    std::shared_ptr<GenerationStrategy> strategy_;
 
     void state_dfs(const ObjectDecl& object, std::size_t state_index,
                    std::vector<std::string>& path,
@@ -162,6 +181,7 @@ private:
                         std::map<std::string, std::size_t>& indeg,
                         std::vector<Flow>& out) const;
     bool order_respected(const Flow& flow) const;
+    bool parameter_respected(const Flow& flow) const;
     bool mutex_violated(const Flow& flow) const;
     bool constraint_violated(const Flow& flow) const;
 };
@@ -177,6 +197,7 @@ struct RunnerOptions {
     std::string lib_path;
     bool dry_run = false;
     int timeout_seconds = 10;
+    std::unordered_map<std::string, GuardExpr> guards;
 };
 
 class Runner {
@@ -213,6 +234,9 @@ std::string render_report(const std::vector<FlowResult>& results,
                           const std::string& format);
 
 std::string flow_id(const Flow& flow);
+
+bool parse_guard(const std::string& text, GuardExpr& out, std::string& err);
+bool guard_satisfied(const GuardExpr& guard, int return_value);
 
 } // namespace wct
 

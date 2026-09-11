@@ -114,6 +114,33 @@ bool parse_count_constraint(const std::string& expr, CountConstraint& out,
     return true;
 }
 
+bool parse_constraint_expr(const std::string& expr,
+                           std::vector<CountConstraint>& out,
+                           std::string& err) {
+    const std::string t = trim(expr);
+    if (t.empty()) {
+        err = "constraint expression is empty";
+        return false;
+    }
+    std::size_t begin = 0;
+    while (begin < t.size()) {
+        std::size_t end = t.find(" and ", begin);
+        const std::string part =
+            trim(t.substr(begin, end == std::string::npos ? std::string::npos
+                                                          : end - begin));
+        CountConstraint cc;
+        if (!parse_count_constraint(part, cc, err)) {
+            return false;
+        }
+        out.push_back(cc);
+        if (end == std::string::npos) {
+            break;
+        }
+        begin = end + 5;
+    }
+    return !out.empty();
+}
+
 std::string now_string() {
     const auto now = std::chrono::system_clock::now();
     const auto tt = std::chrono::system_clock::to_time_t(now);
@@ -125,6 +152,75 @@ std::string now_string() {
 }
 
 } // namespace
+
+bool parse_guard(const std::string& text, GuardExpr& out, std::string& err) {
+    const std::string t = trim(text);
+    if (t.empty()) {
+        err = "guard expression is empty";
+        return false;
+    }
+    const std::string prefix = "return";
+    if (!starts_with(t, prefix)) {
+        err = "guard must start with return";
+        return false;
+    }
+    const std::string rest = trim(t.substr(prefix.size()));
+    if (rest.empty()) {
+        err = "guard missing operator and value";
+        return false;
+    }
+    const std::set<std::string> ops{"==", "!=", "<=", ">=", "<", ">"};
+    std::string op;
+    std::string value;
+    bool found = false;
+    for (const auto& candidate : ops) {
+        if (starts_with(rest, candidate)) {
+            op = candidate;
+            value = trim(rest.substr(candidate.size()));
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        err = "unknown guard operator";
+        return false;
+    }
+    if (value.empty()) {
+        err = "guard missing value";
+        return false;
+    }
+    try {
+        out.value = std::stol(value);
+    } catch (...) {
+        err = "invalid guard value: " + value;
+        return false;
+    }
+    out.op = op;
+    return true;
+}
+
+bool guard_satisfied(const GuardExpr& guard, int return_value) {
+    const long actual = static_cast<long>(return_value);
+    if (guard.op == "==") {
+        return actual == guard.value;
+    }
+    if (guard.op == "!=") {
+        return actual != guard.value;
+    }
+    if (guard.op == "<") {
+        return actual < guard.value;
+    }
+    if (guard.op == "<=") {
+        return actual <= guard.value;
+    }
+    if (guard.op == ">") {
+        return actual > guard.value;
+    }
+    if (guard.op == ">=") {
+        return actual >= guard.value;
+    }
+    return false;
+}
 
 Parser::Parser(std::string file) : file_(std::move(file)) {}
 
@@ -354,15 +450,34 @@ void Parser::parse_parameter(const std::string& text, int line, Spec& spec) {
     const std::string rhs = trim(rest.substr(eq + 1));
     const std::size_t ldot = lhs.find('.');
     const std::size_t rdot = rhs.find('.');
-    if (ldot == std::string::npos || rdot == std::string::npos) {
-        fail(line, "parameter relation must use func.param format");
+    if (ldot == std::string::npos) {
+        fail(line, "parameter relation lhs must use func.param format");
     }
     ParameterRel rel;
     rel.line = line;
     rel.lhs_func = trim(lhs.substr(0, ldot));
     rel.lhs_param = trim(lhs.substr(ldot + 1));
-    rel.rhs_func = trim(rhs.substr(0, rdot));
-    rel.rhs_param = trim(rhs.substr(rdot + 1));
+    if (rel.lhs_func.empty() || rel.lhs_param.empty()) {
+        fail(line, "parameter relation has an empty function or parameter name");
+    }
+    if (rdot == std::string::npos) {
+        rel.rhs_is_const = true;
+        rel.rhs_const = rhs;
+        if (rel.rhs_const.size() >= 2 &&
+            ((rel.rhs_const.front() == '"' && rel.rhs_const.back() == '"') ||
+             (rel.rhs_const.front() == '\'' && rel.rhs_const.back() == '\''))) {
+            rel.rhs_const = rel.rhs_const.substr(1, rel.rhs_const.size() - 2);
+        }
+        if (rel.rhs_const.empty()) {
+            fail(line, "parameter constant is empty");
+        }
+    } else {
+        rel.rhs_func = trim(rhs.substr(0, rdot));
+        rel.rhs_param = trim(rhs.substr(rdot + 1));
+        if (rel.rhs_func.empty() || rel.rhs_param.empty()) {
+            fail(line, "parameter relation has an empty source function or parameter name");
+        }
+    }
     spec.parameters.push_back(rel);
 }
 
@@ -380,13 +495,12 @@ void Parser::parse_order(const std::string& text, int line, Spec& spec) {
 
 void Parser::parse_mutex(const std::string& text, int line, Spec& spec) {
     const auto tokens = split_ws(trim(text.substr(std::string("mutex").size())));
-    if (tokens.size() != 2) {
-        fail(line, "mutex must list exactly two functions");
+    if (tokens.size() < 2) {
+        fail(line, "mutex must list at least two functions");
     }
     MutexRel rel;
     rel.line = line;
-    rel.a = tokens[0];
-    rel.b = tokens[1];
+    rel.funcs = tokens;
     spec.mutexes.push_back(rel);
 }
 
@@ -442,39 +556,123 @@ void Model::validate() {
                 throw ModelError{"transition references unknown function: " +
                                  tr.func};
             }
+            if (!tr.guard.empty()) {
+                GuardExpr guard;
+                std::string err;
+                if (!parse_guard(tr.guard, guard, err)) {
+                    throw ModelError{"invalid guard on transition " + tr.src +
+                                     " -> " + tr.dst + ": " + err};
+                }
+            }
         }
     }
 
+    std::unordered_set<std::string> param_keys;
     for (const auto& rel : spec_.parameters) {
-        if (!has_function(rel.lhs_func) || !has_function(rel.rhs_func)) {
-            throw ModelError{"parameter relation references unknown function"};
+        if (!has_function(rel.lhs_func)) {
+            throw ModelError{"parameter relation references unknown function: " +
+                             rel.lhs_func};
         }
         const FunctionDecl& lhs = function(rel.lhs_func);
-        bool lhs_ok = false;
+        const Param* lhs_param = nullptr;
         for (const auto& p : lhs.params) {
             if (p.name == rel.lhs_param) {
-                lhs_ok = true;
+                lhs_param = &p;
                 break;
             }
         }
-        if (!lhs_ok && lhs.return_param != rel.lhs_param) {
+        if (!lhs_param) {
             throw ModelError{"unknown parameter " + rel.lhs_func + "." +
                              rel.lhs_param};
         }
+
+        const std::string lhs_key = rel.lhs_func + "." + rel.lhs_param;
+        if (!param_keys.insert(lhs_key).second) {
+            throw ModelError{"parameter " + lhs_key + " has multiple sources"};
+        }
+
+        if (rel.rhs_is_const) {
+            continue;
+        }
+
+        if (!has_function(rel.rhs_func)) {
+            throw ModelError{"parameter relation references unknown function: " +
+                             rel.rhs_func};
+        }
         const FunctionDecl& rhs = function(rel.rhs_func);
-        if (rhs.return_param != rel.rhs_param) {
-            bool rhs_ok = false;
-            for (const auto& p : rhs.params) {
-                if (p.name == rel.rhs_param) {
-                    rhs_ok = true;
-                    break;
-                }
-            }
-            if (!rhs_ok) {
-                throw ModelError{"unknown source parameter " + rel.rhs_func +
-                                 "." + rel.rhs_param};
+        const Param* rhs_param = nullptr;
+        for (const auto& p : rhs.params) {
+            if (p.name == rel.rhs_param) {
+                rhs_param = &p;
+                break;
             }
         }
+        if (rhs_param) {
+            if (!lhs_param->type.empty() && !rhs_param->type.empty() &&
+                lhs_param->type != rhs_param->type) {
+                throw ModelError{"parameter type mismatch: " + lhs_key +
+                                 " (" + lhs_param->type + ") <- " +
+                                 rel.rhs_func + "." + rel.rhs_param +
+                                 " (" + rhs_param->type + ")"};
+            }
+        } else if (rhs.return_param == rel.rhs_param) {
+            const std::string rhs_type =
+                rhs.return_type.empty() ? rhs.return_param : rhs.return_type;
+            if (!lhs_param->type.empty() && !rhs_type.empty() &&
+                lhs_param->type != rhs_type) {
+                throw ModelError{"parameter type mismatch: " + lhs_key +
+                                 " (" + lhs_param->type + ") <- " +
+                                 rel.rhs_func + "." + rel.rhs_param +
+                                 " (" + rhs_type + ")"};
+            }
+        } else {
+            throw ModelError{"unknown source parameter " + rel.rhs_func + "." +
+                             rel.rhs_param};
+        }
+    }
+
+    std::unordered_map<std::string, std::vector<std::string>> param_deps;
+    for (const auto& rel : spec_.parameters) {
+        if (rel.rhs_is_const) {
+            continue;
+        }
+        const FunctionDecl& rhs = function(rel.rhs_func);
+        bool rhs_is_param = false;
+        for (const auto& p : rhs.params) {
+            if (p.name == rel.rhs_param) {
+                rhs_is_param = true;
+                break;
+            }
+        }
+        if (!rhs_is_param) {
+            continue;
+        }
+        const std::string from = rel.lhs_func + "." + rel.lhs_param;
+        const std::string to = rel.rhs_func + "." + rel.rhs_param;
+        param_deps[from].push_back(to);
+    }
+    std::unordered_map<std::string, unsigned char> marks;
+    std::function<void(const std::string&)> visit_param =
+        [&](const std::string& node) {
+            const unsigned char mark = marks[node];
+            if (mark == 1U) {
+                throw ModelError{"parameter relations contain a cycle"};
+            }
+            if (mark == 2U) {
+                return;
+            }
+            marks[node] = 1U;
+            const auto it = param_deps.find(node);
+            if (it != param_deps.end()) {
+                for (const auto& next : it->second) {
+                    visit_param(next);
+                }
+            }
+            marks[node] = 2U;
+        };
+    for (const auto& [key, value] : param_deps) {
+        static_cast<void>(value);
+        visit_param(key);
     }
 
     std::unordered_map<std::string, std::size_t> indeg;
@@ -511,18 +709,28 @@ void Model::validate() {
     }
 
     for (const auto& rel : spec_.mutexes) {
-        if (!has_function(rel.a) || !has_function(rel.b)) {
-            throw ModelError{"mutex references unknown function"};
+        std::unordered_set<std::string> seen;
+        for (const auto& name : rel.funcs) {
+            if (!has_function(name)) {
+                throw ModelError{"mutex references unknown function: " + name};
+            }
+            if (!seen.insert(name).second) {
+                throw ModelError{"mutex lists a function more than once: " +
+                                 name};
+            }
         }
     }
     for (const auto& rel : spec_.constraints) {
-        CountConstraint cc;
+        std::vector<CountConstraint> ccs;
         std::string err;
-        if (!parse_count_constraint(rel.expr, cc, err)) {
+        if (!parse_constraint_expr(rel.expr, ccs, err)) {
             throw ModelError{"invalid constraint: " + err};
         }
-        if (!has_function(cc.func)) {
-            throw ModelError{"constraint references unknown function: " + cc.func};
+        for (const auto& cc : ccs) {
+            if (!has_function(cc.func)) {
+                throw ModelError{"constraint references unknown function: " +
+                                 cc.func};
+            }
         }
     }
 }
@@ -550,7 +758,17 @@ const ObjectDecl& Model::object(const std::string& name) const {
 Generator::Generator(const Model& model, const GenerationOptions& options)
     : model_(model), options_(options) {}
 
+bool Generator::truncated() const {
+    if (strategy_) {
+        return strategy_->truncated();
+    }
+    return options_.truncated;
+}
+
 std::vector<Flow> Generator::generate_state_flows() const {
+    if (strategy_) {
+        return strategy_->generate_state_flows();
+    }
     std::vector<Flow> out;
     for (const auto& object : model_.spec().objects) {
         std::size_t initial = 0;
@@ -587,7 +805,9 @@ void Generator::state_dfs(const ObjectDecl& object, std::size_t state_index,
     }
     ++visit;
     if (state.final && !path.empty()) {
-        out.push_back(path);
+        if (parameter_respected(path)) {
+            out.push_back(path);
+        }
     }
     if (path.size() >= options_.max_depth) {
         --visit;
@@ -618,6 +838,9 @@ void Generator::state_dfs(const ObjectDecl& object, std::size_t state_index,
 }
 
 std::vector<Flow> Generator::generate_function_flows() const {
+    if (strategy_) {
+        return strategy_->generate_function_flows();
+    }
     std::vector<Flow> out;
     std::map<std::string, std::size_t> indeg;
     for (const auto& fn : model_.spec().functions) {
@@ -639,7 +862,8 @@ void Generator::topo_enumerate(std::vector<std::string>& current,
         return;
     }
     if (current.size() == model_.spec().functions.size()) {
-        if (order_respected(current) && !mutex_violated(current) &&
+        if (order_respected(current) && parameter_respected(current) &&
+            !mutex_violated(current) &&
             !constraint_violated(current)) {
             out.push_back(current);
             if (out.size() >= options_.max_flows) {
@@ -687,10 +911,40 @@ bool Generator::order_respected(const Flow& flow) const {
     return true;
 }
 
+bool Generator::parameter_respected(const Flow& flow) const {
+    std::unordered_map<std::string, std::size_t> pos;
+    for (std::size_t i = 0; i < flow.size(); ++i) {
+        pos[flow[i]] = i;
+    }
+    for (const auto& rel : model_.spec().parameters) {
+        if (rel.rhs_is_const) {
+            continue;
+        }
+        const auto consumer = pos.find(rel.lhs_func);
+        if (consumer == pos.end()) {
+            continue;
+        }
+        const auto producer = pos.find(rel.rhs_func);
+        if (producer == pos.end()) {
+            return false;
+        }
+        if (producer->second >= consumer->second) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool Generator::mutex_violated(const Flow& flow) const {
     std::unordered_set<std::string> present(flow.begin(), flow.end());
     for (const auto& rel : model_.spec().mutexes) {
-        if (present.count(rel.a) && present.count(rel.b)) {
+        std::size_t present_count = 0;
+        for (const auto& name : rel.funcs) {
+            if (present.count(name)) {
+                ++present_count;
+            }
+        }
+        if (present_count > 1) {
             return true;
         }
     }
@@ -703,28 +957,30 @@ bool Generator::constraint_violated(const Flow& flow) const {
         ++counts[name];
     }
     for (const auto& rel : model_.spec().constraints) {
-        CountConstraint cc;
+        std::vector<CountConstraint> ccs;
         std::string err;
-        if (!parse_count_constraint(rel.expr, cc, err)) {
+        if (!parse_constraint_expr(rel.expr, ccs, err)) {
             continue;
         }
-        const long actual = static_cast<long>(counts[cc.func]);
-        bool ok = false;
-        if (cc.op == "<") {
-            ok = actual < cc.value;
-        } else if (cc.op == "<=") {
-            ok = actual <= cc.value;
-        } else if (cc.op == ">") {
-            ok = actual > cc.value;
-        } else if (cc.op == ">=") {
-            ok = actual >= cc.value;
-        } else if (cc.op == "==") {
-            ok = actual == cc.value;
-        } else if (cc.op == "!=") {
-            ok = actual != cc.value;
-        }
-        if (!ok) {
-            return true;
+        for (const auto& cc : ccs) {
+            const long actual = static_cast<long>(counts[cc.func]);
+            bool ok = false;
+            if (cc.op == "<") {
+                ok = actual < cc.value;
+            } else if (cc.op == "<=") {
+                ok = actual <= cc.value;
+            } else if (cc.op == ">") {
+                ok = actual > cc.value;
+            } else if (cc.op == ">=") {
+                ok = actual >= cc.value;
+            } else if (cc.op == "==") {
+                ok = actual == cc.value;
+            } else if (cc.op == "!=") {
+                ok = actual != cc.value;
+            }
+            if (!ok) {
+                return true;
+            }
         }
     }
     return false;
@@ -797,6 +1053,19 @@ FlowResult Runner::run_direct(const Flow& flow) const {
                 _exit(126);
             }
             const int ret = fn();
+            const auto guard = options_.guards.find(name);
+            if (guard != options_.guards.end() &&
+                !guard_satisfied(guard->second, ret)) {
+                const std::string msg =
+                    "guard not satisfied for " + name +
+                    " (return=" + std::to_string(ret) + ")";
+                const ssize_t ignored_guard =
+                    write(pipefd[1], msg.c_str(), msg.size());
+                (void)ignored_guard;
+                dlclose(handle);
+                close(pipefd[1]);
+                _exit(125);
+            }
             if (ret != 0) {
                 const std::string msg = "function returned non-zero: " + name + " (" + std::to_string(ret) + ")";
                 const ssize_t ignored3 = write(pipefd[1], msg.c_str(), msg.size());

@@ -9,6 +9,16 @@
 
 namespace {
 
+struct FixedStrategy : wct::GenerationStrategy {
+    std::vector<wct::Flow> generate_state_flows() const override {
+        return {{"f", "g"}};
+    }
+    std::vector<wct::Flow> generate_function_flows() const override {
+        return {{"g"}};
+    }
+    bool truncated() const override { return false; }
+};
+
 bool throws_model(const std::string& file) {
     wct::Parser parser(file);
     wct::Spec spec = parser.parse();
@@ -111,7 +121,7 @@ int main() {
         wct::Generator generator(model);
         const auto flows = generator.generate_function_flows();
         assert(flows.size() == 1);
-        wct::Runner runner({"", true, 10});
+        wct::Runner runner({"", true, 10, {}});
         const std::string code = runner.generate_standalone(flows);
         assert(code.find("extern \"C\" int f();") != std::string::npos);
         assert(code.find("run_flow_0") != std::string::npos);
@@ -201,7 +211,7 @@ int main() {
     }
 
     {
-        wct::Runner runner({"test/out/libtest.so", false, 10});
+        wct::Runner runner({"test/out/libtest.so", false, 10, {}});
         const auto results = runner.run({{"f", "g"}, {"h"}, {"f", "h"}});
         assert(results.size() == 3);
         assert(results[0].status == "passed");
@@ -210,14 +220,14 @@ int main() {
     }
 
     {
-        wct::Runner runner({"test/fixtures/missing.so", false, 10});
+        wct::Runner runner({"test/fixtures/missing.so", false, 10, {}});
         const auto results = runner.run({{"f"}});
         assert(results.size() == 1);
         assert(results[0].status == "failed");
     }
 
     {
-        wct::Runner runner({"test/out/libtest.so", false, 10});
+        wct::Runner runner({"test/out/libtest.so", false, 10, {}});
         const auto results = runner.run({{"missing_symbol"}});
         assert(results.size() == 1);
         assert(results[0].status == "failed");
@@ -250,6 +260,114 @@ int main() {
     assert(expect_model_error("function f()\nmutex f g"));
     assert(expect_model_error("function f()\nconstraint count(g) == 1"));
     assert(expect_model_error("function f()\nconstraint bad"));
+
+    assert(expect_model_error(
+        "function init() -> handle\n"
+        "function start(int h)\n"
+        "parameter start.h = init.handle"));
+
+    assert(expect_model_error(
+        "function a(t x)\n"
+        "function b(t y)\n"
+        "parameter a.x = b.y\n"
+        "parameter b.y = a.x"));
+
+    {
+        const std::string path = write_tmp(
+            "function g(config c)\n"
+            "parameter g.c = \"default\"");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        assert(spec.parameters.size() == 1);
+        assert(spec.parameters[0].rhs_is_const);
+        assert(spec.parameters[0].rhs_const == "default");
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::Generator generator(model);
+        const auto flows = generator.generate_function_flows();
+        assert(flows.size() == 1);
+        assert(flows[0] == wct::Flow{"g"});
+    }
+
+    {
+        const std::string path = write_tmp(
+            "function a() -> t\n"
+            "function b(t x)\n"
+            "function c(t y)\n"
+            "parameter b.x = a.t\n"
+            "parameter c.y = b.x");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::Generator generator(model);
+        const auto flows = generator.generate_function_flows();
+        assert(flows.size() == 1);
+        assert(flows[0] == (wct::Flow{"a", "b", "c"}));
+    }
+
+    {
+        wct::GuardExpr guard;
+        std::string err;
+        assert(wct::parse_guard("return==0", guard, err));
+        assert(guard.op == "==");
+        assert(guard.value == 0);
+        assert(wct::guard_satisfied(guard, 0));
+        assert(!wct::guard_satisfied(guard, 1));
+        assert(!wct::parse_guard("return", guard, err));
+    }
+
+    assert(expect_model_error(
+        "object x {\n"
+        " state A initial\n"
+        " state B final\n"
+        " transition A -> B by f() guard return\n"
+        "}\n"
+        "function f()"));
+
+    {
+        const std::string path = write_tmp(
+            "function f()\n"
+            "function g()\n"
+            "constraint count(f) > 0 and count(g) > 0");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::Generator generator(model);
+        const auto flows = generator.generate_function_flows();
+        assert(flows.size() == 2);
+    }
+
+    {
+        const std::string path = write_tmp(
+            "function f()\n"
+            "function g()\n"
+            "function h()\n"
+            "mutex f g h");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::Generator generator(model);
+        const auto flows = generator.generate_function_flows();
+        assert(flows.empty());
+    }
+
+    {
+        wct::Parser parser("test/fixtures/valid.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        wct::Generator generator(model);
+        generator.set_strategy(std::make_shared<FixedStrategy>());
+        const auto state_flows = generator.generate_state_flows();
+        assert(state_flows.size() == 1);
+        assert(state_flows[0] == (wct::Flow{"f", "g"}));
+        const auto function_flows = generator.generate_function_flows();
+        assert(function_flows.size() == 1);
+        assert(function_flows[0] == (wct::Flow{"g"}));
+        assert(!generator.truncated());
+    }
 
     std::cout << "all tests passed\n";
     return 0;

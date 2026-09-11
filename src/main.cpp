@@ -169,6 +169,19 @@ int main(int argc, char** argv) {
         wct::Model model(std::move(spec));
         model.validate();
 
+        wct::RunnerOptions runner_options{o.lib_path, o.dry_run, 10, {}};
+        for (const auto& object : model.spec().objects) {
+            for (const auto& tr : object.transitions) {
+                if (tr.guard.empty()) {
+                    continue;
+                }
+                wct::GuardExpr guard;
+                std::string err;
+                wct::parse_guard(tr.guard, guard, err);
+                runner_options.guards[tr.func] = guard;
+            }
+        }
+
         wct::Generator generator(model, o.gen);
         std::vector<wct::Flow> flows = generator.generate_state_flows();
         const std::vector<wct::Flow> function_flows =
@@ -181,7 +194,7 @@ int main(int argc, char** argv) {
                                               " flows");
 
         if (o.mode == "standalone") {
-            wct::Runner runner({o.lib_path, true, 10});
+            wct::Runner runner({o.lib_path, true, 10, {}});
             const std::string source = runner.generate_standalone(flows);
             const std::string out_file = "build/wise_standalone.cpp";
             std::ofstream fout(out_file);
@@ -223,7 +236,7 @@ int main(int argc, char** argv) {
                 "direct mode requires --lib; use --dry-run to generate without executing");
         }
 
-        wct::Runner runner({o.lib_path, o.dry_run, 10});
+        wct::Runner runner(runner_options);
         const std::vector<wct::FlowResult> results = runner.run(flows);
         for (const auto& r : results) {
             logger.log(r.status == "passed" ? "info" : "warning", "runner",
