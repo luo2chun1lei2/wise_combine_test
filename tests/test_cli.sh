@@ -13,6 +13,8 @@ $bin --model fixtures/function_relations.model --mode relation --trace /tmp/wct-
 $bin --replay /tmp/wct-test-trace.$$ | grep -q 'replay=PASS'
 sed 's/model_digest .*/model_digest 0000000000000000/' /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-tampered.$$
 sed '/^model /p' /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-duplicate.$$
+sed 's/^mode relation$/mode relation EXTRA/' /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-trailing.$$
+if $bin --replay /tmp/wct-test-trace-trailing.$$ >/dev/null 2>&1; then echo 'trailing singleton data unexpectedly replayed' >&2; exit 1; fi
 if $bin --replay /tmp/wct-test-trace-duplicate.$$ >/dev/null 2>&1; then echo 'duplicate model trace unexpectedly replayed' >&2; exit 1; fi
 sed 's/edge fetch->transform/edge altered->transform/' /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-edge-tampered.$$
 if $bin --replay /tmp/wct-test-trace-edge-tampered.$$ >/dev/null 2>&1; then

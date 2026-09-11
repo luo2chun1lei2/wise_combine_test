@@ -170,6 +170,16 @@ static int write_trace_header(FILE *trace, const char *model, const char *mode,
                    limits.max_flows) < 0;
 }
 
+static int exact_single_value(const char *line, const char *prefix) {
+    size_t n = strlen(prefix);
+    if (strncmp(line, prefix, n)) return 1;
+    const unsigned char *p = (const unsigned char *)line + n;
+    if (!*p || *p == '\n' || *p == '\r' || *p == ' ' || *p == '\t') return 0;
+    while (*p && *p != '\n' && *p != '\r' && *p != ' ' && *p != '\t') ++p;
+    while (*p == ' ' || *p == '\t') ++p;
+    return !*p || *p == '\n' || *p == '\r';
+}
+
 static int parse_trace(const char *path, char *model, size_t model_len, char *mode,
                        size_t mode_len, wct_limits *limits, size_t *steps,
                        int *exit_code, uint64_t *digest, uint64_t *model_digest, uint64_t *ir_digest, uint64_t *metadata_digest, size_t *declared_edges, size_t *covered_edges, size_t *uncovered_edges, int *process_exit, int *process_signal, int *timed_out, char *selection, size_t selection_len) {
@@ -184,6 +194,7 @@ static int parse_trace(const char *path, char *model, size_t model_len, char *mo
     int got_metadata_digest = 0;
     if (!file) return -1;
     while (fgets(line, sizeof line, file)) {
+        if ((!strncmp(line, "WCT_TRACE ", 10) && !exact_single_value(line, "WCT_TRACE ")) || (!strncmp(line, "model_digest ", 13) && !exact_single_value(line, "model_digest ")) || (!strncmp(line, "ir_digest ", 10) && !exact_single_value(line, "ir_digest ")) || (!strncmp(line, "metadata_digest ", 16) && !exact_single_value(line, "metadata_digest ")) || (!strncmp(line, "selection ", 10) && !exact_single_value(line, "selection ")) || (!strncmp(line, "model ", 6) && !exact_single_value(line, "model ")) || (!strncmp(line, "mode ", 5) && !exact_single_value(line, "mode ")) || (!strncmp(line, "seed ", 5) && !exact_single_value(line, "seed ")) || (!strncmp(line, "max_steps ", 10) && !exact_single_value(line, "max_steps ")) || (!strncmp(line, "max_flows ", 10) && !exact_single_value(line, "max_flows ")) || (!strncmp(line, "steps ", 6) && !exact_single_value(line, "steps ")) || (!strncmp(line, "declared_edges ", 15) && !exact_single_value(line, "declared_edges ")) || (!strncmp(line, "covered_edges ", 14) && !exact_single_value(line, "covered_edges ")) || (!strncmp(line, "uncovered_edges ", 16) && !exact_single_value(line, "uncovered_edges ")) || (!strncmp(line, "exit ", 5) && !exact_single_value(line, "exit ")) || (!strncmp(line, "process_exit ", 13) && !exact_single_value(line, "process_exit ")) || (!strncmp(line, "process_signal ", 15) && !exact_single_value(line, "process_signal ")) || (!strncmp(line, "timed_out ", 10) && !exact_single_value(line, "timed_out ")) || (!strncmp(line, "digest ", 7) && !exact_single_value(line, "digest "))) { fclose(file); return -1; }
         if (sscanf(line, "WCT_TRACE %d", &version) == 1) { if (got_header++) { fclose(file); return -1; } continue; }
         if (!strncmp(line, "model_digest ", 13) &&
             sscanf(line + 13, "%" SCNx64, model_digest) == 1) {
