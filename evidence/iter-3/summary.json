@@ -9,7 +9,7 @@
     "boundary_fuzz": "PASS",
     "coverage": "PASS",
     "trace_replay": "PASS",
-    "valgrind": "SKIP: valgrind not installed",
+    "valgrind": "PASS: valgrind-3.15.0; API and relation runs clean",
     "measurement": "PASS",
     "git_push": "PASS"
   },

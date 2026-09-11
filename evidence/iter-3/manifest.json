@@ -26,11 +26,20 @@
     {
       "command": "./bin/wise-combine-test --replay evidence/iter-3/call-trace.wct",
       "exit_code": 0
+    },
+    {
+      "command": "valgrind --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=all --error-exitcode=1 ./build/test_api",
+      "exit_code": 0
+    },
+    {
+      "command": "valgrind --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=all --error-exitcode=1 ./bin/wise-combine-test --model fixtures/function_relations.model --mode relation",
+      "exit_code": 0
     }
   ],
   "tools": {
     "cc": "cc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0",
-    "git": "git version 2.25.1"
+    "git": "git version 2.25.1",
+    "valgrind": "valgrind-3.15.0"
   },
   "environment": {
     "system": "Linux",
@@ -69,7 +78,15 @@
     },
     {
       "path": "evidence/iter-3/summary.json",
-      "sha256": "035191117d96f3c4875d914d7d86406e4796f43bffee36886e813982e3fe91f3"
+      "sha256": "2188ebd7fa365e8b31288798c00bab9ab4d6ae527309922d69a8a2be16633607"
+    },
+    {
+      "path": "evidence/iter-3/valgrind-api.log",
+      "sha256": "73b2648dc331aa05a967486d15c2c09fc8c4c4c02d3ce0ddeffc88d0ca454173"
+    },
+    {
+      "path": "evidence/iter-3/valgrind-relation.log",
+      "sha256": "5aae10ba7c87eb626510664282f3e1da3a86abc91afd91874ee0933a5d857f0d"
     }
   ]
 }
