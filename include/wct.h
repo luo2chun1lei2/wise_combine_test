@@ -14,6 +14,8 @@ typedef struct {
 
 typedef struct { char *id; char *from; char *to; char *input; char *expect; } wct_transition;
 typedef int (*wct_transition_fn)(const char *input, char **actual, void *ctx);
+/* Optional hook invoked before replaying a state scenario from the initial state. */
+typedef int (*wct_state_reset_fn)(void *ctx);
 typedef struct { char *id; char *initial; char **states; size_t state_count; wct_transition *transitions; size_t transition_count; } wct_state_graph;
 
 typedef struct {
@@ -37,6 +39,7 @@ typedef struct {
     /* Optional POSIX callback isolation.  A zero timeout means no deadline. */
     unsigned timeout_ms;
     int isolate;
+    wct_state_reset_fn state_reset;
 } wct_limits;
 typedef struct {
     size_t steps;

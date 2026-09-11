@@ -20,9 +20,11 @@ framework-free executable contract for the first release.
 
 `wct_validate_state` rejects a missing/unknown initial state, duplicate states,
 unknown transition endpoints, and duplicate transition IDs. `wct_run_state`
-computes reachability from `initial` and invokes each reachable transition at
-most once, in declaration order, stopping at `limits.max_steps` (or its bounded
-default). Edges whose source state cannot be reached are counted in
+computes reachability from `initial` and invokes transitions in valid graph
+order, stopping at `limits.max_steps` (or a replay-safe bounded default).
+Branch coverage may replay a prefix from `initial`; provide the optional
+`wct_limits.state_reset` hook to restore mutable callback context before each
+scenario. Edges whose source state cannot be reached are counted in
 `report.uncovered`. A callback error or expectation mismatch returns `-1`,
 records the failed step/scenario and expected/actual strings, and does not count
 the failed transition as a completed step or covered edge.

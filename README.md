@@ -34,8 +34,9 @@ Call contracts are optional. For example, `contract fetch 2 string int`
 requires two arguments and validates their declared literal types (`int`,
 `bool`, `string`, `bytes`, `ref`, or `any`).
 
-`--mode state` executes each reachable transition once, using the input as
-the example callback's actual result. `--mode relation` executes calls in
+`--mode state` executes reachable transitions in valid graph order. Branches
+may replay a prefix from the initial state; callers with mutable state should
+provide `wct_limits.state_reset` before scenario replay. `--mode relation` executes calls in
 dependency order and prints the ordered call trace. A `$call` argument is an
 implicit dependency and receives the producer callback's result. `--trace`
 writes a versioned, checksummed text trace; `--replay` reruns the referenced

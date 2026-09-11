@@ -44,6 +44,8 @@ static int state_callback(const char *input, char **actual, void *opaque)
     return *actual == NULL ? -1 : 0;
 }
 
+static int state_reset(void *opaque) { (void)opaque; return 0; }
+
 static void init_state_graph(wct_state_graph *graph)
 {
     memset(graph, 0, sizeof *graph);
@@ -201,7 +203,7 @@ static void test_state_branching_coverage(void)
     graph.transitions[1] = (wct_transition){copy_string("a-left"), copy_string("idle"),
         copy_string("left"), copy_string("l"), copy_string("ok")};
     CHECK(wct_run_state(&graph, state_callback, &context,
-                        (wct_limits){.max_steps = 2, .seed = 7}, &report) == 0,
+                        (wct_limits){.max_steps = 2, .seed = 7, .state_reset = state_reset}, &report) == 0,
           "branching state graph should cover both reachable edges");
     CHECK(report.covered == 2 && report.uncovered == 0 && report.seed == 7,
           "branching state graph should report complete coverage and seed");
@@ -224,10 +226,10 @@ static void test_seed_sampling_determinism(void)
             copy_string("done"), copy_string(ids[i]), copy_string("ok")};
     }
     CHECK(wct_run_state(&graph, state_callback, &ca,
-                        (wct_limits){.max_steps = 3, .seed = 17}, &a) == 0,
+                        (wct_limits){.max_steps = 3, .seed = 17, .state_reset = state_reset}, &a) == 0,
           "seeded state sampling should complete");
     CHECK(wct_run_state(&graph, state_callback, &cb,
-                        (wct_limits){.max_steps = 3, .seed = 17}, &b) == 0,
+                        (wct_limits){.max_steps = 3, .seed = 17, .state_reset = state_reset}, &b) == 0,
           "repeated seeded state sampling should complete");
     CHECK(ca.count == cb.count && ca.count == 3 &&
               memcmp(ca.inputs, cb.inputs, ca.count * sizeof(ca.inputs[0])) == 0,
@@ -235,7 +237,7 @@ static void test_seed_sampling_determinism(void)
     CHECK(a.declared_edges == 3 && a.covered_edges == 3 && a.uncovered_edges == 0,
           "state report should expose declared and covered edge counts");
     CHECK(wct_run_state(&graph, state_callback, &cc,
-                        (wct_limits){.max_steps = 3, .seed = 48}, &c) == 0,
+                        (wct_limits){.max_steps = 3, .seed = 48, .state_reset = state_reset}, &c) == 0,
           "alternate seeded state sampling should complete");
     CHECK(memcmp(ca.inputs, cc.inputs, ca.count * sizeof(ca.inputs[0])) != 0,
           "different seeds should alter sampling order for branching graph");
@@ -313,7 +315,7 @@ static void test_state_branching_and_unreachable(void)
     CHECK(wct_validate_state(&graph, NULL, 0) == 0,
           "branching state graph should validate before execution");
     CHECK(wct_run_state(&graph, state_callback, &context,
-                        (wct_limits){.max_steps = 16, .seed = 7}, &report) == -1,
+                        (wct_limits){.max_steps = 16, .seed = 7, .state_reset = state_reset}, &report) == -1,
           "unreachable declared edge should make the run incomplete");
     CHECK(report.covered == 4 && report.uncovered == 1 && report.failures == 0,
           "state execution should cover both reachable branches and report one unreachable edge");

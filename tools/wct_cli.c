@@ -94,6 +94,7 @@ static int relation_callback(const char *id, const char *const *args, size_t arg
 }
 
 static uint64_t trace_seed(void) { return UINT64_C(1469598103934665603); }
+static int state_reset(void *ctx) { (void)ctx; return 0; }
 
 static int write_trace_header(FILE *trace, const char *model, const char *mode,
                               wct_limits limits) {
@@ -156,6 +157,7 @@ static int replay_trace(const char *path) {
         fprintf(stderr, "error: invalid trace\n");
         return 1;
     }
+    limits.state_reset = state_reset;
     if (hash_file(model) != expected_model_digest) {
         fprintf(stderr, "error: trace model checksum mismatch\n");
         return 1;
@@ -198,6 +200,10 @@ int main(int argc, char **argv) {
         if ((!strcmp(argv[i], "--seed") || !strcmp(argv[i], "--max-steps") ||
              !strcmp(argv[i], "--max-flows") || !strcmp(argv[i], "--timeout-ms")) && i + 1 < argc) {
             char *end = NULL;
+            if (argv[i + 1][0] == '-') {
+                fprintf(stderr, "error: numeric option requires a non-negative integer\n");
+                return 2;
+            }
             errno = 0;
             unsigned long value = strtoul(argv[++i], &end, 10);
             if (!*argv[i] || *end || errno == ERANGE || value > (unsigned long)SIZE_MAX ||
@@ -225,6 +231,7 @@ int main(int argc, char **argv) {
     if (strcmp(mode, "state") && strcmp(mode, "relation")) {
         fprintf(stderr, "error: --mode must be state or relation\n"); return 2;
     }
+    limits.state_reset = state_reset;
     if (trace_path && limits.isolate) {
         fprintf(stderr, "error: --trace cannot be combined with --isolate; replay the isolated run separately\n");
         return 2;

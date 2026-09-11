@@ -374,7 +374,15 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
         r->error = dupstr(err);
         return -1;
     }
-    size_t max = lim.max_steps ? lim.max_steps : g->transition_count;
+    size_t max = lim.max_steps;
+    if (!max) {
+        /* A branch may require replaying a path from the initial state before
+         * each uncovered edge.  Bound the default by a simple finite graph
+         * upper bound rather than silently truncating reachable coverage. */
+        size_t factor = g->state_count + 1;
+        max = g->transition_count && factor > SIZE_MAX / g->transition_count
+            ? SIZE_MAX : g->transition_count * factor;
+    }
     r->declared_edges = g->transition_count;
     unsigned char *seen = calloc(g->transition_count ? g->transition_count : 1, 1);
     unsigned char *reachable = calloc(g->state_count ? g->state_count : 1, 1);
@@ -403,6 +411,12 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
         }
     }
     size_t plan_len = 0, plan_pos = 0;
+    if (fn && lim.state_reset && lim.state_reset(ctx)) {
+        free(queue); free(plan); free(reachable); free(seen);
+        r->error = dupstr("state reset callback failed");
+        r->failures = 1;
+        return -1;
+    }
     for (size_t step = 0; step < max; step++) {
         int picked = -1;
         size_t ready_count = 0;
@@ -423,6 +437,16 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
                 if (!seen[i] && source >= 0 && reachable[(size_t)source]) { target = (int)i; break; }
             }
             if (target >= 0) {
+                if (lim.isolate) {
+                    r->error = dupstr("isolated branch replay is unsupported; use state_reset without isolation");
+                    r->failures = 1;
+                    break;
+                }
+                if (!lim.state_reset) {
+                    r->error = dupstr("state reset callback required for branch replay");
+                    r->failures = 1;
+                    break;
+                }
                 size_t *pred_state = calloc(g->state_count, sizeof *pred_state);
                 size_t *pred_edge = calloc(g->state_count, sizeof *pred_edge);
                 unsigned char *vis = calloc(g->state_count, 1);
@@ -443,6 +467,12 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
                 plan_len = rev_len + 1; plan_pos = 0; st = (size_t)goal;
                 for (size_t k = rev_len; k > 0; --k) { plan[k - 1] = pred_edge[st]; st = pred_state[st]; }
                 plan[rev_len] = (size_t)target;
+                if (fn && lim.state_reset(ctx)) {
+                    free(pred_state); free(pred_edge); free(vis); free(bq);
+                    r->error = dupstr("state reset callback failed");
+                    r->failures = 1;
+                    break;
+                }
                 current = initial;
                 free(pred_state); free(pred_edge); free(vis); free(bq);
                 picked = (int)plan[plan_pos++];
@@ -476,10 +506,12 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
             break;
         }
         free(actual);
-        seen[(size_t)picked] = 1;
+        if (!seen[(size_t)picked]) {
+            seen[(size_t)picked] = 1;
+            r->covered++;
+        }
         current = find_state(g, t->to);
         r->steps++;
-        r->covered++;
     }
     for (size_t i = 0; i < g->transition_count; i++) {
         int source = find_state(g, g->transitions[i].from);
@@ -488,7 +520,7 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
     free(queue); free(plan); free(reachable); free(seen);
     r->covered_edges = r->covered;
     r->uncovered_edges = r->uncovered;
-    if (!r->failures && r->uncovered) { r->error = dupstr("uncovered transition"); return -1; }
+    if (!r->failures && r->uncovered) { if (!r->error) r->error = dupstr("uncovered transition"); return -1; }
     return r->failures ? -1 : 0;
 }
 
