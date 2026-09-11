@@ -45,6 +45,17 @@ static int state_callback(const char *input, char **actual, void *opaque)
 }
 
 static int state_reset(void *opaque) { (void)opaque; return 0; }
+static int snapshot_count(void *opaque, void **snapshot, size_t *size) {
+    state_context *context = opaque;
+    int *copy = malloc(sizeof *copy);
+    if (!copy) return -1;
+    *copy = (int)context->count; *snapshot = copy; *size = sizeof *copy; return 0;
+}
+static int restore_count(void *opaque, const void *snapshot, size_t size) {
+    state_context *context = opaque;
+    if (!snapshot || size != sizeof(int)) return -1;
+    context->count = (size_t)*(const int *)snapshot; return 0;
+}
 
 static void init_state_graph(wct_state_graph *graph)
 {
@@ -114,6 +125,18 @@ static void test_state_callback_failure(void)
     CHECK(report.error != NULL, "failed transition should provide an error");
     wct_report_free(&report);
     wct_state_graph_free(&graph);
+}
+
+static void test_state_failure_atomic_snapshot(void)
+{
+    wct_state_graph graph; wct_report report; state_context context = {.fail = 1};
+    init_state_graph(&graph);
+    CHECK(wct_run_state(&graph, state_callback, &context,
+                        (wct_limits){.state_snapshot = snapshot_count,
+                                    .state_restore = restore_count}, &report) == -1,
+          "snapshot-enabled callback failure should fail run");
+    CHECK(context.count == 0, "failed callback must roll back opaque context");
+    wct_report_free(&report); wct_state_graph_free(&graph);
 }
 
 static int state_callback_slow(const char *input, char **actual, void *opaque)
@@ -647,6 +670,7 @@ int main(void)
 {
     test_state_success_and_limit();
     test_state_callback_failure();
+    test_state_failure_atomic_snapshot();
     test_isolation_timeout();
     test_timeout_range_and_zero_arity_contract();
     test_bare_result_reference_rejected();
