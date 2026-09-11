@@ -546,19 +546,19 @@ static int wct_run_state_impl(const wct_state_graph *g, wct_transition_fn fn, vo
         void *before = NULL; size_t before_size = 0; int before_valid = 0;
         void *after = NULL; size_t after_size = 0;
         int after_valid = 0;
-        if (!lim.isolate && lim.state_snapshot && lim.state_snapshot(ctx, &before, &before_size)) {
+        if (lim.isolate <= 0 && lim.state_snapshot && lim.state_snapshot(ctx, &before, &before_size)) {
             r->error = dupstr("state snapshot failed"); r->failures = 1; break;
         }
-        if (!lim.isolate && lim.state_snapshot) before_valid = 1;
+        if (lim.isolate <= 0 && lim.state_snapshot) before_valid = 1;
         const char *isolation_error = NULL;
         if (lim.transition_observer) lim.transition_observer(t->id, ctx);
-        int rc = lim.isolate ? isolate_state_cb(fn, t->input, &actual, ctx, lim.timeout_ms,
+        int rc = lim.isolate > 0 ? isolate_state_cb(fn, t->input, &actual, ctx, lim.timeout_ms,
                                                 lim.state_snapshot, &after, &after_size, &after_valid, &isolation_error,
                                                 &r->process_exit, &r->process_signal, &r->timed_out)
                              : (fn ? fn(t->input, &actual, ctx) : 0);
         if (rc || !actual || strcmp(actual, t->expect)) {
             int rollback_failed = 0;
-            if (!lim.isolate && lim.state_restore && before_valid &&
+            if (lim.isolate <= 0 && lim.state_restore && before_valid &&
                 lim.state_restore(ctx, before, before_size))
                 rollback_failed = 1;
             r->failures++;
@@ -604,7 +604,7 @@ static int wct_run_state_impl(const wct_state_graph *g, wct_transition_fn fn, vo
 
 int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
                   wct_limits lim, wct_report *r) {
-    if (!lim.isolate) return wct_run_state_impl(g, fn, ctx, lim, r);
+    if (lim.isolate < 0) return wct_run_state_impl(g, fn, ctx, lim, r);
     if (!r) return -1;
     memset(r, 0, sizeof *r);
     if (lim.timeout_ms > (unsigned)INT_MAX) { r->failures=1; r->error=dupstr("timeout exceeds poll limit"); return -1; }
@@ -613,7 +613,7 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
     int p[2]; if (pipe(p) < 0) { free(parent_before); return -1; }
     pid_t pid=fork(); if (pid<0) { close(p[0]); close(p[1]); free(parent_before); return -1; }
     if (pid==0) {
-        close(p[0]); wct_limits child=lim; child.isolate=0; wct_report cr;
+        close(p[0]); wct_limits child=lim; child.isolate=-1; wct_report cr;
         int rc=wct_run_state_impl(g,fn,ctx,child,&cr);
         void *final_state=NULL; size_t final_state_size=0; int state_present=0;
         if(child.state_snapshot) { if(child.state_snapshot(ctx,&final_state,&final_state_size)) rc=-1; else state_present=1; }
@@ -730,7 +730,7 @@ static int wct_run_relation_impl(const wct_relation_graph *g, wct_call_fn fn, vo
         }
         char *out = NULL;
         const char *isolation_error = NULL;
-        int rc = lim.isolate ? isolate_relation_cb(fn, c->id, args, c->argc, &out, ctx, lim.timeout_ms, &isolation_error,
+        int rc = lim.isolate > 0 ? isolate_relation_cb(fn, c->id, args, c->argc, &out, ctx, lim.timeout_ms, &isolation_error,
                                                    &r->process_exit, &r->process_signal, &r->timed_out)
                              : (fn ? fn(c->id, args, c->argc, &out, ctx) : 0);
         free(args);
@@ -796,7 +796,7 @@ static int wct_run_relation_impl(const wct_relation_graph *g, wct_call_fn fn, vo
  * callback side effects cannot contaminate the parent or another flow. */
 int wct_run_relation(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
                     wct_limits lim, wct_report *r) {
-    if (!lim.isolate) return wct_run_relation_impl(g, fn, ctx, lim, r);
+    if (lim.isolate < 0) return wct_run_relation_impl(g, fn, ctx, lim, r);
     if (!r) return -1;
     memset(r, 0, sizeof *r);
     if (lim.timeout_ms > (unsigned)INT_MAX) { r->failures=1; r->error=dupstr("timeout exceeds poll limit"); return -1; }
@@ -804,7 +804,7 @@ int wct_run_relation(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
     pid_t pid = fork();
     if (pid < 0) { close(p[0]); close(p[1]); return -1; }
     if (pid == 0) {
-        close(p[0]); wct_limits child = lim; child.isolate = 0;
+        close(p[0]); wct_limits child = lim; child.isolate = -1;
         wct_report cr; int rc = wct_run_relation_impl(g, fn, ctx, child, &cr);
         uint64_t lens[6] = { cr.scenario ? strlen(cr.scenario) : 0, cr.expected ? strlen(cr.expected) : 0,
             cr.actual ? strlen(cr.actual) : 0, cr.error ? strlen(cr.error) : 0, 0, 0 };

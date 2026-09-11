@@ -112,7 +112,7 @@ static void test_state_success_and_limit(void)
 
     CHECK(wct_validate_state(&graph, NULL, 0) == 0, "valid state graph should validate");
     CHECK(wct_run_state(&graph, state_callback, &context,
-                        (wct_limits){.max_steps = 2, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == 0,
+                        (wct_limits){.isolate = -1, .max_steps = 2, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == 0,
           "state run should succeed when all edges fit the limit");
     CHECK(report.steps == 2 && report.covered == 2 && report.uncovered == 0 &&
               report.failures == 0,
@@ -126,7 +126,7 @@ static void test_state_success_and_limit(void)
     init_state_graph(&graph);
     context = (state_context){0};
     CHECK(wct_run_state(&graph, state_callback, &context,
-                        (wct_limits){.max_steps = 1, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == -1,
+                        (wct_limits){.isolate = -1, .max_steps = 1, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == -1,
           "a bounded run with uncovered edges should be reported as incomplete");
     CHECK(report.steps == 1 && report.covered == 1 && report.uncovered == 1 &&
               report.failures == 0,
@@ -142,7 +142,7 @@ static void test_state_callback_failure(void)
     state_context context = {.fail = 1};
     init_state_graph(&graph);
 
-    CHECK(wct_run_state(&graph, state_callback, &context, (wct_limits){.state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == -1,
+    CHECK(wct_run_state(&graph, state_callback, &context, (wct_limits){.isolate = -1, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == -1,
           "callback failure should fail state run");
     CHECK(report.failures == 1 && report.steps == 0 && report.covered == 0,
           "failed transition must not count as completed or covered");
@@ -156,7 +156,7 @@ static void test_state_failure_atomic_snapshot(void)
     wct_state_graph graph; wct_report report; state_context context = {.fail = 1};
     init_state_graph(&graph);
     CHECK(wct_run_state(&graph, state_callback, &context,
-                        (wct_limits){.state_snapshot = snapshot_count,
+                        (wct_limits){.isolate = -1, .state_snapshot = snapshot_count,
                                     .state_restore = restore_count}, &report) == -1,
           "snapshot-enabled callback failure should fail run");
     CHECK(context.count == 0, "failed callback must roll back opaque context");
@@ -199,7 +199,7 @@ static void test_zero_snapshot_and_rollback_failure(void)
     wct_state_graph graph; wct_report report; state_context context = {0};
     init_state_graph(&graph); zero_restore_calls = 0;
     CHECK(wct_run_state(&graph, state_callback_bad_result, &context,
-                        (wct_limits){.state_snapshot = snapshot_zero,
+                        (wct_limits){.isolate = -1, .state_snapshot = snapshot_zero,
                                     .state_restore = restore_zero}, &report) == -1,
           "zero-length snapshot run should retain transactional behavior");
     CHECK(zero_restore_calls == 1, "zero-length successful snapshot must be restored");
@@ -207,7 +207,7 @@ static void test_zero_snapshot_and_rollback_failure(void)
 
     init_state_graph(&graph); context = (state_context){0};
     CHECK(wct_run_state(&graph, state_callback_bad_result, &context,
-                        (wct_limits){.state_snapshot = snapshot_zero,
+                        (wct_limits){.isolate = -1, .state_snapshot = snapshot_zero,
                                     .state_restore = restore_fails}, &report) == -1,
           "restore failure should fail the run");
     CHECK(report.error && strstr(report.error, "rollback failed"),
@@ -302,7 +302,7 @@ static void test_state_branching_coverage(void)
     graph.transitions[1] = (wct_transition){copy_string("a-left"), copy_string("idle"),
         copy_string("left"), copy_string("l"), copy_string("ok")};
     CHECK(wct_run_state(&graph, state_callback, &context,
-                        (wct_limits){.max_steps = 2, .seed = 7, .state_reset = state_reset, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == 0,
+                        (wct_limits){.isolate = -1, .max_steps = 2, .seed = 7, .state_reset = state_reset, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == 0,
           "branching state graph should cover both reachable edges");
     CHECK(report.covered == 2 && report.uncovered == 0 && report.seed == 7,
           "branching state graph should report complete coverage and seed");
@@ -325,10 +325,10 @@ static void test_seed_sampling_determinism(void)
             copy_string("done"), copy_string(ids[i]), copy_string("ok")};
     }
     CHECK(wct_run_state(&graph, state_callback, &ca,
-                        (wct_limits){.max_steps = 3, .seed = 17, .state_reset = state_reset, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &a) == 0,
+                        (wct_limits){.isolate = -1, .max_steps = 3, .seed = 17, .state_reset = state_reset, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &a) == 0,
           "seeded state sampling should complete");
     CHECK(wct_run_state(&graph, state_callback, &cb,
-                        (wct_limits){.max_steps = 3, .seed = 17, .state_reset = state_reset, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &b) == 0,
+                        (wct_limits){.isolate = -1, .max_steps = 3, .seed = 17, .state_reset = state_reset, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &b) == 0,
           "repeated seeded state sampling should complete");
     CHECK(ca.count == cb.count && ca.count == 3 &&
               memcmp(ca.inputs, cb.inputs, ca.count * sizeof(ca.inputs[0])) == 0,
@@ -336,7 +336,7 @@ static void test_seed_sampling_determinism(void)
     CHECK(a.declared_edges == 3 && a.covered_edges == 3 && a.uncovered_edges == 0,
           "state report should expose declared and covered edge counts");
     CHECK(wct_run_state(&graph, state_callback, &cc,
-                        (wct_limits){.max_steps = 3, .seed = 48, .state_reset = state_reset, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &c) == 0,
+                        (wct_limits){.isolate = -1, .max_steps = 3, .seed = 48, .state_reset = state_reset, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &c) == 0,
           "alternate seeded state sampling should complete");
     CHECK(memcmp(ca.inputs, cc.inputs, ca.count * sizeof(ca.inputs[0])) != 0,
           "different seeds should alter sampling order for branching graph");
@@ -414,7 +414,7 @@ static void test_state_branching_and_unreachable(void)
     CHECK(wct_validate_state(&graph, NULL, 0) == 0,
           "branching state graph should validate before execution");
     CHECK(wct_run_state(&graph, state_callback, &context,
-                        (wct_limits){.max_steps = 16, .seed = 7, .state_reset = state_reset, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == -1,
+                        (wct_limits){.isolate = -1, .max_steps = 16, .seed = 7, .state_reset = state_reset, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == -1,
           "unreachable declared edge should make the run incomplete");
     CHECK(report.covered == 4 && report.uncovered == 1 && report.failures == 0,
           "state execution should cover both reachable branches and report one unreachable edge");
@@ -510,7 +510,7 @@ static void test_relation_result_binding(void)
     graph.relations = calloc(1, sizeof *graph.relations);
     graph.relations[0] = (wct_relation){copy_string("produce"), copy_string("consume")};
     CHECK(wct_run_relation(&graph, relation_callback, &context,
-                           (wct_limits){.seed = 11, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == 0,
+                           (wct_limits){.isolate = -1, .seed = 11, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == 0,
           "relation result binding should execute successfully");
     CHECK(report.steps == 2 && report.uncovered == 0 && report.seed == 11,
           "relation result binding should report complete deterministic flow");
@@ -558,13 +558,13 @@ static void test_relation_result_contracts(void)
     graph.calls[0].result_type_set = 1;
     graph.calls[0].expected_result = copy_string("42");
     CHECK(wct_run_relation(&graph, result_contract_callback, NULL,
-                           (wct_limits){.max_flows = 1}, &report) == 0,
+                           (wct_limits){.isolate = -1, .max_flows = 1}, &report) == 0,
           "matching typed result and exact assertion should pass");
     wct_report_free(&report);
 
     graph.calls[0].result_type = WCT_BOOL;
     CHECK(wct_run_relation(&graph, result_contract_callback, NULL,
-                           (wct_limits){.max_flows = 1}, &report) == -1 &&
+                           (wct_limits){.isolate = -1, .max_flows = 1}, &report) == -1 &&
               report.failures == 1 && report.failed_step == 1 &&
               strstr(report.error, "type mismatch") != NULL,
           "runtime result type mismatch should fail at the producing call");
@@ -574,7 +574,7 @@ static void test_relation_result_contracts(void)
     free(graph.calls[0].expected_result);
     graph.calls[0].expected_result = copy_string("41");
     CHECK(wct_run_relation(&graph, result_contract_callback, NULL,
-                           (wct_limits){.max_flows = 1}, &report) == -1 &&
+                           (wct_limits){.isolate = -1, .max_flows = 1}, &report) == -1 &&
               strcmp(report.expected, "41") == 0 &&
               strcmp(report.actual, "42") == 0,
           "exact result mismatch should expose expected and actual values");
@@ -594,7 +594,7 @@ static void test_multiple_bounded_relation_flows(void)
     graph.calls[1].id = copy_string("b");
     graph.calls[2].id = copy_string("c");
     CHECK(wct_run_relation(&graph, relation_callback, &context,
-                           (wct_limits){.max_flows = 2, .max_steps = 3,
+                           (wct_limits){.isolate = -1, .max_flows = 2, .max_steps = 3,
                                         .state_snapshot = relation_snapshot,
                                         .state_restore = relation_restore}, &report) == 0,
           "bounded runner should execute multiple legal topological flows");
@@ -635,7 +635,7 @@ static void test_relation_order_and_failure(void)
 
     CHECK(wct_validate_relation(&graph, NULL, 0) == 0, "valid relation graph should validate");
     CHECK(wct_run_relation(&graph, relation_callback, &context,
-                           (wct_limits){.max_flows = 1, .max_steps = 2}, &report) == -1,
+                           (wct_limits){.isolate = -1, .max_flows = 1, .max_steps = 2}, &report) == -1,
           "relation run should report incomplete coverage under flow limit");
     CHECK(report.steps == 2 && report.covered == 2 && report.uncovered == 1,
           "relation flow limit should bound calls and expose incomplete coverage");
@@ -647,7 +647,7 @@ static void test_relation_order_and_failure(void)
 
     init_relation_graph(&graph);
     context = (relation_context){.fail_id = "transform"};
-    CHECK(wct_run_relation(&graph, relation_callback, &context, (wct_limits){0}, &report) == -1,
+    CHECK(wct_run_relation(&graph, relation_callback, &context, (wct_limits){.isolate = -1, 0}, &report) == -1,
           "relation callback failure should fail run");
     CHECK(report.failures == 1 && report.steps == 1,
           "relation failure should preserve completed step count");
@@ -693,7 +693,7 @@ static void test_relation_lexical_tie_break(void)
     CHECK(wct_validate_relation(&graph, NULL, 0) == 0,
           "independent calls should validate");
     CHECK(wct_run_relation(&graph, relation_callback, &context,
-                           (wct_limits){.max_flows = 1, .max_steps = 3, .seed = 0}, &report) == 0,
+                           (wct_limits){.isolate = -1, .max_flows = 1, .max_steps = 3, .seed = 0}, &report) == 0,
           "independent calls should execute");
     CHECK(context.count == 3 && strcmp(context.ids[0], "alpha") == 0 &&
               strcmp(context.ids[1], "middle") == 0 &&
@@ -720,7 +720,7 @@ static void test_relation_reference_dependency(void)
     CHECK(wct_validate_relation(&graph, NULL, 0) == 0,
           "result reference should define a valid implicit dependency");
     CHECK(wct_run_relation(&graph, relation_callback, &context,
-                           (wct_limits){0}, &report) == 0,
+                           (wct_limits){.isolate = -1, 0}, &report) == 0,
           "implicit result dependency should execute successfully");
     CHECK(context.count == 2 && strcmp(context.ids[0], "produce") == 0 &&
               strcmp(context.ids[1], "consume") == 0,
