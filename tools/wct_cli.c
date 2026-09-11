@@ -72,12 +72,6 @@ static int state_callback(const char *input, char **actual, void *ctx) {
         char line[2048];
         context->step++;
         const char *edge_id = context->current_edge_id ? context->current_edge_id : "?";
-        if (context->state_graph) {
-            for (size_t i = 0; i < context->state_graph->transition_count; ++i) {
-                const wct_transition *t = &context->state_graph->transitions[i];
-                if (!input || !strcmp(t->input, input)) { edge_id = t->id; break; }
-            }
-        }
         snprintf(line, sizeof line, "step %zu state %s %s edge %s edge_hash %016" PRIx64, context->step,
                  input ? input : "-", *actual, edge_id, hash_text(edge_id));
         trace_record(context, line);

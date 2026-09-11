@@ -527,6 +527,7 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
         }
         if (!lim.isolate && lim.state_snapshot) before_valid = 1;
         const char *isolation_error = NULL;
+        if (lim.transition_observer) lim.transition_observer(t->id, ctx);
         int rc = lim.isolate ? isolate_state_cb(fn, t->input, &actual, ctx, lim.timeout_ms,
                                                 lim.state_snapshot, &after, &after_size, &after_valid, &isolation_error,
                                                 &r->process_exit, &r->process_signal, &r->timed_out)
