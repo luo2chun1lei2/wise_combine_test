@@ -253,4 +253,13 @@ void FunctionModelBuilder::validate() {
       }
     }
   }
+
+  for (const auto &setup : model_.setups) {
+    if (setup.count <= 0) {
+      model_.errors.push_back("setup " + setup.name + " has non-positive count");
+    }
+    if (functionNames.find(setup.function) == functionNames.end()) {
+      model_.errors.push_back("setup " + setup.name + " references unknown function: " + setup.function);
+    }
+  }
 }

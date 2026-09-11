@@ -14,6 +14,9 @@ RUNTIME_OBJ := $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(RUNTIME_CPP))
 
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -I$(ANTLR_RUNTIME) -I$(GEN_DIR)/src/grammar
+OBJFLAGS := -MMD -MP
+
+-include $(RUNTIME_OBJ:.o=.d)
 
 .PHONY: all test install uninstall clean
 
@@ -26,7 +29,7 @@ $(STAMP): $(GRAMMARS)
 
 $(OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) $(OBJFLAGS) -c -o $@ $<
 
 $(BIN): $(STAMP) $(RUNTIME_OBJ) $(SRC_CPP)
 	$(CXX) $(CXXFLAGS) -o $@ $(RUNTIME_OBJ) $$(find $(GEN_DIR) -name '*.cpp') $(SRC_CPP)
