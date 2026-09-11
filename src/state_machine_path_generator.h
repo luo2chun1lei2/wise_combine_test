@@ -21,6 +21,7 @@ class StateMachinePathGenerator {
  public:
   StateMachinePathGenerator(const smodel::StateMachine &machine, int maxLength);
   std::vector<Path> generate();
+  std::vector<Path> generateBfs();
   std::vector<Path> generateRandom(unsigned seed, int count);
   std::vector<Path> generateTour();
 

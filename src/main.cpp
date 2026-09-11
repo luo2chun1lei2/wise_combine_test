@@ -89,7 +89,7 @@ std::string transitionKey(const smodel::Transition &t) {
 
 int runFunction(const std::string &text, int maxLength, unsigned seed, bool json, bool negative,
                 int maxCases, bool coverage, bool harness, bool dylib, bool randomAlgorithm,
-                bool cover, int replayIndex) {
+                bool bfsAlgorithm, bool cover, int replayIndex) {
   antlr4::ANTLRInputStream input(text);
   FunctionDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -104,8 +104,14 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
   FunctionModelBuilder builder;
   model::Model m = builder.build(tree);
   gen::SequenceGenerator generator(m, maxLength, seed, negative, maxCases);
-  std::vector<gen::Sequence> sequences =
-      randomAlgorithm ? generator.generateRandom(seed, maxCases) : generator.generate();
+  std::vector<gen::Sequence> sequences;
+  if (bfsAlgorithm) {
+    sequences = generator.generateBfs();
+  } else if (randomAlgorithm) {
+    sequences = generator.generateRandom(seed, maxCases);
+  } else {
+    sequences = generator.generate();
+  }
   const std::vector<gen::Sequence> &negativeSequences = generator.negativeSequences();
 
   if (replayIndex >= 0) {
@@ -237,7 +243,7 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
 }
 
 int runStateMachine(const std::string &text, int maxLength, bool json, bool coverage, bool cover,
-                    bool randomAlgorithm, bool tourAlgorithm, unsigned seed, int maxCases,
+                    bool randomAlgorithm, bool tourAlgorithm, bool bfsAlgorithm, unsigned seed, int maxCases,
                     const std::string &events, int replayIndex) {
   antlr4::ANTLRInputStream input(text);
   StateMachineDslLexer lexer(&input);
@@ -256,6 +262,8 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
   std::vector<spath::Path> paths;
   if (tourAlgorithm) {
     paths = generator.generateTour();
+  } else if (bfsAlgorithm) {
+    paths = generator.generateBfs();
   } else if (randomAlgorithm) {
     paths = generator.generateRandom(seed, maxCases);
   } else {
@@ -412,7 +420,7 @@ int main(int argc, char **argv) {
   if (argc < 2) {
     std::cerr << "usage: " << argv[0]
               << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--coverage]"
-              << " [--cover] [--algorithm random] [--harness] [--dylib] [--events e1,e2,...]"
+              << " [--cover] [--algorithm dfs|bfs|random|tour] [--harness] [--dylib] [--events e1,e2,...]"
               << " [--replay N] [--max-cases N]"
               << std::endl;
     return 2;
@@ -428,6 +436,7 @@ int main(int argc, char **argv) {
   bool dylib = false;
   bool randomAlgorithm = false;
   bool tourAlgorithm = false;
+  bool bfsAlgorithm = false;
   int maxCases = 0;
   int replayIndex = -1;
   std::string events;
@@ -450,6 +459,8 @@ int main(int argc, char **argv) {
         randomAlgorithm = true;
       } else if (algorithm == "tour") {
         tourAlgorithm = true;
+      } else if (algorithm == "bfs") {
+        bfsAlgorithm = true;
       } else {
         std::cerr << "unknown algorithm: " << algorithm << std::endl;
         return 2;
@@ -499,10 +510,10 @@ int main(int argc, char **argv) {
   try {
     if (firstKeyword(text) == "machine") {
       return runStateMachine(text, maxLength, json, coverage, cover, randomAlgorithm, tourAlgorithm,
-                             seed, maxCases, events, replayIndex);
+                             bfsAlgorithm, seed, maxCases, events, replayIndex);
     }
     return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness, dylib,
-                       randomAlgorithm, cover, replayIndex);
+                       randomAlgorithm, bfsAlgorithm, cover, replayIndex);
   } catch (const std::exception &e) {
     std::cerr << "exception: " << e.what() << std::endl;
     return 3;

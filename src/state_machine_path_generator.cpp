@@ -1,5 +1,6 @@
 #include "state_machine_path_generator.h"
 
+#include <deque>
 #include <random>
 
 namespace spath {
@@ -37,6 +38,40 @@ std::vector<Path> StateMachinePathGenerator::generate() {
   Path path;
   dfs(machine_.initial, path);
   return results_;
+}
+
+std::vector<Path> StateMachinePathGenerator::generateBfs() {
+  struct Node {
+    std::string state;
+    Path path;
+  };
+
+  std::vector<Path> out;
+  std::set<std::string> seen;
+  std::deque<Node> queue;
+  queue.push_back({machine_.initial, {}});
+
+  while (!queue.empty()) {
+    Node node = queue.front();
+    queue.pop_front();
+    if (static_cast<int>(node.path.steps.size()) >= maxLength_) {
+      continue;
+    }
+    for (const auto &transition : machine_.transitions) {
+      if (transition.from != node.state) {
+        continue;
+      }
+      Path next = node.path;
+      Step step;
+      step.transition = transition;
+      next.steps.push_back(step);
+      if (seen.insert(next.text()).second) {
+        out.push_back(next);
+        queue.push_back({transition.to, next});
+      }
+    }
+  }
+  return out;
 }
 
 std::vector<Path> StateMachinePathGenerator::generateRandom(unsigned seed, int count) {

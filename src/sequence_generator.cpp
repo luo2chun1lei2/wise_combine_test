@@ -1,5 +1,6 @@
 #include "sequence_generator.h"
 
+#include <deque>
 #include <sstream>
 
 namespace gen {
@@ -66,6 +67,60 @@ std::vector<Sequence> SequenceGenerator::generate() {
   std::vector<Instance> env;
   Sequence seq;
   dfs(env, seq, 0);
+  return results_;
+}
+
+std::vector<Sequence> SequenceGenerator::generateBfs() {
+  struct Node {
+    std::vector<Instance> env;
+    Sequence seq;
+    int nextId = 0;
+  };
+
+  results_.clear();
+  seen_.clear();
+  std::deque<Node> queue;
+  queue.push_back({{}, {}, 0});
+
+  while (!queue.empty()) {
+    Node node = queue.front();
+    queue.pop_front();
+    if (static_cast<int>(node.seq.calls.size()) >= maxLength_) {
+      continue;
+    }
+
+    for (const auto &function : model_.functions) {
+      std::vector<int> bindings(function.params.size(), -1);
+      std::vector<bool> used(node.env.size(), false);
+      enumerateBindings(function, node.env, 0, bindings, used,
+                        [&](const std::vector<int> &bound) {
+        Sequence next = node.seq;
+        Call call;
+        call.function = function.name;
+        for (std::size_t i = 0; i < function.params.size(); ++i) {
+          if (bound[i] >= 0) {
+            call.resourceArgs.push_back(node.env[bound[i]].id);
+            call.values.push_back("");
+          } else {
+            call.resourceArgs.push_back(-1);
+            const std::string &sourceName = function.params[i].valueSource;
+            auto it = model_.values.find(sourceName);
+            call.values.push_back(it != model_.values.end() ? sampleValue(it->second) : "");
+          }
+        }
+        next.calls.push_back(call);
+
+        std::vector<Instance> newEnv = node.env;
+        int newNextId = node.nextId;
+        apply(function, bound, newEnv, newNextId);
+
+        if (seen_.insert(next.text()).second) {
+          results_.push_back(next);
+          queue.push_back({newEnv, next, newNextId});
+        }
+      });
+    }
+  }
   return results_;
 }
 
