@@ -15,6 +15,7 @@ class StateMachineBuilder : public StateMachineDslBaseVisitor {
 
  private:
   smodel::StateMachine machine_;
+  std::string currentParent_;
 
   void validate();
   static std::string actionText(StateMachineDslParser::ActionContext *ctx);

@@ -289,14 +289,14 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
 
   if (!events.empty()) {
     std::vector<std::string> trace;
-    std::string current = m.initial;
+    std::string current = smodel::leafOf(m, m.initial);
     bool failed = false;
     std::string failure;
 
     for (const auto &event : splitCsv(events)) {
       const auto it =
           std::find_if(m.transitions.begin(), m.transitions.end(), [&](const smodel::Transition &t) {
-            return t.from == current && t.event == event;
+            return (t.from == current || smodel::isDescendantOf(m, current, t.from)) && t.event == event;
           });
       if (it == m.transitions.end()) {
         failed = true;
@@ -304,7 +304,7 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
         break;
       }
       trace.push_back(current + " -" + event + "-> " + it->to);
-      current = it->to;
+      current = smodel::leafOf(m, it->to);
     }
 
     if (json) {

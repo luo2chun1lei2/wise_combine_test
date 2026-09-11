@@ -18,6 +18,9 @@ echo "$events_out" | grep -q 'final: CLOSED'
 cover_out="$("$BIN" doc/examples/connection.dsl --max-length 4 --cover)"
 echo "$cover_out" | grep -q 'covered transitions: 5/5'
 
+nested_out="$("$BIN" doc/examples/nested.dsl --events power_on,start,stop,power_off)"
+echo "$nested_out" | grep -q 'final: OFF'
+
 harness_c="$("$BIN" doc/examples/file-functions.dsl --max-length 2 --seed 42 --max-cases 3 --harness)"
 echo "$harness_c" | gcc -x c - -o /tmp/wise_harness
 (

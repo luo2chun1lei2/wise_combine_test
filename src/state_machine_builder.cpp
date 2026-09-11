@@ -46,13 +46,27 @@ std::any StateMachineBuilder::visitEventsDecl(StateMachineDslParser::EventsDeclC
 std::any StateMachineBuilder::visitStateBlock(StateMachineDslParser::StateBlockContext *ctx) {
   smodel::StateInfo info;
   const std::string name = ctx->ID()->getText();
+  info.parent = currentParent_;
   for (auto *entry : ctx->entryDecl()) {
     info.entry = actionText(entry->action());
   }
   for (auto *exit : ctx->exitDecl()) {
     info.exit = actionText(exit->action());
   }
+  if (!ctx->initialDecl().empty()) {
+    info.initial = ctx->initialDecl(0)->ID()->getText();
+  }
   machine_.stateInfo[name] = info;
+  if (!currentParent_.empty()) {
+    machine_.stateInfo[currentParent_].children.push_back(name);
+  }
+
+  const std::string savedParent = currentParent_;
+  currentParent_ = name;
+  for (auto *child : ctx->stateBlock()) {
+    child->accept(this);
+  }
+  currentParent_ = savedParent;
   return nullptr;
 }
 
