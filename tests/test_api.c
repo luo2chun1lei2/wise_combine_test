@@ -112,7 +112,7 @@ static void test_state_success_and_limit(void)
 
     CHECK(wct_validate_state(&graph, NULL, 0) == 0, "valid state graph should validate");
     CHECK(wct_run_state(&graph, state_callback, &context,
-                        (wct_limits){.max_steps = 2}, &report) == 0,
+                        (wct_limits){.max_steps = 2, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == 0,
           "state run should succeed when all edges fit the limit");
     CHECK(report.steps == 2 && report.covered == 2 && report.uncovered == 0 &&
               report.failures == 0,
@@ -126,7 +126,7 @@ static void test_state_success_and_limit(void)
     init_state_graph(&graph);
     context = (state_context){0};
     CHECK(wct_run_state(&graph, state_callback, &context,
-                        (wct_limits){.max_steps = 1}, &report) == -1,
+                        (wct_limits){.max_steps = 1, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == -1,
           "a bounded run with uncovered edges should be reported as incomplete");
     CHECK(report.steps == 1 && report.covered == 1 && report.uncovered == 1 &&
               report.failures == 0,
@@ -142,7 +142,7 @@ static void test_state_callback_failure(void)
     state_context context = {.fail = 1};
     init_state_graph(&graph);
 
-    CHECK(wct_run_state(&graph, state_callback, &context, (wct_limits){0}, &report) == -1,
+    CHECK(wct_run_state(&graph, state_callback, &context, (wct_limits){.state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == -1,
           "callback failure should fail state run");
     CHECK(report.failures == 1 && report.steps == 0 && report.covered == 0,
           "failed transition must not count as completed or covered");
@@ -229,7 +229,7 @@ static void test_isolation_timeout(void)
     wct_report report;
     init_state_graph(&graph);
     CHECK(wct_run_state(&graph, state_callback_slow, NULL,
-                        (wct_limits){.isolate = 1, .timeout_ms = 5}, &report) == -1,
+                        (wct_limits){.isolate = 1, .timeout_ms = 5, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == -1,
           "isolated callback timeout should fail run");
     CHECK(report.error && strstr(report.error, "timeout") != NULL,
           "isolated timeout should be reported");
@@ -245,7 +245,7 @@ static void test_timeout_range_and_zero_arity_contract(void)
     wct_report report;
     init_state_graph(&state);
     CHECK(wct_run_state(&state, state_callback, NULL,
-                        (wct_limits){.isolate = 1, .timeout_ms = UINT_MAX}, &report) == -1,
+                        (wct_limits){.isolate = 1, .timeout_ms = UINT_MAX, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == -1,
           "timeouts beyond poll's signed range should be rejected");
     CHECK(report.error && strstr(report.error, "timeout exceeds poll limit") != NULL,
           "out-of-range timeout should provide a precise error");
@@ -302,7 +302,7 @@ static void test_state_branching_coverage(void)
     graph.transitions[1] = (wct_transition){copy_string("a-left"), copy_string("idle"),
         copy_string("left"), copy_string("l"), copy_string("ok")};
     CHECK(wct_run_state(&graph, state_callback, &context,
-                        (wct_limits){.max_steps = 2, .seed = 7, .state_reset = state_reset}, &report) == 0,
+                        (wct_limits){.max_steps = 2, .seed = 7, .state_reset = state_reset, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == 0,
           "branching state graph should cover both reachable edges");
     CHECK(report.covered == 2 && report.uncovered == 0 && report.seed == 7,
           "branching state graph should report complete coverage and seed");
@@ -325,10 +325,10 @@ static void test_seed_sampling_determinism(void)
             copy_string("done"), copy_string(ids[i]), copy_string("ok")};
     }
     CHECK(wct_run_state(&graph, state_callback, &ca,
-                        (wct_limits){.max_steps = 3, .seed = 17, .state_reset = state_reset}, &a) == 0,
+                        (wct_limits){.max_steps = 3, .seed = 17, .state_reset = state_reset, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &a) == 0,
           "seeded state sampling should complete");
     CHECK(wct_run_state(&graph, state_callback, &cb,
-                        (wct_limits){.max_steps = 3, .seed = 17, .state_reset = state_reset}, &b) == 0,
+                        (wct_limits){.max_steps = 3, .seed = 17, .state_reset = state_reset, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &b) == 0,
           "repeated seeded state sampling should complete");
     CHECK(ca.count == cb.count && ca.count == 3 &&
               memcmp(ca.inputs, cb.inputs, ca.count * sizeof(ca.inputs[0])) == 0,
@@ -336,7 +336,7 @@ static void test_seed_sampling_determinism(void)
     CHECK(a.declared_edges == 3 && a.covered_edges == 3 && a.uncovered_edges == 0,
           "state report should expose declared and covered edge counts");
     CHECK(wct_run_state(&graph, state_callback, &cc,
-                        (wct_limits){.max_steps = 3, .seed = 48, .state_reset = state_reset}, &c) == 0,
+                        (wct_limits){.max_steps = 3, .seed = 48, .state_reset = state_reset, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &c) == 0,
           "alternate seeded state sampling should complete");
     CHECK(memcmp(ca.inputs, cc.inputs, ca.count * sizeof(ca.inputs[0])) != 0,
           "different seeds should alter sampling order for branching graph");
@@ -414,7 +414,7 @@ static void test_state_branching_and_unreachable(void)
     CHECK(wct_validate_state(&graph, NULL, 0) == 0,
           "branching state graph should validate before execution");
     CHECK(wct_run_state(&graph, state_callback, &context,
-                        (wct_limits){.max_steps = 16, .seed = 7, .state_reset = state_reset}, &report) == -1,
+                        (wct_limits){.max_steps = 16, .seed = 7, .state_reset = state_reset, .state_snapshot = snapshot_zero, .state_restore = restore_zero}, &report) == -1,
           "unreachable declared edge should make the run incomplete");
     CHECK(report.covered == 4 && report.uncovered == 1 && report.failures == 0,
           "state execution should cover both reachable branches and report one unreachable edge");
