@@ -651,16 +651,15 @@ int wct_run_relation(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
             if (ready) ready_count++;
         }
         if (ready_count) {
-            size_t choice = lim.seed ? (next_rand(&rng) % ready_count) : 0;
+            size_t choice = lim.seed ? (next_rand(&rng) % ready_count) : (step % ready_count);
             for (size_t i = 0; i < n; i++) {
                 if (done[i]) continue;
                 int ready = 1;
                 for (size_t j = 0; j < g->relation_count; j++) if (find_call(g, g->relations[j].to) == (int)i) { int source = find_call(g, g->relations[j].from); if (source < 0 || !done[(size_t)source]) ready = 0; }
                 for (size_t j = 0; j < g->calls[i].argc; j++) { const char *arg = g->calls[i].args[j]; if (arg && arg[0] == '$') { int source = find_call(g, arg + 1); if (source < 0 || !done[(size_t)source]) ready = 0; } }
                 if (ready) {
-                    if (!lim.seed) {
-                        if (pick < 0 || strcmp(g->calls[i].id, g->calls[(size_t)pick].id) < 0)
-                            pick = (int)i;
+                    if (!lim.seed && flow == 0) {
+                        if (pick < 0 || strcmp(g->calls[i].id, g->calls[(size_t)pick].id) < 0) pick = (int)i;
                     } else if (choice == 0) { pick = (int)i; break; }
                     else choice--;
                 }
