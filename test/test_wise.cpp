@@ -186,13 +186,17 @@ int main() {
         bad.status = "failed";
         bad.exit_code = 1;
         bad.detail = "boom";
+        bad.bindings = "h.x = \"v\"";
         const std::string text =
             wct::render_report({ok, bad}, "text");
         assert(text.find("passed=1") != std::string::npos);
         assert(text.find("failed=1") != std::string::npos);
+        assert(text.find("{h.x = \"v\"}") != std::string::npos);
         const std::string json =
             wct::render_report({ok, bad}, "json");
         assert(json.find("\"total\": 2") != std::string::npos);
+        assert(json.find("\"bindings\"") != std::string::npos);
+        assert(json.find("\\\"v\\\"") != std::string::npos);
         assert(wct::flow_id(ok.flow) == "f->g");
     }
 

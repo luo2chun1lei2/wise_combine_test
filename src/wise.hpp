@@ -194,6 +194,7 @@ struct FlowResult {
     std::string status; // passed, failed, crashed, timeout, not_executed
     int exit_code = 0;
     std::string detail;
+    std::string bindings;
 };
 
 struct RunnerOptions {
@@ -215,6 +216,7 @@ private:
     RunnerOptions options_;
     FlowResult run_direct(const Flow& flow) const;
     FlowResult run_not_executed(const Flow& flow) const;
+    std::string flow_bindings(const Flow& flow) const;
 };
 
 struct LogOptions {

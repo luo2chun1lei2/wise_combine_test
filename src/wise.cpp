@@ -1039,7 +1039,32 @@ FlowResult Runner::run_not_executed(const Flow& flow) const {
     r.flow = flow;
     r.status = "not_executed";
     r.detail = "dry-run: no library loaded";
+    r.bindings = flow_bindings(flow);
     return r;
+}
+
+std::string Runner::flow_bindings(const Flow& flow) const {
+    if (!options_.spec) {
+        return {};
+    }
+    std::unordered_set<std::string> present(flow.begin(), flow.end());
+    std::ostringstream out;
+    for (const auto& rel : options_.spec->parameters) {
+        if (present.count(rel.lhs_func) == 0) {
+            continue;
+        }
+        if (!rel.rhs_is_const && present.count(rel.rhs_func) == 0) {
+            continue;
+        }
+        out << rel.lhs_func << "." << rel.lhs_param << " = ";
+        if (rel.rhs_is_const) {
+            out << "\"" << rel.rhs_const << "\"";
+        } else {
+            out << rel.rhs_func << "." << rel.rhs_param;
+        }
+        out << ";";
+    }
+    return out.str();
 }
 
 FlowResult Runner::run_direct(const Flow& flow) const {
@@ -1158,6 +1183,7 @@ FlowResult Runner::run_direct(const Flow& flow) const {
     if (!detail.empty()) {
         result.detail = detail;
     }
+    result.bindings = flow_bindings(flow);
     return result;
 }
 
@@ -1268,6 +1294,36 @@ std::string flow_id(const Flow& flow) {
 
 std::string render_report(const std::vector<FlowResult>& results,
                           const std::string& format) {
+    const auto escape_json = [](const std::string& value) {
+        std::ostringstream out;
+        for (const unsigned char c : value) {
+            switch (c) {
+                case '"':
+                    out << "\\\"";
+                    break;
+                case '\\':
+                    out << "\\\\";
+                    break;
+                case '\n':
+                    out << "\\n";
+                    break;
+                case '\r':
+                    out << "\\r";
+                    break;
+                case '\t':
+                    out << "\\t";
+                    break;
+                default:
+                    if (c < 0x20U) {
+                        out << "\\u00" << std::hex << std::setw(2)
+                            << std::setfill('0') << static_cast<int>(c) << std::dec;
+                    } else {
+                        out << static_cast<char>(c);
+                    }
+            }
+        }
+        return out.str();
+    };
     std::size_t passed = 0;
     std::size_t failed = 0;
     for (const auto& r : results) {
@@ -1286,10 +1342,11 @@ std::string render_report(const std::vector<FlowResult>& results,
         out << "  \"flows\": [\n";
         for (std::size_t i = 0; i < results.size(); ++i) {
             const auto& r = results[i];
-            out << "    {\"id\": \"" << flow_id(r.flow)
-                << "\", \"status\": \"" << r.status
+            out << "    {\"id\": \"" << escape_json(flow_id(r.flow))
+                << "\", \"status\": \"" << escape_json(r.status)
                 << "\", \"exit_code\": " << r.exit_code
-                << ", \"detail\": \"" << r.detail << "\"}";
+                << ", \"detail\": \"" << escape_json(r.detail)
+                << "\", \"bindings\": \"" << escape_json(r.bindings) << "\"}";
             if (i + 1 < results.size()) {
                 out << ",";
             }
@@ -1306,6 +1363,9 @@ std::string render_report(const std::vector<FlowResult>& results,
         out << "[" << r.status << "] " << flow_id(r.flow);
         if (!r.detail.empty()) {
             out << " (" << r.detail << ")";
+        }
+        if (!r.bindings.empty()) {
+            out << " {" << r.bindings << "}";
         }
         out << "\n";
     }
