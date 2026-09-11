@@ -21,6 +21,7 @@ struct StateInfo {
   std::vector<std::string> children;
   std::string initial;
   std::string history;
+  std::string historyDeep;
   bool concurrent = false;
 };
 

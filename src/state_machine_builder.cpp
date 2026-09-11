@@ -59,6 +59,9 @@ std::any StateMachineBuilder::visitStateBlock(StateMachineDslParser::StateBlockC
   if (!ctx->historyDecl().empty()) {
     info.history = ctx->historyDecl(0)->ID()->getText();
   }
+  if (!ctx->historyDeepDecl().empty()) {
+    info.historyDeep = ctx->historyDeepDecl(0)->ID()->getText();
+  }
   if (!ctx->concurrentDecl().empty()) {
     info.concurrent = true;
   }

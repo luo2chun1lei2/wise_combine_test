@@ -300,12 +300,17 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
     std::string failure;
 
     std::map<std::string, std::string> historyOwner;
+    std::map<std::string, std::string> historyDeepOwner;
     for (const auto &[name, info] : m.stateInfo) {
       (void)name;
       if (!info.history.empty()) {
         historyOwner[info.history] = name;
       }
+      if (!info.historyDeep.empty()) {
+        historyDeepOwner[info.historyDeep] = name;
+      }
     }
+    std::map<std::string, std::string> lastChild;
     std::map<std::string, std::string> lastLeaf;
 
     auto enterSet = [&](const std::string &state) -> std::set<std::string> {
@@ -324,22 +329,32 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
     };
 
     auto resolveTarget = [&](const std::string &to) -> std::set<std::string> {
-      auto history = historyOwner.find(to);
-      if (history != historyOwner.end()) {
-        auto last = lastLeaf.find(history->second);
-        return {last != lastLeaf.end() ? last->second : smodel::leafOf(m, history->second)};
+      auto deep = historyDeepOwner.find(to);
+      if (deep != historyDeepOwner.end()) {
+        auto last = lastLeaf.find(deep->second);
+        return {last != lastLeaf.end() ? last->second : smodel::leafOf(m, deep->second)};
+      }
+      auto shallow = historyOwner.find(to);
+      if (shallow != historyOwner.end()) {
+        auto child = lastChild.find(shallow->second);
+        return {smodel::leafOf(m,
+                               child != lastChild.end() ? child->second
+                                                        : smodel::findState(m, shallow->second)->initial)};
       }
       return enterSet(to);
     };
 
     auto updateHistory = [&](const std::string &leaf) {
       std::string current = leaf;
+      std::string child = leaf;
       while (!current.empty()) {
         const smodel::StateInfo *info = smodel::findState(m, current);
         if (info == nullptr || info->parent.empty()) {
           break;
         }
+        lastChild[info->parent] = child;
         lastLeaf[info->parent] = leaf;
+        child = info->parent;
         current = info->parent;
       }
     };
