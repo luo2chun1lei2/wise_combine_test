@@ -72,6 +72,12 @@ struct MutexRel {
     int line = 0;
 };
 
+struct ParallelRel {
+    std::string a;
+    std::string b;
+    int line = 0;
+};
+
 struct ConstraintRel {
     std::string expr;
     int line = 0;
@@ -96,6 +102,7 @@ struct Spec {
     std::vector<ParameterRel> parameters;
     std::vector<OrderRel> orders;
     std::vector<MutexRel> mutexes;
+    std::vector<ParallelRel> parallels;
     std::vector<ConstraintRel> constraints;
     std::vector<std::string> state_constraints;
     std::vector<ValueConstraintRel> value_constraints;
@@ -141,6 +148,7 @@ private:
     void parse_parameter(const std::string& text, int line, Spec& spec);
     void parse_order(const std::string& text, int line, Spec& spec);
     void parse_mutex(const std::string& text, int line, Spec& spec);
+    void parse_parallel(const std::string& text, int line, Spec& spec);
     void parse_constraint(const std::string& text, int line, Spec& spec);
 };
 
@@ -196,6 +204,7 @@ private:
     bool parameter_respected(const Flow& flow) const;
     bool guard_allows(const TransitionDecl& transition) const;
     bool state_allowed(const ObjectDecl& object, const std::string& state) const;
+    bool parallel_respected(const Flow& flow) const;
     std::optional<std::string> resolve_param_const(
         const std::string& func, const std::string& param,
         std::unordered_set<std::string>& visiting) const;

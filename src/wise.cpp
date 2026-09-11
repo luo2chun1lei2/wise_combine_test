@@ -279,6 +279,9 @@ Spec Parser::parse() {
         } else if (starts_with(text, "mutex ")) {
             parse_mutex(text, line_no, spec);
             ++pos_;
+        } else if (starts_with(text, "parallel ")) {
+            parse_parallel(text, line_no, spec);
+            ++pos_;
         } else if (starts_with(text, "constraint ")) {
             parse_constraint(text, line_no, spec);
             ++pos_;
@@ -526,6 +529,18 @@ void Parser::parse_mutex(const std::string& text, int line, Spec& spec) {
     rel.line = line;
     rel.funcs = tokens;
     spec.mutexes.push_back(rel);
+}
+
+void Parser::parse_parallel(const std::string& text, int line, Spec& spec) {
+    const auto tokens = split_ws(trim(text.substr(std::string("parallel").size())));
+    if (tokens.size() != 2) {
+        fail(line, "parallel must list exactly two functions");
+    }
+    ParallelRel rel;
+    rel.line = line;
+    rel.a = tokens[0];
+    rel.b = tokens[1];
+    spec.parallels.push_back(rel);
 }
 
 void Parser::parse_constraint(const std::string& text, int line, Spec& spec) {
@@ -786,6 +801,14 @@ void Model::validate() {
             }
         }
     }
+    for (const auto& rel : spec_.parallels) {
+        if (!has_function(rel.a) || !has_function(rel.b)) {
+            throw ModelError{"parallel references unknown function"};
+        }
+        if (rel.a == rel.b) {
+            throw ModelError{"parallel cannot reference the same function"};
+        }
+    }
     for (const auto& rel : spec_.constraints) {
         std::vector<CountConstraint> ccs;
         std::string err;
@@ -910,7 +933,7 @@ void Generator::state_dfs(const ObjectDecl& object, std::size_t state_index,
     ++visit;
     if (state.final && !path.empty()) {
         if (parameter_respected(path) && order_respected(path) &&
-            state_allowed(object, state.name)) {
+            parallel_respected(path) && state_allowed(object, state.name)) {
             out.push_back(path);
         }
     }
@@ -1075,6 +1098,16 @@ bool Generator::state_allowed(const ObjectDecl& object,
         }
     }
     return false;
+}
+
+bool Generator::parallel_respected(const Flow& flow) const {
+    std::unordered_set<std::string> present(flow.begin(), flow.end());
+    for (const auto& rel : model_.spec().parallels) {
+        if (present.count(rel.a) != present.count(rel.b)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 std::optional<std::string> Generator::resolve_param_const(

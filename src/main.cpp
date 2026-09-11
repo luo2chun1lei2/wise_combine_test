@@ -162,6 +162,8 @@ int main(int argc, char** argv) {
                                parsed.orders.end());
             spec.mutexes.insert(spec.mutexes.end(), parsed.mutexes.begin(),
                                 parsed.mutexes.end());
+            spec.parallels.insert(spec.parallels.end(), parsed.parallels.begin(),
+                                  parsed.parallels.end());
             spec.constraints.insert(spec.constraints.end(), parsed.constraints.begin(),
                                     parsed.constraints.end());
             spec.state_constraints.insert(spec.state_constraints.end(),
