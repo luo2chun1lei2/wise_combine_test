@@ -287,6 +287,50 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
     paths = generator.generate();
   }
 
+  if (!events.empty()) {
+    std::vector<std::string> trace;
+    std::string current = m.initial;
+    bool failed = false;
+    std::string failure;
+
+    for (const auto &event : splitCsv(events)) {
+      const auto it =
+          std::find_if(m.transitions.begin(), m.transitions.end(), [&](const smodel::Transition &t) {
+            return t.from == current && t.event == event;
+          });
+      if (it == m.transitions.end()) {
+        failed = true;
+        failure = "state " + current + " has no event " + event;
+        break;
+      }
+      trace.push_back(current + " -" + event + "-> " + it->to);
+      current = it->to;
+    }
+
+    if (json) {
+      std::cout << "{\"kind\":\"state_machine_execution\"";
+      std::cout << ",\"machine\":\"" << jsonEscape(m.name) << "\"";
+      std::cout << ",\"trace\":";
+      printJsonStrings(trace);
+      std::cout << ",\"final\":\"" << jsonEscape(current) << "\"";
+      std::cout << ",\"failed\":" << (failed ? "true" : "false");
+      std::cout << ",\"failure\":\"" << jsonEscape(failure) << "\"";
+      std::cout << "}" << std::endl;
+      return failed ? 1 : 0;
+    }
+
+    for (const auto &step : trace) {
+      std::cout << step << std::endl;
+    }
+    if (failed) {
+      std::cout << "FAIL: " << failure << std::endl;
+      return 1;
+    }
+    std::cout << "final: " << current << std::endl;
+    std::cout << "OK" << std::endl;
+    return 0;
+  }
+
   if (json) {
     std::vector<std::string> pathTexts;
     pathTexts.reserve(paths.size());
@@ -317,25 +361,6 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
       std::cerr << "  " << e << std::endl;
     }
     return 1;
-  }
-
-  if (!events.empty()) {
-    std::string current = m.initial;
-    for (const auto &event : splitCsv(events)) {
-      const auto it =
-          std::find_if(m.transitions.begin(), m.transitions.end(), [&](const smodel::Transition &t) {
-            return t.from == current && t.event == event;
-          });
-      if (it == m.transitions.end()) {
-        std::cout << "FAIL: state " << current << " has no event " << event << std::endl;
-        return 1;
-      }
-      std::cout << current << " -" << event << "-> " << it->to << std::endl;
-      current = it->to;
-    }
-    std::cout << "final: " << current << std::endl;
-    std::cout << "OK" << std::endl;
-    return 0;
   }
 
   if (replayIndex >= 0) {
