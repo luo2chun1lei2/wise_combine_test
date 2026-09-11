@@ -40,11 +40,7 @@ struct Effect {
 };
 
 struct SuccessExpr {
-  enum class Kind { True, False, Compare };
-  Kind kind = Kind::True;
-  std::string lhs;
-  std::string op;
-  std::string rhs;
+  std::string expr;
 };
 
 struct Function {

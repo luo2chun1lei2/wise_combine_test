@@ -85,7 +85,7 @@ func 函数名(参数, ...) -> 返回类型 {
 
 - 条件形式：`<参数名> is <状态>`，多个条件用逗号分隔。
 - 效果形式：`<参数名> -> <状态>` 或 `result -> <状态>`，多个效果用逗号分隔。
-- 成功判定形式：`true`、`false`，或对 `result`/参数/常量/NULL 的比较表达式，例如 `result == 0`、`result >= 0`、`result != NULL`、`result == nmemb`。
+- 成功判定形式：`true`、`false`，或对 `result`/参数/常量/NULL 的比较表达式，例如 `result == 0`、`result >= 0`、`result != NULL`、`result == nmemb`；多个比较可用 `&&`、`||` 和括号组合。
 - `result` 是关键字：在 `effects` 中表示返回值对应的资源实例；在 `success` 中表示原始 C 返回值。
 
 ## 8. 语义
@@ -170,7 +170,7 @@ func close(h: FileHandle) -> int {
 - `--dylib`：生成需要动态加载被测库的 C harness 代码。
 - `--replay N`：输出第 N 个合法序列的 harness，便于复现。
 
-尚未支持：`success` 表达式的逻辑组合（如 `&&`/`||`），以及为资源参数显式声明“预创建多实例”的模型语法。
+尚未支持：为资源参数显式声明“预创建多实例”的模型语法。
 
 ## 11. 相关决定
 

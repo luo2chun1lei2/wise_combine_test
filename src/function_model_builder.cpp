@@ -121,18 +121,7 @@ std::any FunctionModelBuilder::visitFuncBlock(FunctionDslParser::FuncBlockContex
         function.effects.push_back(effect);
       }
     } else if (member->successDecl() != nullptr) {
-      auto *successCtx = member->successDecl()->successExpr();
-      const std::string text = successCtx->getText();
-      if (text == "true") {
-        function.success.kind = model::SuccessExpr::Kind::True;
-      } else if (text == "false") {
-        function.success.kind = model::SuccessExpr::Kind::False;
-      } else {
-        function.success.kind = model::SuccessExpr::Kind::Compare;
-        function.success.lhs = operandText(successCtx->operand(0));
-        function.success.op = successCtx->op()->getText();
-        function.success.rhs = operandText(successCtx->operand(1));
-      }
+      function.success.expr = member->successDecl()->successExpr()->getText();
     }
   }
 

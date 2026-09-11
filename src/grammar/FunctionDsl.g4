@@ -34,7 +34,10 @@ cond: ID 'is' ID;
 effect: target '->' ID;
 target: 'result' | ID;
 
-successExpr: 'true' | 'false' | operand op operand;
+successExpr: orExpr;
+orExpr: andExpr ('||' andExpr)*;
+andExpr: primary ('&&' primary)*;
+primary: 'true' | 'false' | '(' orExpr ')' | operand op operand;
 operand: 'result' | 'NULL' | ID | INT;
 op: '==' | '!=' | '>' | '>=' | '<' | '<=';
 

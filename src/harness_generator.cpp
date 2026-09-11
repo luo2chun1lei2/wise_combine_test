@@ -1,6 +1,7 @@
 #include "harness_generator.h"
 
 #include <algorithm>
+#include <cctype>
 #include <map>
 #include <sstream>
 
@@ -75,20 +76,62 @@ SigParts parseSig(const std::string &signature) {
   return {ret, params};
 }
 
-std::string operandExpr(const model::Model &model, const model::Function &fn,
-                        const std::map<std::string, std::string> &paramExpr,
-                        const std::string &returnVar, const std::string &operand) {
-  if (operand == "result") {
-    return returnVar;
+std::string translateSuccess(const std::map<std::string, std::string> &paramExpr,
+                             const std::string &returnVar, const std::string &expr) {
+  std::string out;
+  for (std::size_t i = 0; i < expr.size();) {
+    const char c = expr[i];
+    if (std::isalpha(static_cast<unsigned char>(c)) || c == '_') {
+      std::size_t j = i;
+      while (j < expr.size() &&
+             (std::isalnum(static_cast<unsigned char>(expr[j])) || expr[j] == '_')) {
+        ++j;
+      }
+      const std::string token = expr.substr(i, j - i);
+      if (token == "result") {
+        out += returnVar;
+      } else if (token == "true") {
+        out += "1";
+      } else if (token == "false") {
+        out += "0";
+      } else if (token == "NULL") {
+        out += "NULL";
+      } else {
+        auto it = paramExpr.find(token);
+        out += (it != paramExpr.end()) ? it->second : token;
+      }
+      i = j;
+    } else if (std::isdigit(static_cast<unsigned char>(c))) {
+      std::size_t j = i;
+      while (j < expr.size() && std::isdigit(static_cast<unsigned char>(expr[j]))) {
+        ++j;
+      }
+      out += expr.substr(i, j - i);
+      i = j;
+    } else if (c == '=' && i + 1 < expr.size() && expr[i + 1] == '=') {
+      out += "==";
+      i += 2;
+    } else if (c == '!' && i + 1 < expr.size() && expr[i + 1] == '=') {
+      out += "!=";
+      i += 2;
+    } else if (c == '>' && i + 1 < expr.size() && expr[i + 1] == '=') {
+      out += ">=";
+      i += 2;
+    } else if (c == '<' && i + 1 < expr.size() && expr[i + 1] == '=') {
+      out += "<=";
+      i += 2;
+    } else if (c == '&' && i + 1 < expr.size() && expr[i + 1] == '&') {
+      out += "&&";
+      i += 2;
+    } else if (c == '|' && i + 1 < expr.size() && expr[i + 1] == '|') {
+      out += "||";
+      i += 2;
+    } else {
+      out += c;
+      ++i;
+    }
   }
-  if (operand == "NULL") {
-    return "NULL";
-  }
-  auto it = paramExpr.find(operand);
-  if (it != paramExpr.end()) {
-    return it->second;
-  }
-  return operand;
+  return out;
 }
 
 }  // namespace
@@ -199,16 +242,7 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
       }
       out << "  " << callStmt << "\n";
 
-      std::string success;
-      if (fn.success.kind == model::SuccessExpr::Kind::True) {
-        success = "1";
-      } else if (fn.success.kind == model::SuccessExpr::Kind::False) {
-        success = "0";
-      } else {
-        success = operandExpr(model, fn, paramExpr, returnVar, fn.success.lhs) + " " +
-                  fn.success.op + " " +
-                  operandExpr(model, fn, paramExpr, returnVar, fn.success.rhs);
-      }
+      const std::string success = translateSuccess(paramExpr, returnVar, fn.success.expr);
 
       out << "  if (!(" << success << ")) { printf(\"FAIL " << s << " " << fn.name
           << "\\n\"); return 1; }\n";

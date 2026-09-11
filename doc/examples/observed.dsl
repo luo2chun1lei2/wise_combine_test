@@ -20,7 +20,7 @@ func open_h(name: string from names) -> Handle {
   signature: "int open_h(const char*)"
   requires:
   effects: result -> OPEN
-  success: result >= 0
+  success: result >= 0 && result <= 100
 }
 
 func close_h(h: Handle) -> int {
