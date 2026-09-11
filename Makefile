@@ -12,13 +12,13 @@ all: $(BIN)
 $(BUILD):
 	@mkdir -p $(BUILD) bin
 
-$(BUILD)/wct.o: src/wct.c include/wct.h | $(BUILD)
+$(BUILD)/wct.o: src/wct.c src/wct_internal.h include/wct.h | $(BUILD)
 	$(CC) $(CFLAGS) -g -c $< -o $@
 
-$(BUILD)/wct_cli.o: tools/wct_cli.c include/wct.h | $(BUILD)
+$(BUILD)/wct_cli.o: tools/wct_cli.c src/wct_internal.h include/wct.h | $(BUILD)
 	$(CC) $(CFLAGS) -g -c $< -o $@
 
-$(API_TEST): tests/test_api.c src/wct.c include/wct.h | $(BUILD)
+$(API_TEST): tests/test_api.c src/wct.c src/wct_internal.h include/wct.h | $(BUILD)
 	$(CC) $(CFLAGS) -g tests/test_api.c src/wct.c -o $@ $(LDFLAGS)
 
 $(BIN): $(BUILD)/wct.o $(BUILD)/wct_cli.o

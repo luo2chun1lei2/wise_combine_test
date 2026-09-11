@@ -47,8 +47,8 @@ typedef struct {
     unsigned seed;
     /* Optional POSIX callback isolation.  A zero timeout means no deadline. */
     unsigned timeout_ms;
-    /* 0/1 run a whole scenario in a POSIX child; -1 is an explicit
-     * in-process compatibility mode for trusted unit harnesses. */
+    /* Retained for ABI compatibility; public runners always isolate the
+     * complete scenario in a POSIX child. */
     int isolate;
     wct_state_reset_fn state_reset;
     wct_state_snapshot_fn state_snapshot;

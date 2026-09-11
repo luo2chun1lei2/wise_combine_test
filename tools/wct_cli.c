@@ -1,4 +1,5 @@
 #include "wct.h"
+#include "../src/wct_internal.h"
 #include <inttypes.h>
 #include <limits.h>
 #include <errno.h>
@@ -270,9 +271,9 @@ static int replay_trace(const char *path) {
     cli_context context = {.hash = trace_seed(), .quiet = 1, .state_graph = &state, .state_current = 0};
     wct_report report = {0};
     int rc = !strcmp(mode, "state")
-        ? wct_run_state(&state, state_callback, &context, limits, &report)
+        ? wct_run_state_in_process(&state, state_callback, &context, limits, &report)
         : !strcmp(mode, "relation")
-            ? wct_run_relation(&relation, relation_callback, &context, limits, &report)
+            ? wct_run_relation_in_process(&relation, relation_callback, &context, limits, &report)
             : -1;
     int ok = (rc ? 1 : 0) == expected_exit && report.steps == expected_steps &&
              context.hash == expected_digest && report.declared_edges == expected_declared && report.covered_edges == expected_covered && report.uncovered_edges == expected_uncovered && report.process_exit == expected_process_exit && report.process_signal == expected_process_signal && report.timed_out == expected_timed_out;
@@ -379,9 +380,11 @@ int main(int argc, char **argv) {
     wct_report report = {0};
     int rc;
     if (!strcmp(mode, "state")) {
-        rc = wct_run_state(&state, state_callback, &context, limits, &report);
+        rc = trace_path ? wct_run_state_in_process(&state, state_callback, &context, limits, &report)
+                        : wct_run_state(&state, state_callback, &context, limits, &report);
     } else {
-        rc = wct_run_relation(&relation, relation_callback, &context, limits, &report);
+        rc = trace_path ? wct_run_relation_in_process(&relation, relation_callback, &context, limits, &report)
+                        : wct_run_relation(&relation, relation_callback, &context, limits, &report);
     }
     printf("steps=%zu covered=%zu failures=%zu uncovered=%zu edges=%zu/%zu uncovered_edges=%zu seed=%u",
            report.steps, report.covered, report.failures, report.uncovered,

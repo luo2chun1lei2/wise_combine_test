@@ -1,4 +1,5 @@
 #include "wct.h"
+#include "wct_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -625,7 +626,6 @@ static int wct_run_state_impl(const wct_state_graph *g, wct_transition_fn fn, vo
 
 int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
                   wct_limits lim, wct_report *r) {
-    if (lim.isolate < 0) return wct_run_state_impl(g, fn, ctx, lim, r);
     if (!r) return -1;
     memset(r, 0, sizeof *r);
     if (lim.timeout_ms > (unsigned)INT_MAX) { r->failures=1; r->error=dupstr("timeout exceeds poll limit"); return -1; }
@@ -634,7 +634,7 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
     int p[2]; if (pipe(p) < 0) { free(parent_before); return -1; }
     pid_t pid=fork(); if (pid<0) { close(p[0]); close(p[1]); free(parent_before); return -1; }
     if (pid==0) {
-        close(p[0]); wct_limits child=lim; child.isolate=-1; wct_report cr;
+        close(p[0]); wct_limits child=lim; child.isolate=0; wct_report cr;
         int rc=wct_run_state_impl(g,fn,ctx,child,&cr);
         void *final_state=NULL; size_t final_state_size=0; int state_present=0;
         if(child.state_snapshot) { if(child.state_snapshot(ctx,&final_state,&final_state_size)) rc=-1; else state_present=1; }
@@ -798,7 +798,6 @@ static int wct_run_relation_impl(const wct_relation_graph *g, wct_call_fn fn, vo
  * callback side effects cannot contaminate the parent or another flow. */
 int wct_run_relation(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
                     wct_limits lim, wct_report *r) {
-    if (lim.isolate < 0) return wct_run_relation_impl(g, fn, ctx, lim, r);
     if (!r) return -1;
     memset(r, 0, sizeof *r);
     if (lim.timeout_ms > (unsigned)INT_MAX) { r->failures=1; r->error=dupstr("timeout exceeds poll limit"); return -1; }
@@ -806,7 +805,7 @@ int wct_run_relation(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
     pid_t pid = fork();
     if (pid < 0) { close(p[0]); close(p[1]); return -1; }
     if (pid == 0) {
-        close(p[0]); wct_limits child = lim; child.isolate = -1;
+        close(p[0]); wct_limits child = lim; child.isolate = 0;
         wct_report cr; int rc = wct_run_relation_impl(g, fn, ctx, child, &cr);
         uint64_t lens[6] = { cr.scenario ? strlen(cr.scenario) : 0, cr.expected ? strlen(cr.expected) : 0,
             cr.actual ? strlen(cr.actual) : 0, cr.error ? strlen(cr.error) : 0, 0, 0 };
@@ -828,4 +827,16 @@ int wct_run_relation(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
     int wr=reap_deadline(pid,&status,deadline); if (wr==1) { kill_reap(pid); wct_report_free(r); r->timed_out=1; r->process_signal=SIGKILL; r->error=dupstr("scenario timeout"); return -1; }
     if (wr<0 || !WIFEXITED(status) || WEXITSTATUS(status)!=0) { kill_reap(pid); wct_report_free(r); r->error=dupstr("scenario terminated"); return -1; }
     r->process_exit=WEXITSTATUS(status); return rc;
+}
+
+int wct_run_state_in_process(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
+                             wct_limits lim, wct_report *r) {
+    lim.isolate = 0;
+    return wct_run_state_impl(g, fn, ctx, lim, r);
+}
+
+int wct_run_relation_in_process(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
+                                wct_limits lim, wct_report *r) {
+    lim.isolate = 0;
+    return wct_run_relation_impl(g, fn, ctx, lim, r);
 }
