@@ -228,6 +228,34 @@ bool json_string_field(const std::string& text, const std::string& key,
     return false;
 }
 
+bool json_int_field(const std::string& text, const std::string& key,
+                    long& value) {
+    const std::string needle = "\"" + key + "\":";
+    const std::size_t pos = text.find(needle);
+    if (pos == std::string::npos) {
+        return false;
+    }
+    std::size_t start = pos + needle.size();
+    while (start < text.size() &&
+           (text[start] == ' ' || text[start] == '\t')) {
+        ++start;
+    }
+    if (start >= text.size()) {
+        return false;
+    }
+    std::size_t end = start;
+    while (end < text.size() && text[end] != ',' && text[end] != '}') {
+        ++end;
+    }
+    const std::string number = trim(text.substr(start, end - start));
+    try {
+        value = std::stol(number);
+    } catch (...) {
+        return false;
+    }
+    return true;
+}
+
 bool parse_returns_json(const std::string& text,
                         std::map<std::string, std::string>& values) {
     const std::string marker = "\"returns\":{";
@@ -1743,6 +1771,39 @@ FlowResult Runner::run_adapter(const Flow& flow) const {
         if (response_status != "ok") {
             result.status = "failed";
             result.detail = "adapter reported " + response_status;
+            result.bindings = flow_bindings(flow);
+            return result;
+        }
+
+        long return_value = 0;
+        const bool has_return = json_int_field(output, "return", return_value);
+
+        const auto guard = options_.guards.find(function);
+        if (guard != options_.guards.end() &&
+            !guard_satisfied(guard->second, static_cast<int>(return_value))) {
+            result.status = "failed";
+            result.detail = "guard not satisfied for " + function +
+                            " (return=" + std::to_string(return_value) + ")";
+            result.bindings = flow_bindings(flow);
+            return result;
+        }
+
+        const auto expected = options_.expected_returns.find(function);
+        if (expected != options_.expected_returns.end() &&
+            expected->second.has_value()) {
+            if (return_value != expected->second.value()) {
+                result.status = "failed";
+                result.detail = "return mismatch for " + function +
+                                ": expected " +
+                                std::to_string(expected->second.value()) +
+                                ", got " + std::to_string(return_value);
+                result.bindings = flow_bindings(flow);
+                return result;
+            }
+        } else if (has_return && return_value != 0) {
+            result.status = "failed";
+            result.detail = "function returned non-zero: " + function + " (" +
+                            std::to_string(return_value) + ")";
             result.bindings = flow_bindings(flow);
             return result;
         }

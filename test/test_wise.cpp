@@ -650,6 +650,118 @@ int main() {
     }
 
     {
+        wct::Parser parser("test/fixtures/adapter.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::RunnerOptions opts;
+        opts.adapter_path = "test/fixtures/adapter_ok.sh";
+        opts.spec = &model.spec();
+        opts.expected_returns["init"] = 1;
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"init"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "failed");
+        assert(results[0].detail.find("return mismatch") != std::string::npos);
+    }
+
+    {
+        wct::Parser parser("test/fixtures/adapter.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::RunnerOptions opts;
+        opts.adapter_path = "test/fixtures/adapter_ok.sh";
+        opts.spec = &model.spec();
+        opts.guards["init"] = wct::GuardExpr{"!=", 0};
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"init"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "failed");
+        assert(results[0].detail.find("guard not satisfied") !=
+               std::string::npos);
+    }
+
+    {
+        wct::Parser parser("test/fixtures/adapter.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::RunnerOptions opts;
+        opts.adapter_path = "test/fixtures/adapter_ok.sh";
+        opts.spec = &model.spec();
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"start"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "failed");
+        assert(results[0].detail.find("producer return unavailable") !=
+               std::string::npos);
+    }
+
+    {
+        wct::Parser parser("test/fixtures/adapter.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::RunnerOptions opts;
+        opts.adapter_path = "test/fixtures/adapter_malformed.sh";
+        opts.spec = &model.spec();
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"init"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "failed");
+        assert(results[0].detail.find("malformed adapter response") !=
+               std::string::npos);
+    }
+
+    {
+        wct::Parser parser("test/fixtures/adapter.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::RunnerOptions opts;
+        opts.adapter_path = "test/fixtures/adapter_error.sh";
+        opts.spec = &model.spec();
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"init"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "failed");
+        assert(results[0].detail.find("adapter exited with error") !=
+               std::string::npos);
+    }
+
+    {
+        wct::Parser parser("test/fixtures/adapter.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::RunnerOptions opts;
+        opts.adapter_path = "test/fixtures/adapter_mismatch.sh";
+        opts.spec = &model.spec();
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"init"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "failed");
+        assert(results[0].detail.find("adapter reported mismatch") !=
+               std::string::npos);
+    }
+
+    {
+        wct::Parser parser("test/fixtures/adapter.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::RunnerOptions opts;
+        opts.adapter_path = "test/fixtures/adapter_sleep.sh";
+        opts.spec = &model.spec();
+        opts.timeout_seconds = 1;
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"init"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "timeout");
+    }
+
+    {
         const std::string path = write_tmp(
             "function a() -> t\n"
             "function b(t x)\n"
@@ -705,6 +817,14 @@ int main() {
     assert(expect_model_error(
         "function g(config c)\nconstraint value(g.d) == \"x\""));
     assert(expect_model_error("constraint value(g.c) == \"x\""));
+    assert(expect_parse_error(
+        "object x {\n state A initial\n state B final\n"
+        " transition A -> B by f() expect_output\n}\nfunction f()"));
+    assert(expect_parse_error(
+        "object x {\n state A initial\n state B final\n"
+        " transition A -> B by f() expect x\n}\nfunction f()"));
+    assert(expect_parse_error(
+        "function g(config c)\nconstraint value(.c) == \"x\""));
 
     assert(expect_model_error("object x {\n state A initial\n}\nconstraint state B"));
     assert(expect_model_error(
