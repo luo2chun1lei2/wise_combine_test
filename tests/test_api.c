@@ -56,6 +56,14 @@ static int restore_count(void *opaque, const void *snapshot, size_t size) {
     if (!snapshot || size != sizeof(int)) return -1;
     context->count = (size_t)*(const int *)snapshot; return 0;
 }
+static int state_callback_fail_second(const char *input, char **actual, void *opaque) {
+    state_context *context = opaque;
+    (void)input;
+    context->count++;
+    if (context->count == 2) return -1;
+    *actual = copy_string("ok");
+    return *actual ? 0 : -1;
+}
 
 static void init_state_graph(wct_state_graph *graph)
 {
@@ -136,6 +144,28 @@ static void test_state_failure_atomic_snapshot(void)
                                     .state_restore = restore_count}, &report) == -1,
           "snapshot-enabled callback failure should fail run");
     CHECK(context.count == 0, "failed callback must roll back opaque context");
+    wct_report_free(&report); wct_state_graph_free(&graph);
+}
+
+static void test_isolated_state_snapshot_commit(void)
+{
+    wct_state_graph graph; wct_report report; state_context context = {0};
+    init_state_graph(&graph);
+    CHECK(wct_run_state(&graph, state_callback, &context,
+                        (wct_limits){.isolate = 1, .timeout_ms = 100,
+                                    .state_snapshot = snapshot_count,
+                                    .state_restore = restore_count}, &report) == 0,
+          "isolated state run with transaction hooks should succeed");
+    CHECK(context.count == 2, "isolated transitions should commit state between callbacks");
+    wct_report_free(&report); wct_state_graph_free(&graph);
+
+    init_state_graph(&graph); context = (state_context){0};
+    CHECK(wct_run_state(&graph, state_callback_fail_second, &context,
+                        (wct_limits){.isolate = 1, .timeout_ms = 100,
+                                    .state_snapshot = snapshot_count,
+                                    .state_restore = restore_count}, &report) == -1,
+          "isolated callback failure should fail run");
+    CHECK(context.count == 1, "failed isolated transition must not commit child state");
     wct_report_free(&report); wct_state_graph_free(&graph);
 }
 
@@ -671,6 +701,7 @@ int main(void)
     test_state_success_and_limit();
     test_state_callback_failure();
     test_state_failure_atomic_snapshot();
+    test_isolated_state_snapshot_commit();
     test_isolation_timeout();
     test_timeout_range_and_zero_arity_contract();
     test_bare_result_reference_rejected();

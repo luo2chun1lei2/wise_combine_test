@@ -24,7 +24,10 @@ computes reachability from `initial` and invokes transitions in valid graph
 order, stopping at `limits.max_steps` (or a replay-safe bounded default).
 Branch coverage may replay a prefix from `initial`; provide the optional
 `wct_limits.state_reset` hook to restore mutable callback context before each
-scenario. Edges whose source state cannot be reached are counted in
+scenario. For mutable contexts, pair `wct_limits.state_snapshot` and
+`wct_limits.state_restore` to make each transition transactional: successful
+isolated callbacks commit their serialized post-state, while failed callbacks
+are rolled back. Edges whose source state cannot be reached are counted in
 `report.uncovered`. A callback error or expectation mismatch returns `-1`,
 records the failed step/scenario and expected/actual strings, and does not count
 the failed transition as a completed step or covered edge.
