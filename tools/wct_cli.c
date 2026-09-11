@@ -350,10 +350,6 @@ int main(int argc, char **argv) {
     limits.state_snapshot = state_snapshot;
     limits.state_restore = state_restore;
     limits.transition_observer = state_observer;
-    if (trace_path && limits.isolate) {
-        fprintf(stderr, "error: --trace cannot be combined with --isolate; replay the isolated run separately\n");
-        return 2;
-    }
     /* CLI scenarios are isolated by default; trace capture remains an
        explicit in-process compatibility mode so it can replay side effects. */
     if (!trace_path) limits.isolate = 1;
