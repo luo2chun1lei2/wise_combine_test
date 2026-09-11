@@ -89,7 +89,7 @@ std::string transitionKey(const smodel::Transition &t) {
 
 int runFunction(const std::string &text, int maxLength, unsigned seed, bool json, bool negative,
                 int maxCases, bool coverage, bool harness, bool dylib, bool randomAlgorithm,
-                bool bfsAlgorithm, bool cover, int replayIndex) {
+                bool bfsAlgorithm, bool bindRandom, bool cover, int replayIndex) {
   antlr4::ANTLRInputStream input(text);
   FunctionDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -104,6 +104,7 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
   FunctionModelBuilder builder;
   model::Model m = builder.build(tree);
   gen::SequenceGenerator generator(m, maxLength, seed, negative, maxCases);
+  generator.setBindRandom(bindRandom);
   std::vector<gen::Sequence> sequences;
   if (bfsAlgorithm) {
     sequences = generator.generateBfs();
@@ -421,7 +422,7 @@ int main(int argc, char **argv) {
     std::cerr << "usage: " << argv[0]
               << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--coverage]"
               << " [--cover] [--algorithm dfs|bfs|random|tour] [--harness] [--dylib] [--events e1,e2,...]"
-              << " [--replay N] [--max-cases N]"
+              << " [--bind enumerate|random] [--replay N] [--max-cases N]"
               << std::endl;
     return 2;
   }
@@ -437,6 +438,7 @@ int main(int argc, char **argv) {
   bool randomAlgorithm = false;
   bool tourAlgorithm = false;
   bool bfsAlgorithm = false;
+  bool bindRandom = false;
   int maxCases = 0;
   int replayIndex = -1;
   std::string events;
@@ -463,6 +465,16 @@ int main(int argc, char **argv) {
         bfsAlgorithm = true;
       } else {
         std::cerr << "unknown algorithm: " << algorithm << std::endl;
+        return 2;
+      }
+    } else if (arg == "--bind" && i + 1 < argc) {
+      const std::string bindMode = argv[++i];
+      if (bindMode == "random") {
+        bindRandom = true;
+      } else if (bindMode == "enumerate") {
+        bindRandom = false;
+      } else {
+        std::cerr << "unknown bind mode: " << bindMode << std::endl;
         return 2;
       }
     } else if (arg == "--harness") {
@@ -513,7 +525,7 @@ int main(int argc, char **argv) {
                              bfsAlgorithm, seed, maxCases, events, replayIndex);
     }
     return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness, dylib,
-                       randomAlgorithm, bfsAlgorithm, cover, replayIndex);
+                       randomAlgorithm, bfsAlgorithm, bindRandom, cover, replayIndex);
   } catch (const std::exception &e) {
     std::cerr << "exception: " << e.what() << std::endl;
     return 3;

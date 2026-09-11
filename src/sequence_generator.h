@@ -29,6 +29,7 @@ class SequenceGenerator {
   std::vector<Sequence> generateBfs();
   std::vector<Sequence> generateRandom(unsigned seed, int count);
   const std::vector<Sequence> &negativeSequences() const;
+  void setBindRandom(bool value);
 
  private:
   struct Instance {
@@ -40,6 +41,7 @@ class SequenceGenerator {
   const model::Model &model_;
   int maxLength_ = 0;
   bool negative_ = false;
+  bool bindRandom_ = false;
   int maxCases_ = 0;
   std::mt19937 rng_;
   std::vector<Sequence> results_;

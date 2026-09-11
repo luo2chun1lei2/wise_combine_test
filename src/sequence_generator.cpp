@@ -128,6 +128,10 @@ const std::vector<Sequence> &SequenceGenerator::negativeSequences() const {
   return negativeResults_;
 }
 
+void SequenceGenerator::setBindRandom(bool value) {
+  bindRandom_ = value;
+}
+
 std::vector<Sequence> SequenceGenerator::generateRandom(unsigned seed, int count) {
   std::vector<Sequence> out;
   std::set<std::string> seen;
@@ -227,7 +231,20 @@ void SequenceGenerator::dfs(std::vector<Instance> &env, Sequence &seq, int nextI
 
     std::vector<int> bindings(function.params.size(), -1);
     used.assign(env.size(), false);
-    enumerateBindings(function, env, 0, bindings, used, [&](const std::vector<int> &bound) {
+    std::vector<std::vector<int>> candidates;
+    enumerateBindings(function, env, 0, bindings, used,
+                      [&](const std::vector<int> &bound) { candidates.push_back(bound); });
+
+    std::size_t start = 0;
+    std::size_t end = candidates.size();
+    if (bindRandom_ && !candidates.empty()) {
+      const std::size_t pick = rng_() % candidates.size();
+      start = pick;
+      end = pick + 1;
+    }
+
+    for (std::size_t k = start; k < end; ++k) {
+      const std::vector<int> &bound = candidates[k];
       Sequence next = seq;
       Call call;
       call.function = function.name;
@@ -257,7 +274,7 @@ void SequenceGenerator::dfs(std::vector<Instance> &env, Sequence &seq, int nextI
         results_.push_back(next);
         dfs(newEnv, next, newNextId);
       }
-    });
+    }
   }
 }
 
