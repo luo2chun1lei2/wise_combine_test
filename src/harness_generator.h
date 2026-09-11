@@ -9,6 +9,6 @@
 namespace harness {
 
 std::string generate(const model::Model &model, const std::vector<gen::Sequence> &sequences,
-                     bool dylib = false);
+                     bool dylib = false, bool jsonFailures = false);
 
 }  // namespace harness

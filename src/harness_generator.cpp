@@ -167,7 +167,7 @@ std::string translateSuccess(const std::map<std::string, std::string> &paramExpr
 }  // namespace
 
 std::string generate(const model::Model &model, const std::vector<gen::Sequence> &sequences,
-                     bool dylib) {
+                     bool dylib, bool jsonFailures) {
   std::ostringstream out;
   out << "#include <stddef.h>\n";
   out << "#include <stdio.h>\n";
@@ -275,8 +275,14 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
 
       const std::string success = translateSuccess(paramExpr, returnVar, fn.success.expr);
 
-      out << "  if (!(" << success << ")) { printf(\"FAIL " << s << " " << fn.name
-          << "\\n\"); return 1; }\n";
+      if (jsonFailures) {
+        out << "  if (!(" << success << ")) { printf(\"{\\\"kind\\\":\\\"failure\\\",\\\"seq\\\":"
+            << s << ",\\\"step\\\":\\\"" << fn.name << "\\\",\\\"expected\\\":\\\""
+            << escapeCString(fn.success.expr) << "\\\"}\\n\"); return 1; }\n";
+      } else {
+        out << "  if (!(" << success << ")) { printf(\"FAIL " << s << " " << fn.name
+            << "\\n\"); return 1; }\n";
+      }
 
       for (const auto &effect : fn.effects) {
         std::string type;
@@ -296,8 +302,15 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
         const std::string observe = observeOf(model, type);
         if (!observe.empty() && !handleExpr.empty()) {
           const std::string observeFn = dylib ? observe + "_p" : observe;
-          out << "  if (strcmp(" << observeFn << "(" << handleExpr << "), \"" << effect.state
-              << "\") != 0) { printf(\"FAIL " << s << " " << fn.name << " state\\n\"); return 1; }\n";
+          if (jsonFailures) {
+            out << "  if (strcmp(" << observeFn << "(" << handleExpr << "), \"" << effect.state
+                << "\") != 0) { printf(\"{\\\"kind\\\":\\\"failure\\\",\\\"seq\\\":" << s
+                << ",\\\"step\\\":\\\"" << fn.name << "\\\",\\\"expected\\\":\\\"" << effect.state
+                << "\\\"}\\n\"); return 1; }\n";
+          } else {
+            out << "  if (strcmp(" << observeFn << "(" << handleExpr << "), \"" << effect.state
+                << "\") != 0) { printf(\"FAIL " << s << " " << fn.name << " state\\n\"); return 1; }\n";
+          }
         }
       }
     }

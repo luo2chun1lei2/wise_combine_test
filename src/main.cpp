@@ -105,7 +105,7 @@ void collectNswitch(const smodel::StateMachine &machine, const std::string &stat
 
 int runFunction(const std::string &text, int maxLength, unsigned seed, bool json, bool negative,
                 int maxCases, bool coverage, bool harness, bool dylib, bool randomAlgorithm,
-                bool bfsAlgorithm, bool bindRandom, bool cover, int replayIndex) {
+                bool bfsAlgorithm, bool bindRandom, bool cover, int replayIndex, bool harnessJson) {
   antlr4::ANTLRInputStream input(text);
   FunctionDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -137,12 +137,12 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
       return 1;
     }
     std::vector<gen::Sequence> one{sequences[replayIndex]};
-    std::cout << harness::generate(m, one, false);
+    std::cout << harness::generate(m, one, false, harnessJson);
     return 0;
   }
 
   if (harness) {
-    std::cout << harness::generate(m, sequences, dylib);
+    std::cout << harness::generate(m, sequences, dylib, harnessJson);
     return 0;
   }
 
@@ -587,7 +587,7 @@ int main(int argc, char **argv) {
   if (argc < 2) {
     std::cerr << "usage: " << argv[0]
               << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--coverage]"
-              << " [--cover] [--algorithm dfs|bfs|random|tour] [--harness] [--dylib] [--events e1,e2,...]"
+              << " [--cover] [--algorithm dfs|bfs|random|tour] [--harness] [--harness-json] [--dylib] [--events e1,e2,...]"
               << " [--bind enumerate|random] [--n-switch N] [--replay N] [--max-cases N]"
               << std::endl;
     return 2;
@@ -601,6 +601,7 @@ int main(int argc, char **argv) {
   bool cover = false;
   bool harness = false;
   bool dylib = false;
+  bool harnessJson = false;
   bool randomAlgorithm = false;
   bool tourAlgorithm = false;
   bool bfsAlgorithm = false;
@@ -652,6 +653,9 @@ int main(int argc, char **argv) {
     } else if (arg == "--dylib") {
       harness = true;
       dylib = true;
+    } else if (arg == "--harness-json") {
+      harness = true;
+      harnessJson = true;
     } else if (arg == "--events" && i + 1 < argc) {
       events = argv[++i];
     } else if (arg == "--max-length" && i + 1 < argc) {
@@ -700,7 +704,7 @@ int main(int argc, char **argv) {
                              bfsAlgorithm, seed, maxCases, events, replayIndex, nSwitch);
     }
     return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness, dylib,
-                       randomAlgorithm, bfsAlgorithm, bindRandom, cover, replayIndex);
+                       randomAlgorithm, bfsAlgorithm, bindRandom, cover, replayIndex, harnessJson);
   } catch (const std::exception &e) {
     std::cerr << "exception: " << e.what() << std::endl;
     return 3;
