@@ -60,6 +60,10 @@ echo "$deep_out" | grep -q 'final: SUB1_B'
 shallow_hist="$("$BIN" doc/examples/deep-history.dsl --events power_on,to_b,power_off,resume_shallow)"
 echo "$shallow_hist" | grep -q 'final: SUB1_A'
 
+ref_count="$(python3 test/reference_check.py 3)"
+tool_count="$("$BIN" doc/examples/connection.dsl --max-length 3 | grep '^paths: ' | awk '{print $2}')"
+[ "$ref_count" = "$tool_count" ]
+
 harness_c="$("$BIN" doc/examples/file-functions.dsl --max-length 2 --seed 42 --max-cases 3 --harness)"
 echo "$harness_c" | gcc -x c - -o /tmp/wise_harness
 (
