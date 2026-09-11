@@ -369,6 +369,9 @@ int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) {
                 }
             }
         }
+        if (g->calls[i].expected_result && !g->calls[i].result_type_set) {
+            /* An exact result assertion is meaningful without a type annotation. */
+        }
         for (size_t j = 0; j < g->calls[i].argc; ++j) {
             const char *arg = g->calls[i].args[j];
             if (!arg) {
