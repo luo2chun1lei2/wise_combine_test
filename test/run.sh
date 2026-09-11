@@ -51,6 +51,9 @@ echo "$pair_out" | grep -q 'covered_function_pairs:'
 concurrent_paths="$("$BIN" doc/examples/concurrent.dsl --max-length 2)"
 echo "$concurrent_paths" | grep -q 'paths: 4'
 
+neg_sm="$("$BIN" doc/examples/connection.dsl --negative)"
+echo "$neg_sm" | grep -q 'negative:'
+
 harness_c="$("$BIN" doc/examples/file-functions.dsl --max-length 2 --seed 42 --max-cases 3 --harness)"
 echo "$harness_c" | gcc -x c - -o /tmp/wise_harness
 (

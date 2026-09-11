@@ -449,7 +449,7 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
 int runStateMachine(const std::string &text, int maxLength, bool json, bool coverage, bool cover,
                     bool randomAlgorithm, bool tourAlgorithm, bool bfsAlgorithm, unsigned seed, int maxCases,
                     const std::string &events, int replayIndex, int nSwitch,
-                    const std::map<std::string, std::string> &guardValues) {
+                    const std::map<std::string, std::string> &guardValues, bool negative) {
   antlr4::ANTLRInputStream input(text);
   StateMachineDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -473,6 +473,25 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
     paths = generator.generateRandom(seed, maxCases);
   } else {
     paths = generator.generate();
+  }
+
+  std::vector<std::string> negatives;
+  if (negative) {
+    for (const auto &state : m.states) {
+      const smodel::StateInfo *info = smodel::findState(m, state);
+      if (info != nullptr && !info->children.empty()) {
+        continue;
+      }
+      for (const auto &event : m.events) {
+        const bool accepted = std::any_of(
+            m.transitions.begin(), m.transitions.end(), [&](const smodel::Transition &t) {
+              return t.event == event && (t.from == state || smodel::isDescendantOf(m, state, t.from));
+            });
+        if (!accepted) {
+          negatives.push_back(state + " does not accept " + event);
+        }
+      }
+    }
   }
 
   if (!events.empty()) {
@@ -685,6 +704,10 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
       }
       std::cout << "}";
     }
+    if (negative) {
+      std::cout << ",\"negative\":";
+      printJsonStrings(negatives);
+    }
     std::cout << ",\"errors\":";
     printJsonStrings(m.errors);
     std::cout << "}" << std::endl;
@@ -702,6 +725,13 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
       std::cerr << "  " << e << std::endl;
     }
     return 1;
+  }
+
+  if (negative) {
+    std::cout << "negative: " << negatives.size() << std::endl;
+    for (const auto &item : negatives) {
+      std::cout << "  " << item << std::endl;
+    }
   }
 
   if (replayIndex >= 0) {
@@ -942,13 +972,14 @@ int main(int argc, char **argv) {
 
   try {
     const bool isMachine = (firstKeyword(text) == "machine");
-    if (isMachine && (negative || harness || dylib || bindRandom)) {
-      std::cerr << "warning: --negative/--harness/--dylib/--bind are ignored for state machine models"
+    if (isMachine && (harness || dylib || bindRandom)) {
+      std::cerr << "warning: --harness/--dylib/--bind are ignored for state machine models"
                 << std::endl;
     }
     if (isMachine) {
       return runStateMachine(text, maxLength, json, coverage, cover, randomAlgorithm, tourAlgorithm,
-                             bfsAlgorithm, seed, maxCases, events, replayIndex, nSwitch, guardValues);
+                             bfsAlgorithm, seed, maxCases, events, replayIndex, nSwitch, guardValues,
+                             negative);
     }
     return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness, dylib,
                        randomAlgorithm, bfsAlgorithm, bindRandom, cover, replayIndex, harnessJson);
