@@ -56,6 +56,18 @@ static int restore_count(void *opaque, const void *snapshot, size_t size) {
     if (!snapshot || size != sizeof(int)) return -1;
     context->count = (size_t)*(const int *)snapshot; return 0;
 }
+static int zero_restore_calls;
+static int snapshot_zero(void *opaque, void **snapshot, size_t *size) {
+    (void)opaque; *snapshot = NULL; *size = 0; return 0;
+}
+static int restore_zero(void *opaque, const void *snapshot, size_t size) {
+    (void)opaque; (void)snapshot;
+    if (size != 0) return -1;
+    zero_restore_calls++; return 0;
+}
+static int restore_fails(void *opaque, const void *snapshot, size_t size) {
+    (void)opaque; (void)snapshot; (void)size; return -1;
+}
 static int state_callback_fail_second(const char *input, char **actual, void *opaque) {
     state_context *context = opaque;
     (void)input;
@@ -179,6 +191,27 @@ static void test_isolated_state_snapshot_commit(void)
                                     .state_restore = restore_count}, &report) == -1,
           "isolated expectation mismatch should fail run");
     CHECK(context.count == 0, "expectation mismatch must not commit child state");
+    wct_report_free(&report); wct_state_graph_free(&graph);
+}
+
+static void test_zero_snapshot_and_rollback_failure(void)
+{
+    wct_state_graph graph; wct_report report; state_context context = {0};
+    init_state_graph(&graph); zero_restore_calls = 0;
+    CHECK(wct_run_state(&graph, state_callback_bad_result, &context,
+                        (wct_limits){.state_snapshot = snapshot_zero,
+                                    .state_restore = restore_zero}, &report) == -1,
+          "zero-length snapshot run should retain transactional behavior");
+    CHECK(zero_restore_calls == 1, "zero-length successful snapshot must be restored");
+    wct_report_free(&report); wct_state_graph_free(&graph);
+
+    init_state_graph(&graph); context = (state_context){0};
+    CHECK(wct_run_state(&graph, state_callback_bad_result, &context,
+                        (wct_limits){.state_snapshot = snapshot_zero,
+                                    .state_restore = restore_fails}, &report) == -1,
+          "restore failure should fail the run");
+    CHECK(report.error && strstr(report.error, "rollback failed"),
+          "restore failure during rollback should be explicit");
     wct_report_free(&report); wct_state_graph_free(&graph);
 }
 
@@ -715,6 +748,7 @@ int main(void)
     test_state_callback_failure();
     test_state_failure_atomic_snapshot();
     test_isolated_state_snapshot_commit();
+    test_zero_snapshot_and_rollback_failure();
     test_isolation_timeout();
     test_timeout_range_and_zero_arity_contract();
     test_bare_result_reference_rejected();

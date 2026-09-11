@@ -34,6 +34,12 @@ state for either commit or rollback. Edges whose source state cannot be reached 
 records the failed step/scenario and expected/actual strings, and does not count
 the failed transition as a completed step or covered edge.
 
+A successful snapshot is valid even when it is represented by `NULL` and zero
+bytes; the runner still invokes restore. Restore failures are reported as
+explicit commit/rollback failures. Without snapshot/restore hooks, isolated
+callbacks cannot propagate opaque context mutations between transitions;
+branch replay therefore rejects that configuration.
+
 ## Function relations
 
 `wct_validate_relation` rejects duplicate call IDs, unknown relation endpoints,

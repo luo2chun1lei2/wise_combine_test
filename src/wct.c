@@ -63,7 +63,8 @@ static void kill_reap(pid_t pid) { (void)kill(pid, SIGKILL); while (waitpid(pid,
 static int isolate_state_cb(wct_transition_fn fn, const char *input, char **actual,
                             void *ctx, unsigned timeout_ms,
                             wct_state_snapshot_fn snapshot_fn,
-                            void **state_out, size_t *state_out_size, const char **why,
+                            void **state_out, size_t *state_out_size, int *state_valid,
+                            const char **why,
                             int *exit_code, int *signal_no, int *timed_out) {
     if (timeout_ms > (unsigned)INT_MAX) { *why = "timeout exceeds poll limit"; return -1; }
     int p[2]; if (pipe(p) < 0) { *why = "isolation pipe failed"; return -1; }
@@ -109,6 +110,7 @@ static int isolate_state_cb(wct_transition_fn fn, const char *input, char **actu
     if (!rc && state_out) {
         *state_out = state;
         *state_out_size = (size_t)state_size;
+        if (state_valid) *state_valid = snapshot_fn != NULL;
         state = NULL;
     }
     free(state);
@@ -517,31 +519,36 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
         if (picked < 0) break;
         const wct_transition *t = &g->transitions[(size_t)picked];
         char *actual = NULL;
-        void *before = NULL; size_t before_size = 0;
+        void *before = NULL; size_t before_size = 0; int before_valid = 0;
         void *after = NULL; size_t after_size = 0;
+        int after_valid = 0;
         if (!lim.isolate && lim.state_snapshot && lim.state_snapshot(ctx, &before, &before_size)) {
             r->error = dupstr("state snapshot failed"); r->failures = 1; break;
         }
+        if (!lim.isolate && lim.state_snapshot) before_valid = 1;
         const char *isolation_error = NULL;
         int rc = lim.isolate ? isolate_state_cb(fn, t->input, &actual, ctx, lim.timeout_ms,
-                                                lim.state_snapshot, &after, &after_size, &isolation_error,
+                                                lim.state_snapshot, &after, &after_size, &after_valid, &isolation_error,
                                                 &r->process_exit, &r->process_signal, &r->timed_out)
                              : (fn ? fn(t->input, &actual, ctx) : 0);
         if (rc || !actual || strcmp(actual, t->expect)) {
-            if (!lim.isolate && lim.state_restore && before)
-                (void)lim.state_restore(ctx, before, before_size);
+            int rollback_failed = 0;
+            if (!lim.isolate && lim.state_restore && before_valid &&
+                lim.state_restore(ctx, before, before_size))
+                rollback_failed = 1;
             r->failures++;
             r->failed_step = step + 1;
             r->scenario = dupstr(t->id);
             r->expected = dupstr(t->expect);
             r->actual = actual ? dupstr(actual) : NULL;
-            r->error = dupstr(isolation_error ? isolation_error : (rc ? "transition callback failed" : "transition expectation failed"));
+            r->error = dupstr(rollback_failed ? "state rollback failed" :
+                              (isolation_error ? isolation_error : (rc ? "transition callback failed" : "transition expectation failed")));
             free(actual);
             free(before);
             free(after);
             break;
         }
-        if (lim.isolate && lim.state_restore &&
+        if (lim.isolate && lim.state_restore && after_valid &&
             lim.state_restore(ctx, after, after_size)) {
             free(actual); free(before); free(after);
             r->failures++; r->failed_step = step + 1;
