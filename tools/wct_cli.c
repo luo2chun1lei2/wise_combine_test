@@ -136,6 +136,7 @@ static int parse_trace(const char *path, char *model, size_t model_len, char *mo
                        int *exit_code, uint64_t *digest, uint64_t *model_digest, uint64_t *ir_digest, uint64_t *metadata_digest, char *selection, size_t selection_len) {
     (void)model_len;
     (void)mode_len;
+    (void)selection_len;
     FILE *file = fopen(path, "r");
     char line[4096], key[64], value[2048];
     int version = 0, got_model = 0, got_mode = 0, got_digest = 0, got_model_digest = 0, got_ir = 0, got_selection = 0;
@@ -171,7 +172,7 @@ static int parse_trace(const char *path, char *model, size_t model_len, char *mo
     }
     fclose(file);
     if (!got_model || !got_mode || !got_digest || !got_model_digest ||
-        version != 1 || !*model || !*mode || stored.hash != *digest)
+        version != 1 || !*model || !*mode || !got_ir || !got_selection || !got_metadata_digest || stored.hash != *digest || metadata.hash != *metadata_digest)
         return -1;
     return 0;
 }
