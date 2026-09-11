@@ -667,6 +667,9 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
         for (const auto &step : path.steps) {
           coveredStates.insert(step.transition.from);
           coveredStates.insert(step.transition.to);
+          for (const auto &leaf : smodel::enterLeaves(m, step.transition.to)) {
+            coveredStates.insert(leaf);
+          }
           coveredTransitions.insert(transitionKey(step.transition));
         }
         if (nSwitch >= 1) {
@@ -815,6 +818,9 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
       for (const auto &step : path.steps) {
         coveredStates.insert(step.transition.from);
         coveredStates.insert(step.transition.to);
+        for (const auto &leaf : smodel::enterLeaves(m, step.transition.to)) {
+          coveredStates.insert(leaf);
+        }
         coveredTransitions.insert(step.transition.from + " -" + step.transition.event + "-> " +
                                   step.transition.to);
       }
