@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 static int failures;
 
@@ -112,6 +113,28 @@ static void test_state_callback_failure(void)
     wct_state_graph_free(&graph);
 }
 
+static int state_callback_slow(const char *input, char **actual, void *opaque)
+{
+    (void)opaque;
+    if (input && !strcmp(input, "begin")) { struct timespec ts = {.tv_nsec = 50000000}; nanosleep(&ts, NULL); }
+    *actual = copy_string("ok");
+    return *actual == NULL ? -1 : 0;
+}
+
+static void test_isolation_timeout(void)
+{
+    wct_state_graph graph;
+    wct_report report;
+    init_state_graph(&graph);
+    CHECK(wct_run_state(&graph, state_callback_slow, NULL,
+                        (wct_limits){.isolate = 1, .timeout_ms = 5}, &report) == -1,
+          "isolated callback timeout should fail run");
+    CHECK(report.error && strstr(report.error, "timeout") != NULL,
+          "isolated timeout should be reported");
+    wct_report_free(&report);
+    wct_state_graph_free(&graph);
+}
+
 static void test_state_branching_coverage(void)
 {
     wct_state_graph graph = {0};
@@ -136,6 +159,40 @@ static void test_state_branching_coverage(void)
     CHECK(report.covered == 2 && report.uncovered == 0 && report.seed == 7,
           "branching state graph should report complete coverage and seed");
     wct_report_free(&report);
+    wct_state_graph_free(&graph);
+}
+
+static void test_seed_sampling_determinism(void)
+{
+    wct_state_graph graph = {0};
+    wct_report a = {0}, b = {0}, c = {0};
+    state_context ca = {0}, cb = {0}, cc = {0};
+    graph.id = copy_string("seed"); graph.initial = copy_string("idle");
+    graph.state_count = 2; graph.states = calloc(2, sizeof *graph.states);
+    graph.states[0] = copy_string("idle"); graph.states[1] = copy_string("done");
+    graph.transition_count = 3; graph.transitions = calloc(3, sizeof *graph.transitions);
+    const char *ids[] = {"a", "b", "c"};
+    for (size_t i = 0; i < 3; ++i) {
+        graph.transitions[i] = (wct_transition){copy_string(ids[i]), copy_string("idle"),
+            copy_string("done"), copy_string(ids[i]), copy_string("ok")};
+    }
+    CHECK(wct_run_state(&graph, state_callback, &ca,
+                        (wct_limits){.max_steps = 3, .seed = 17}, &a) == 0,
+          "seeded state sampling should complete");
+    CHECK(wct_run_state(&graph, state_callback, &cb,
+                        (wct_limits){.max_steps = 3, .seed = 17}, &b) == 0,
+          "repeated seeded state sampling should complete");
+    CHECK(ca.count == cb.count && ca.count == 3 &&
+              memcmp(ca.inputs, cb.inputs, ca.count * sizeof(ca.inputs[0])) == 0,
+          "same seed should produce identical transition order");
+    CHECK(a.declared_edges == 3 && a.covered_edges == 3 && a.uncovered_edges == 0,
+          "state report should expose declared and covered edge counts");
+    CHECK(wct_run_state(&graph, state_callback, &cc,
+                        (wct_limits){.max_steps = 3, .seed = 48}, &c) == 0,
+          "alternate seeded state sampling should complete");
+    CHECK(memcmp(ca.inputs, cc.inputs, ca.count * sizeof(ca.inputs[0])) != 0,
+          "different seeds should alter sampling order for branching graph");
+    wct_report_free(&a); wct_report_free(&b); wct_report_free(&c);
     wct_state_graph_free(&graph);
 }
 
@@ -231,8 +288,8 @@ static void test_parser_diagnostics(void)
     fclose(file);
     CHECK(wct_parse_file(path, &state, &relation, error, sizeof error) == -1,
           "malformed transition should be rejected");
-    CHECK(strstr(error, "line") != NULL,
-          "malformed transition diagnostic should include a line number");
+    CHECK(strstr(error, "line 4 column 1") != NULL,
+          "malformed transition diagnostic should include line and column");
     wct_state_graph_free(&state);
     wct_relation_graph_free(&relation);
     remove(path);
@@ -319,9 +376,9 @@ static void init_relation_graph(wct_relation_graph *graph)
     graph->id = copy_string("pipeline");
     graph->call_count = 3;
     graph->calls = calloc(graph->call_count, sizeof *graph->calls);
-    graph->calls[0] = (wct_call){copy_string("fetch"), calloc(1, sizeof(char *)), 1};
-    graph->calls[1] = (wct_call){copy_string("transform"), calloc(1, sizeof(char *)), 1};
-    graph->calls[2] = (wct_call){copy_string("store"), calloc(1, sizeof(char *)), 1};
+    graph->calls[0] = (wct_call){.id = copy_string("fetch"), .args = calloc(1, sizeof(char *)), .argc = 1};
+    graph->calls[1] = (wct_call){.id = copy_string("transform"), .args = calloc(1, sizeof(char *)), .argc = 1};
+    graph->calls[2] = (wct_call){.id = copy_string("store"), .args = calloc(1, sizeof(char *)), .argc = 1};
     graph->calls[0].args[0] = copy_string("url");
     graph->calls[1].args[0] = copy_string("json");
     graph->calls[2].args[0] = copy_string("db");
@@ -398,7 +455,7 @@ static void test_relation_lexical_tie_break(void)
     CHECK(wct_validate_relation(&graph, NULL, 0) == 0,
           "independent calls should validate");
     CHECK(wct_run_relation(&graph, relation_callback, &context,
-                           (wct_limits){.max_flows = 3, .seed = 11}, &report) == 0,
+                           (wct_limits){.max_flows = 3, .seed = 0}, &report) == 0,
           "independent calls should execute");
     CHECK(context.count == 3 && strcmp(context.ids[0], "alpha") == 0 &&
               strcmp(context.ids[1], "middle") == 0 &&
@@ -442,6 +499,42 @@ static void test_relation_reference_dependency(void)
               strstr(error, "cycle") != NULL,
           "cycles formed only by result references should be rejected");
     wct_relation_graph_free(&graph);
+}
+
+
+static void test_relation_arity_and_types(void)
+{
+    wct_relation_graph graph = {0};
+    char error[128] = {0};
+    graph.call_count = 1;
+    graph.calls = calloc(1, sizeof *graph.calls);
+    graph.calls[0].id = copy_string("typed");
+    graph.calls[0].argc = 1;
+    graph.calls[0].args = calloc(1, sizeof(char *));
+    graph.calls[0].args[0] = copy_string("true");
+    graph.calls[0].expected_argc = 2;
+    CHECK(wct_validate_relation(&graph, error, sizeof error) == -1 &&
+          strstr(error, "arity mismatch") != NULL,
+          "declared call arity mismatch should be rejected");
+    graph.calls[0].expected_argc = 1;
+    graph.calls[0].arg_type_count = 1;
+    graph.calls[0].arg_types = calloc(1, sizeof *graph.calls[0].arg_types);
+    graph.calls[0].arg_types[0] = WCT_INT;
+    memset(error, 0, sizeof error);
+    CHECK(wct_validate_relation(&graph, error, sizeof error) == -1 &&
+          strstr(error, "type mismatch") != NULL,
+          "declared argument type mismatch should be rejected");
+    graph.calls[0].arg_types[0] = WCT_BOOL;
+    CHECK(wct_validate_relation(&graph, error, sizeof error) == 0,
+          "matching bool argument type should validate");
+    wct_relation_graph_free(&graph);
+}
+
+static void test_parser_call_contract(void) {
+    const char *path = "/tmp/wct-contract.model"; FILE *f=fopen(path,"w"); wct_state_graph st={0}; wct_relation_graph g={0}; char e[128]={0};
+    CHECK(f != NULL, "contract fixture writable"); if (!f) return; fputs("schema 1\nrelation_graph r\ncall fetch true\ncontract fetch 1 bool\n",f); fclose(f);
+    CHECK(wct_parse_file(path,&st,&g,e,sizeof e)==0 && g.calls[0].expected_argc==1 && g.calls[0].arg_type_count==1 && g.calls[0].arg_types[0]==WCT_BOOL, "parser should load call contracts");
+    wct_state_graph_free(&st); wct_relation_graph_free(&g); remove(path);
 }
 
 static void test_parser_boundaries(void)
@@ -505,8 +598,10 @@ int main(void)
 {
     test_state_success_and_limit();
     test_state_callback_failure();
+    test_isolation_timeout();
     test_state_branching_coverage();
     test_state_validation_errors();
+    test_seed_sampling_determinism();
     test_state_branching_and_unreachable();
     test_parser_diagnostics();
     test_empty_ids_rejected();
@@ -515,6 +610,8 @@ int main(void)
     test_relation_cycle();
     test_relation_lexical_tie_break();
     test_relation_reference_dependency();
+    test_relation_arity_and_types();
+    test_parser_call_contract();
     test_parser_boundaries();
     test_parse_fixtures();
     if (failures != 0) {

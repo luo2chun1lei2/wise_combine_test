@@ -1,0 +1,1 @@
+完成 wise_combine_test 原始计划：在现有 C11/Linux 组合测试工具基础上，补齐并验证状态图与函数关系的完整规格。必须保持低依赖、版本化 DSL/C API/CLI；实现状态迁移的真实顺序语义、失败原子性、循环/步数边界；实现关系 DAG 的参数/结果绑定、typed/arity 校验、声明边覆盖、确定性 seed sampling；实现 POSIX fork/waitpid 场景隔离与超时报告；完善 trace schema/hash/replay、行列号诊断、边界/fuzz、ASan/UBSan/Valgrind、测量、覆盖率、README、每轮 evidence manifest；所有变更提交并推送。明确排除未声明参数空间穷举。最终必须有干净工作树、远端同步、所有测试和内存检查通过。

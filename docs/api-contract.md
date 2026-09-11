@@ -58,3 +58,17 @@ cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror \
 The same command can be rebuilt with `-fsanitize=address,undefined` to check
 the explicit free paths. A Valgrind run is optional when the executable is
 installed in the environment.
+
+
+## Call contracts and diagnostics
+
+`wct_call.expected_argc` optionally declares an exact argument count; zero leaves
+legacy callers unrestricted. `arg_types`/`arg_type_count` optionally declare one
+type per argument. Use `WCT_ANY` to accept any inferred type. Literal arguments
+are inferred as integer (decimal), boolean (`true`/`false`), bytes (`0x...`),
+string, or reference (`$call`). Validation rejects arity or type mismatches
+before callbacks run. DSL models can declare the same metadata after a call with
+`contract <call-id> <argc> <type...>`; supported names are `int`, `bool`,
+`string`, `bytes`, `ref`, and `any`. The parser reports syntax failures with a one-based line and
+column (currently column 1 for directive-level errors), making malformed models
+easier to locate.

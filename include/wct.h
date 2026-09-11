@@ -6,7 +6,7 @@
 
 #define WCT_SCHEMA_VERSION 1u
 
-typedef enum { WCT_INT, WCT_BOOL, WCT_STRING, WCT_BYTES, WCT_REF } wct_value_type;
+typedef enum { WCT_INT, WCT_BOOL, WCT_STRING, WCT_BYTES, WCT_REF, WCT_ANY = -1 } wct_value_type;
 typedef struct {
     wct_value_type type;
     union { int64_t integer; int boolean; const char *string; struct { const unsigned char *data; size_t len; } bytes; const char *ref; } as;
@@ -16,17 +16,38 @@ typedef struct { char *id; char *from; char *to; char *input; char *expect; } wc
 typedef int (*wct_transition_fn)(const char *input, char **actual, void *ctx);
 typedef struct { char *id; char *initial; char **states; size_t state_count; wct_transition *transitions; size_t transition_count; } wct_state_graph;
 
-typedef struct { char *id; char **args; size_t argc; } wct_call;
+typedef struct {
+    char *id;
+    char **args;
+    size_t argc;
+    /* Optional contract metadata. A zero expected_argc/type_count disables that check. */
+    size_t expected_argc;
+    wct_value_type *arg_types;
+    size_t arg_type_count;
+} wct_call;
 typedef struct { char *from; char *to; } wct_relation;
 typedef int (*wct_call_fn)(const char *id, const char *const *args, size_t argc, char **result, void *ctx);
 typedef struct { char *id; wct_call *calls; size_t call_count; wct_relation *relations; size_t relation_count; } wct_relation_graph;
 
-typedef struct { size_t max_steps; size_t max_flows; unsigned seed; } wct_limits;
+typedef struct {
+    size_t max_steps;
+    size_t max_flows;
+    unsigned seed;
+    /* Optional POSIX callback isolation.  A zero timeout means no deadline. */
+    unsigned timeout_ms;
+    int isolate;
+} wct_limits;
 typedef struct {
     size_t steps;
     size_t covered;
     size_t failures;
     size_t uncovered;
+    size_t declared_edges;
+    size_t covered_edges;
+    size_t uncovered_edges;
+    int process_exit;
+    int process_signal;
+    int timed_out;
     size_t failed_step;
     unsigned seed;
     char *scenario;

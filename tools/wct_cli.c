@@ -14,6 +14,7 @@ static char *copy_string(const char *value) {
 static void usage(FILE *out) {
     fprintf(out, "Usage: wise-combine-test --model FILE [--mode state|relation]\n");
     fprintf(out, "       [--seed N] [--max-steps N] [--max-flows N]\n");
+    fprintf(out, "       [--isolate] [--timeout-ms N]\n");
     fprintf(out, "       [--trace FILE] | --replay FILE\n");
     fprintf(out, "       wise-combine-test --help | --version\n");
 }
@@ -193,7 +194,7 @@ int main(int argc, char **argv) {
         if (!strcmp(argv[i], "--model") && i + 1 < argc) { model = argv[++i]; continue; }
         if (!strcmp(argv[i], "--mode") && i + 1 < argc) { mode = argv[++i]; continue; }
         if ((!strcmp(argv[i], "--seed") || !strcmp(argv[i], "--max-steps") ||
-             !strcmp(argv[i], "--max-flows")) && i + 1 < argc) {
+             !strcmp(argv[i], "--max-flows") || !strcmp(argv[i], "--timeout-ms")) && i + 1 < argc) {
             char *end = NULL;
             unsigned long value = strtoul(argv[++i], &end, 10);
             if (!*argv[i] || *end || value > (unsigned long)SIZE_MAX) {
@@ -202,9 +203,11 @@ int main(int argc, char **argv) {
             }
             if (!strcmp(argv[i - 1], "--seed")) limits.seed = (unsigned)value;
             else if (!strcmp(argv[i - 1], "--max-steps")) limits.max_steps = (size_t)value;
-            else limits.max_flows = (size_t)value;
+            else if (!strcmp(argv[i - 1], "--max-flows")) limits.max_flows = (size_t)value;
+            else limits.timeout_ms = (unsigned)value;
             continue;
         }
+        if (!strcmp(argv[i], "--isolate")) { limits.isolate = 1; continue; }
         fprintf(stderr, "error: unknown or incomplete option '%s'\n", argv[i]);
         usage(stderr);
         return 2;
@@ -244,13 +247,17 @@ int main(int argc, char **argv) {
     } else {
         rc = wct_run_relation(&relation, relation_callback, &context, limits, &report);
     }
-    printf("steps=%zu covered=%zu failures=%zu uncovered=%zu seed=%u\n",
-           report.steps, report.covered, report.failures, report.uncovered, report.seed);
+    printf("steps=%zu covered=%zu failures=%zu uncovered=%zu edges=%zu/%zu uncovered_edges=%zu seed=%u",
+           report.steps, report.covered, report.failures, report.uncovered,
+           report.covered_edges, report.declared_edges, report.uncovered_edges, report.seed);
+    if (limits.isolate) printf(" process_exit=%d process_signal=%d timed_out=%d",
+                               report.process_exit, report.process_signal, report.timed_out);
+    putchar('\n');
     if (report.error) fprintf(stderr, "error: %s\n", report.error);
     if (report.scenario)
         fprintf(stderr, "scenario=%s step=%zu\n", report.scenario, report.failed_step);
     if (trace) {
-        fprintf(trace, "steps %zu\nexit %d\ndigest %016" PRIx64 "\n", report.steps,
+        fprintf(trace, "steps %zu\ndeclared_edges %zu\ncovered_edges %zu\nuncovered_edges %zu\nexit %d\ndigest %016" PRIx64 "\n", report.steps, report.declared_edges, report.covered_edges, report.uncovered_edges,
                 rc ? 1 : 0, context.hash);
         fclose(trace);
     }
