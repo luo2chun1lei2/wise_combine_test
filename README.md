@@ -46,7 +46,7 @@ make test
 ## 使用
 
 ```sh
-./build/wise_combine_test <模型文件> [--max-length N] [--seed N] [--json] [--negative] [--coverage] [--cover] [--algorithm random|tour] [--harness] [--dylib] [--events e1,e2,...] [--replay N] [--max-cases N]
+./build/wise_combine_test <模型文件> [--max-length N] [--seed N] [--json] [--negative] [--coverage] [--cover] [--algorithm dfs|bfs|random|tour] [--bind enumerate|random] [--n-switch N] [--harness] [--dylib] [--events e1,e2,...] [--replay N] [--max-cases N]
 ```
 
 常用选项：
@@ -57,7 +57,9 @@ make test
 - `--json`：输出 JSON 报告。
 - `--coverage`：输出函数覆盖或状态/转换覆盖统计。
 - `--cover`：输出贪心计算出的最小覆盖用例集。
-- `--algorithm random`：随机游走；`--algorithm tour`：状态机转换游。
+- `--algorithm dfs|bfs|random|tour`：生成算法；`tour` 仅状态机。
+- `--bind enumerate|random`：资源实例绑定策略（仅函数模型）。
+- `--n-switch N`：输出状态机 N-switch 覆盖统计（含转换对 N=2）。
 - `--negative`：生成负向函数调用序列。
 - `--harness`：输出 C harness 代码而不是直接执行。
 - `--dylib`：输出动态加载被测库的 C harness 代码。
@@ -75,6 +77,8 @@ make test
 
 - 函数调用序列 DSL：见 [doc/dsl.md](doc/dsl.md)。
 - 状态机 DSL：见 [doc/state-machine-dsl.md](doc/state-machine-dsl.md)。
+
+状态机 DSL 支持扁平、嵌套、复合、浅历史和并发状态；函数 DSL 支持 `setup` 块预创建资源实例。
 
 示例模型位于 [doc/examples](doc/examples)。
 
