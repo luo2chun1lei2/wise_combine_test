@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <string>
@@ -81,6 +83,90 @@ std::vector<std::string> splitCsv(const std::string &s) {
     start = comma + 1;
   }
   return out;
+}
+
+bool isNumber(const std::string &s) {
+  if (s.empty()) {
+    return false;
+  }
+  std::size_t i = (s[0] == '-') ? 1 : 0;
+  if (i == s.size()) {
+    return false;
+  }
+  for (; i < s.size(); ++i) {
+    if (!std::isdigit(static_cast<unsigned char>(s[i]))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool evalGuard(const std::string &guard, const std::map<std::string, std::string> &values) {
+  if (guard.empty()) {
+    return true;
+  }
+  const std::vector<std::string> ops = {"==", "!=", ">=", "<=", ">", "<"};
+  std::size_t pos = std::string::npos;
+  std::string op;
+  for (const auto &candidate : ops) {
+    pos = guard.find(candidate);
+    if (pos != std::string::npos) {
+      op = candidate;
+      break;
+    }
+  }
+  if (pos == std::string::npos) {
+    return true;
+  }
+
+  auto resolveVariable = [&](const std::string &token) -> std::optional<std::string> {
+    auto it = values.find(token);
+    if (it != values.end()) {
+      return it->second;
+    }
+    return std::nullopt;
+  };
+
+  auto resolveValue = [&](const std::string &token) -> std::string {
+    auto it = values.find(token);
+    if (it != values.end()) {
+      return it->second;
+    }
+    if (token.size() >= 2 && token.front() == '"' && token.back() == '"') {
+      return token.substr(1, token.size() - 2);
+    }
+    if (isNumber(token)) {
+      return token;
+    }
+    return token;
+  };
+
+  const std::string lhs = ltrim(guard.substr(0, pos));
+  const std::string rhs = ltrim(guard.substr(pos + op.size()));
+  const auto left = resolveVariable(lhs);
+  const std::string right = resolveValue(rhs);
+  if (!left) {
+    return true;
+  }
+
+  if (op == "==" || op == "!=") {
+    const bool equal = *left == right;
+    return op == "==" ? equal : !equal;
+  }
+
+  if (isNumber(*left) && isNumber(right)) {
+    const long long a = std::stoll(*left);
+    const long long b = std::stoll(right);
+    if (op == ">") return a > b;
+    if (op == ">=") return a >= b;
+    if (op == "<") return a < b;
+    return a <= b;
+  }
+
+  if (op == ">") return *left > right;
+  if (op == ">=") return *left >= right;
+  if (op == "<") return *left < right;
+  return *left <= right;
 }
 
 std::string transitionKey(const smodel::Transition &t) {
@@ -268,7 +354,8 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
 
 int runStateMachine(const std::string &text, int maxLength, bool json, bool coverage, bool cover,
                     bool randomAlgorithm, bool tourAlgorithm, bool bfsAlgorithm, unsigned seed, int maxCases,
-                    const std::string &events, int replayIndex, int nSwitch) {
+                    const std::string &events, int replayIndex, int nSwitch,
+                    const std::map<std::string, std::string> &guardValues) {
   antlr4::ANTLRInputStream input(text);
   StateMachineDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -296,6 +383,7 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
 
   if (!events.empty()) {
     std::vector<std::string> trace;
+    std::vector<std::string> actions;
     bool failed = false;
     std::string failure;
 
@@ -381,7 +469,7 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
         auto it = std::find_if(m.transitions.begin(), m.transitions.end(),
                                [&](const smodel::Transition &t) {
                                  return (t.from == leaf || smodel::isDescendantOf(m, leaf, t.from)) &&
-                                        t.event == event;
+                                        t.event == event && evalGuard(t.guard, guardValues);
                                });
         if (it != m.transitions.end()) {
           chosen = &*it;
@@ -395,6 +483,13 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
       }
 
       trace.push_back(chosen->from + " -" + event + "-> " + chosen->to);
+      const smodel::StateInfo *fromInfo = smodel::findState(m, chosen->from);
+      if (fromInfo != nullptr && !fromInfo->exit.empty()) {
+        actions.push_back("exit " + chosen->from + ": " + fromInfo->exit);
+      }
+      if (!chosen->action.empty()) {
+        actions.push_back("action: " + chosen->action);
+      }
       for (auto it = active.begin(); it != active.end();) {
         if (*it == chosen->from || smodel::isDescendantOf(m, *it, chosen->from)) {
           it = active.erase(it);
@@ -402,9 +497,14 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
           ++it;
         }
       }
-      for (const auto &target : resolveTarget(chosen->to)) {
+      const std::set<std::string> targets = resolveTarget(chosen->to);
+      for (const auto &target : targets) {
         active.insert(target);
         updateHistory(target);
+        const smodel::StateInfo *targetInfo = smodel::findState(m, target);
+        if (targetInfo != nullptr && !targetInfo->entry.empty()) {
+          actions.push_back("entry " + target + ": " + targetInfo->entry);
+        }
       }
     }
 
@@ -415,6 +515,8 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
       std::cout << ",\"machine\":\"" << jsonEscape(m.name) << "\"";
       std::cout << ",\"trace\":";
       printJsonStrings(trace);
+      std::cout << ",\"actions\":";
+      printJsonStrings(actions);
       std::cout << ",\"final\":\"" << jsonEscape(finalState) << "\"";
       std::cout << ",\"failed\":" << (failed ? "true" : "false");
       std::cout << ",\"failure\":\"" << jsonEscape(failure) << "\"";
@@ -424,6 +526,9 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
 
     for (const auto &step : trace) {
       std::cout << step << std::endl;
+    }
+    for (const auto &action : actions) {
+      std::cout << "  " << action << std::endl;
     }
     if (failed) {
       std::cout << "FAIL: " << failure << std::endl;
@@ -588,7 +693,7 @@ int main(int argc, char **argv) {
     std::cerr << "usage: " << argv[0]
               << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--coverage]"
               << " [--cover] [--algorithm dfs|bfs|random|tour] [--harness] [--harness-json] [--dylib] [--events e1,e2,...]"
-              << " [--bind enumerate|random] [--n-switch N] [--replay N] [--max-cases N]"
+              << " [--bind enumerate|random] [--n-switch N] [--guard k=v] [--replay N] [--max-cases N]"
               << std::endl;
     return 2;
   }
@@ -610,6 +715,7 @@ int main(int argc, char **argv) {
   int maxCases = 0;
   int replayIndex = -1;
   std::string events;
+  std::map<std::string, std::string> guardValues;
   std::string modelPath;
 
   try {
@@ -658,6 +764,14 @@ int main(int argc, char **argv) {
       harnessJson = true;
     } else if (arg == "--events" && i + 1 < argc) {
       events = argv[++i];
+    } else if (arg == "--guard" && i + 1 < argc) {
+      const std::string spec = argv[++i];
+      const std::size_t eq = spec.find('=');
+      if (eq == std::string::npos) {
+        std::cerr << "invalid --guard value: " << spec << std::endl;
+        return 2;
+      }
+      guardValues[spec.substr(0, eq)] = spec.substr(eq + 1);
     } else if (arg == "--max-length" && i + 1 < argc) {
       maxLength = std::stoi(argv[++i]);
     } else if (arg == "--seed" && i + 1 < argc) {
@@ -701,7 +815,7 @@ int main(int argc, char **argv) {
     }
     if (isMachine) {
       return runStateMachine(text, maxLength, json, coverage, cover, randomAlgorithm, tourAlgorithm,
-                             bfsAlgorithm, seed, maxCases, events, replayIndex, nSwitch);
+                             bfsAlgorithm, seed, maxCases, events, replayIndex, nSwitch, guardValues);
     }
     return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness, dylib,
                        randomAlgorithm, bfsAlgorithm, bindRandom, cover, replayIndex, harnessJson);
