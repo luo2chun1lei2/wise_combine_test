@@ -2,7 +2,7 @@
   "iteration": "I9",
   "status": "PASS",
   "scope": "final clean-checkout regression, whole-scenario isolation, bounded flows, replay and release evidence",
-  "head": "1af6dcc9c32de7f2b20a28485310b83810be8bda",
+  "head": "50ff978",
   "checks": {
     "replay": 0,
     "measure-3": 0,
@@ -26,5 +26,6 @@
   ],
   "measurement_summary": "measure-1.tsv.summary.tsv (median/min/max/range)",
   "trace_replay": "PASS",
-  "blockers": []
+  "blockers": [],
+  "tested_source_commit": "1af6dcc9c32de7f2b20a28485310b83810be8bda"
 }

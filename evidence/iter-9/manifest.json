@@ -1,7 +1,7 @@
 {
   "iteration": "I9",
   "status": "PASS",
-  "head": "1af6dcc9c32de7f2b20a28485310b83810be8bda",
+  "head": "50ff978",
   "commands": [
     {
       "command": "make_clean_test",
@@ -55,7 +55,7 @@
     "python": "3.8.10"
   },
   "git": {
-    "commit": "1af6dcc9c32de7f2b20a28485310b83810be8bda",
+    "commit": "50ff978",
     "push": "PASS (origin/omx)"
   },
   "artifacts": [
@@ -175,5 +175,6 @@
       "path": "evidence/iter-9/trace.log",
       "sha256": "02c89f1b7f44567add7c00cc089e4790d762ad4d343b9a22513ae93e53742222"
     }
-  ]
+  ],
+  "tested_source_commit": "1af6dcc9c32de7f2b20a28485310b83810be8bda"
 }
