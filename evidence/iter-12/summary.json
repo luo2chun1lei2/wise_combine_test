@@ -1,0 +1,21 @@
+{
+  "iteration": "I12",
+  "status": "PASS",
+  "scope": "final provenance refresh after cleanup revert",
+  "head": "6882a0acf95f3073f10e6e97820455186f52701f",
+  "tested_source_commit": "6882a0acf95f3073f10e6e97820455186f52701f",
+  "prior_summary_sha256": "76548af7493cc5a796ccdc44261b15ead31f122746cf8f050160b4c54eeef46d",
+  "checks": {
+    "replay": 0,
+    "valgrind": 0,
+    "sanitize": 0,
+    "measure-3": 0,
+    "measure-1": 0,
+    "test": 0,
+    "trace": 0,
+    "measure-2": 0,
+    "sentinels": 0,
+    "coverage": 0
+  },
+  "blockers": []
+}
