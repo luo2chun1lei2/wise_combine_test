@@ -27,6 +27,18 @@ echo "$history_out" | grep -q 'final: ON_WORKING'
 concurrent_out="$("$BIN" doc/examples/concurrent.dsl --events power_on,a_next,b_next,power_off)"
 echo "$concurrent_out" | grep -q 'final: OFF'
 
+bfs_out="$("$BIN" doc/examples/file-functions.dsl --algorithm bfs --max-length 2)"
+echo "$bfs_out" | grep -q 'sequences: 5'
+
+negative_out="$("$BIN" doc/examples/file-functions.dsl --max-length 3 --negative)"
+echo "$negative_out" | grep -q 'negative: 6'
+
+nswitch_out="$("$BIN" doc/examples/connection.dsl --max-length 4 --n-switch 2)"
+echo "$nswitch_out" | grep -q 'covered_nswitch_2: 7/7'
+
+json_exec="$("$BIN" doc/examples/connection.dsl --events connect,close --json || true)"
+echo "$json_exec" | grep -q '"failed":true'
+
 harness_c="$("$BIN" doc/examples/file-functions.dsl --max-length 2 --seed 42 --max-cases 3 --harness)"
 echo "$harness_c" | gcc -x c - -o /tmp/wise_harness
 (
