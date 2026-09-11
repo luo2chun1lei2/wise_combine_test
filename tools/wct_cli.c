@@ -178,37 +178,37 @@ static int parse_trace(const char *path, char *model, size_t model_len, char *mo
     (void)selection_len;
     FILE *file = fopen(path, "r");
     char line[4096], key[64], value[2048];
-    int version = 0, got_model = 0, got_mode = 0, got_digest = 0, got_model_digest = 0, got_ir = 0, got_selection = 0, got_report = 0, got_seed = 0, got_max_steps = 0, got_max_flows = 0, got_steps = 0, got_exit = 0;
+    int version = 0, got_model = 0, got_mode = 0, got_digest = 0, got_model_digest = 0, got_ir = 0, got_selection = 0, got_report = 0, got_seed = 0, got_max_steps = 0, got_max_flows = 0, got_steps = 0, got_exit = 0, got_header = 0;
     cli_context stored = {.hash = trace_seed()};
     cli_context metadata = {.hash = trace_seed()};
     int got_metadata_digest = 0;
     if (!file) return -1;
     while (fgets(line, sizeof line, file)) {
-        if (sscanf(line, "WCT_TRACE %d", &version) == 1) continue;
+        if (sscanf(line, "WCT_TRACE %d", &version) == 1) { if (got_header++) { fclose(file); return -1; } continue; }
         if (!strncmp(line, "model_digest ", 13) &&
             sscanf(line + 13, "%" SCNx64, model_digest) == 1) {
-            got_model_digest = 1; continue;
+            if (got_model_digest) { fclose(file); return -1; } got_model_digest = 1; continue;
         }
-        if (!strncmp(line, "ir_digest ", 10) && sscanf(line + 10, "%" SCNx64, ir_digest) == 1) { got_ir = 1; continue; }
-        if (!strncmp(line, "metadata_digest ", 16) && sscanf(line + 16, "%" SCNx64, metadata_digest) == 1) { got_metadata_digest = 1; continue; }
-        if (!strncmp(line, "selection ", 10) && sscanf(line + 10, "%63s", selection) == 1) { line[strcspn(line, "\r\n")] = 0; hash_bytes(&metadata, line); got_selection = 1; continue; }
+        if (!strncmp(line, "ir_digest ", 10) && sscanf(line + 10, "%" SCNx64, ir_digest) == 1) { if (got_ir) { fclose(file); return -1; } got_ir = 1; continue; }
+        if (!strncmp(line, "metadata_digest ", 16) && sscanf(line + 16, "%" SCNx64, metadata_digest) == 1) { if (got_metadata_digest) { fclose(file); return -1; } got_metadata_digest = 1; continue; }
+        if (!strncmp(line, "selection ", 10) && sscanf(line + 10, "%63s", selection) == 1) { line[strcspn(line, "\r\n")] = 0; hash_bytes(&metadata, line); if (got_selection) { fclose(file); return -1; } got_selection = 1; continue; }
         if (!strncmp(line, "edge ", 5)) { line[strcspn(line, "\r\n")] = 0; hash_bytes(&metadata, line); continue; }
         if (!strncmp(line, "model ", 6) && sscanf(line + 6, "%2047s", model) == 1) {
-            got_model = 1; continue;
+            if (got_model) { fclose(file); return -1; } got_model = 1; continue;
         }
-        if (sscanf(line, "mode %63s", mode) == 1) { got_mode = 1; continue; }
+        if (sscanf(line, "mode %63s", mode) == 1) { if (got_mode) { fclose(file); return -1; } got_mode = 1; continue; }
         if (sscanf(line, "seed %u", &limits->seed) == 1) { if (got_seed++) return -1; continue; }
         if (sscanf(line, "max_steps %zu", &limits->max_steps) == 1) { if (got_max_steps++) return -1; continue; }
         if (sscanf(line, "max_flows %zu", &limits->max_flows) == 1) { if (got_max_flows++) return -1; continue; }
         if (sscanf(line, "steps %zu", steps) == 1) { if (got_steps++) return -1; continue; }
-        if (sscanf(line, "declared_edges %zu", declared_edges) == 1) { got_report |= 1; continue; }
-        if (sscanf(line, "covered_edges %zu", covered_edges) == 1) { got_report |= 2; continue; }
-        if (sscanf(line, "uncovered_edges %zu", uncovered_edges) == 1) { got_report |= 4; continue; }
-        if (sscanf(line, "process_exit %d", process_exit) == 1) { got_report |= 8; continue; }
-        if (sscanf(line, "process_signal %d", process_signal) == 1) { got_report |= 16; continue; }
-        if (sscanf(line, "timed_out %d", timed_out) == 1) { got_report |= 32; continue; }
+        if (sscanf(line, "declared_edges %zu", declared_edges) == 1) { if (got_report & 1) { fclose(file); return -1; } got_report |= 1; continue; }
+        if (sscanf(line, "covered_edges %zu", covered_edges) == 1) { if (got_report & 2) { fclose(file); return -1; } got_report |= 2; continue; }
+        if (sscanf(line, "uncovered_edges %zu", uncovered_edges) == 1) { if (got_report & 4) { fclose(file); return -1; } got_report |= 4; continue; }
+        if (sscanf(line, "process_exit %d", process_exit) == 1) { if (got_report & 8) { fclose(file); return -1; } got_report |= 8; continue; }
+        if (sscanf(line, "process_signal %d", process_signal) == 1) { if (got_report & 16) { fclose(file); return -1; } got_report |= 16; continue; }
+        if (sscanf(line, "timed_out %d", timed_out) == 1) { if (got_report & 32) { fclose(file); return -1; } got_report |= 32; continue; }
         if (sscanf(line, "exit %d", exit_code) == 1) { if (got_exit++) return -1; continue; }
-        if (sscanf(line, "digest %" SCNx64, digest) == 1) { got_digest = 1; continue; }
+        if (sscanf(line, "digest %" SCNx64, digest) == 1) { if (got_digest) { fclose(file); return -1; } got_digest = 1; continue; }
         if (sscanf(line, "%63s %2047s", key, value) == 2 && !strcmp(key, "step")) {
             line[strcspn(line, "\r\n")] = '\0';
             trace_record(&stored, line);
@@ -218,7 +218,7 @@ static int parse_trace(const char *path, char *model, size_t model_len, char *mo
     }
     fclose(file);
     if (!got_model || !got_mode || !got_digest || !got_model_digest || got_report != 63 || !got_seed || !got_max_steps || !got_max_flows || !got_steps || !got_exit ||
-        version != 1 || !*model || !*mode || !got_ir || !got_selection || !got_metadata_digest || stored.hash != *digest || metadata.hash != *metadata_digest)
+        !got_header || version != 1 || !*model || !*mode || !got_ir || !got_selection || !got_metadata_digest || stored.hash != *digest || metadata.hash != *metadata_digest)
         return -1;
     return 0;
 }

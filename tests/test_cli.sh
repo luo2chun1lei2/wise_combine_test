@@ -12,6 +12,8 @@ $bin --model fixtures/relation.model --mode relation --isolate --timeout-ms 100 
 $bin --model fixtures/function_relations.model --mode relation --trace /tmp/wct-test-trace.$$ >/dev/null
 $bin --replay /tmp/wct-test-trace.$$ | grep -q 'replay=PASS'
 sed 's/model_digest .*/model_digest 0000000000000000/' /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-tampered.$$
+sed '/^model /p' /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-duplicate.$$
+if $bin --replay /tmp/wct-test-trace-duplicate.$$ >/dev/null 2>&1; then echo 'duplicate model trace unexpectedly replayed' >&2; exit 1; fi
 sed 's/edge fetch->transform/edge altered->transform/' /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-edge-tampered.$$
 if $bin --replay /tmp/wct-test-trace-edge-tampered.$$ >/dev/null 2>&1; then
     echo 'altered edge metadata unexpectedly replayed' >&2
