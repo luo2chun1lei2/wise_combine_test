@@ -201,6 +201,7 @@ struct RunnerOptions {
     int timeout_seconds = 10;
     std::unordered_map<std::string, GuardExpr> guards = {};
     std::unordered_map<std::string, std::optional<long>> expected_returns = {};
+    const Spec* spec = nullptr;
 };
 
 class Runner {

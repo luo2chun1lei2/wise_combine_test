@@ -170,6 +170,7 @@ int main(int argc, char** argv) {
         model.validate();
 
         wct::RunnerOptions runner_options{o.lib_path, o.dry_run, 10, {}};
+        runner_options.spec = &model.spec();
         for (const auto& object : model.spec().objects) {
             for (const auto& tr : object.transitions) {
                 if (!tr.guard.empty()) {

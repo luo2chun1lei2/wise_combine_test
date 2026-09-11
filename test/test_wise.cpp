@@ -419,6 +419,22 @@ int main() {
         assert(code.find("if (r != 0) return 1;") != std::string::npos);
     }
 
+    {
+        const std::string path = write_tmp(
+            "function a() -> t\n"
+            "function b(t x)\n"
+            "parameter b.x = a.t");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::RunnerOptions opts;
+        opts.spec = &model.spec();
+        wct::Runner runner(opts);
+        const std::string code = runner.generate_standalone({{"a", "b"}});
+        assert(code.find("// b.x <- a.t") != std::string::npos);
+    }
+
     std::cout << "all tests passed\n";
     return 0;
 }

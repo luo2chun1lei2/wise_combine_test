@@ -1157,6 +1157,22 @@ std::string Runner::generate_standalone(const std::vector<Flow>& flows) const {
     out << "\n";
     for (std::size_t i = 0; i < flows.size(); ++i) {
         out << "static int run_flow_" << i << "() {\n";
+        if (options_.spec) {
+            std::unordered_set<std::string> present(flows[i].begin(),
+                                                    flows[i].end());
+            for (const auto& rel : options_.spec->parameters) {
+                if (present.count(rel.lhs_func) == 0) {
+                    continue;
+                }
+                if (rel.rhs_is_const) {
+                    out << "  // " << rel.lhs_func << "." << rel.lhs_param
+                        << " = \"" << rel.rhs_const << "\"\n";
+                } else if (present.count(rel.rhs_func) != 0) {
+                    out << "  // " << rel.lhs_func << "." << rel.lhs_param
+                        << " <- " << rel.rhs_func << "." << rel.rhs_param << "\n";
+                }
+            }
+        }
         for (const auto& name : flows[i]) {
             out << "  {\n";
             out << "    int r = " << name << "();\n";
