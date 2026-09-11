@@ -26,6 +26,8 @@ typedef struct {
     uint64_t hash;
     size_t step;
     int quiet;
+    const wct_state_graph *state_graph;
+    int state_current;
 } cli_context;
 
 static void hash_bytes(cli_context *context, const char *text) {
@@ -59,14 +61,24 @@ static void trace_record(cli_context *context, const char *line) {
     if (context->trace) fprintf(context->trace, "%s\n", line);
 }
 
+static uint64_t trace_seed(void);
+static uint64_t hash_text(const char *text) { cli_context c = {.hash = trace_seed()}; hash_bytes(&c, text ? text : ""); return c.hash; }
+
 static int state_callback(const char *input, char **actual, void *ctx) {
     cli_context *context = ctx;
     *actual = input ? copy_string(input) : NULL;
     if (*actual && context) {
         char line[2048];
         context->step++;
-        snprintf(line, sizeof line, "step %zu state %s %s", context->step,
-                 input ? input : "-", *actual);
+        const char *edge_id = "?";
+        if (context->state_graph) {
+            for (size_t i = 0; i < context->state_graph->transition_count; ++i) {
+                const wct_transition *t = &context->state_graph->transitions[i];
+                if (!input || !strcmp(t->input, input)) { edge_id = t->id; break; }
+            }
+        }
+        snprintf(line, sizeof line, "step %zu state %s %s edge %s edge_hash %016" PRIx64, context->step,
+                 input ? input : "-", *actual, edge_id, hash_text(edge_id));
         trace_record(context, line);
     }
     return input && !*actual;
@@ -87,7 +99,7 @@ static int relation_callback(const char *id, const char *const *args, size_t arg
         for (size_t i = 0; i < argc && used > 0 && (size_t)used < sizeof line; ++i)
             used += snprintf(line + used, sizeof line - (size_t)used, " %s", args[i] ? args[i] : "-");
         if (used > 0 && (size_t)used < sizeof line)
-            snprintf(line + used, sizeof line - (size_t)used, " result %s", *result);
+            snprintf(line + used, sizeof line - (size_t)used, " result %s call_hash %016" PRIx64, *result, hash_text(id));
         trace_record(context, line);
     }
     return !*result;
@@ -96,25 +108,40 @@ static int relation_callback(const char *id, const char *const *args, size_t arg
 static uint64_t trace_seed(void) { return UINT64_C(1469598103934665603); }
 static int state_reset(void *ctx) { (void)ctx; return 0; }
 
+static uint64_t canonical_ir_digest(const wct_state_graph *state, const wct_relation_graph *relation, const char *mode) {
+    cli_context c = {.hash = trace_seed()};
+    hash_bytes(&c, mode);
+    if (!strcmp(mode, "state") && state) {
+        for (size_t i = 0; i < state->state_count; ++i) hash_bytes(&c, state->states[i]);
+        for (size_t i = 0; i < state->transition_count; ++i) { const wct_transition *t=&state->transitions[i]; hash_bytes(&c,t->id); hash_bytes(&c,t->from); hash_bytes(&c,t->to); hash_bytes(&c,t->input); hash_bytes(&c,t->expect); }
+    } else if (relation) {
+        for (size_t i = 0; i < relation->call_count; ++i) { const wct_call *x=&relation->calls[i]; hash_bytes(&c,x->id); for(size_t j=0;j<x->argc;++j) hash_bytes(&c,x->args[j]); }
+        for (size_t i = 0; i < relation->relation_count; ++i) { hash_bytes(&c,relation->relations[i].from); hash_bytes(&c,relation->relations[i].to); }
+    }
+    return c.hash;
+}
+
 static int write_trace_header(FILE *trace, const char *model, const char *mode,
-                              wct_limits limits) {
+                              wct_limits limits, uint64_t ir_digest) {
     uint64_t model_digest = hash_file(model);
     if (!model_digest) return -1;
     return fprintf(trace, "WCT_TRACE 1\nmodel %s\nmodel_digest %016" PRIx64
-                   "\nmode %s\nseed %u\nmax_steps %zu\nmax_flows %zu\n",
-                   model, model_digest, mode, limits.seed, limits.max_steps,
+                   "\nir_digest %016" PRIx64 "\nmode %s\nseed %u\nmax_steps %zu\nmax_flows %zu\n",
+                   model, model_digest, ir_digest, mode, limits.seed, limits.max_steps,
                    limits.max_flows) < 0;
 }
 
 static int parse_trace(const char *path, char *model, size_t model_len, char *mode,
                        size_t mode_len, wct_limits *limits, size_t *steps,
-                       int *exit_code, uint64_t *digest, uint64_t *model_digest) {
+                       int *exit_code, uint64_t *digest, uint64_t *model_digest, uint64_t *ir_digest, uint64_t *metadata_digest, char *selection, size_t selection_len) {
     (void)model_len;
     (void)mode_len;
     FILE *file = fopen(path, "r");
     char line[4096], key[64], value[2048];
-    int version = 0, got_model = 0, got_mode = 0, got_digest = 0, got_model_digest = 0;
+    int version = 0, got_model = 0, got_mode = 0, got_digest = 0, got_model_digest = 0, got_ir = 0, got_selection = 0;
     cli_context stored = {.hash = trace_seed()};
+    cli_context metadata = {.hash = trace_seed()};
+    int got_metadata_digest = 0;
     if (!file) return -1;
     while (fgets(line, sizeof line, file)) {
         if (sscanf(line, "WCT_TRACE %d", &version) == 1) continue;
@@ -122,6 +149,10 @@ static int parse_trace(const char *path, char *model, size_t model_len, char *mo
             sscanf(line + 13, "%" SCNx64, model_digest) == 1) {
             got_model_digest = 1; continue;
         }
+        if (!strncmp(line, "ir_digest ", 10) && sscanf(line + 10, "%" SCNx64, ir_digest) == 1) { got_ir = 1; continue; }
+        if (!strncmp(line, "metadata_digest ", 16) && sscanf(line + 16, "%" SCNx64, metadata_digest) == 1) { got_metadata_digest = 1; continue; }
+        if (!strncmp(line, "selection ", 10) && sscanf(line + 10, "%63s", selection) == 1) { line[strcspn(line, "\r\n")] = 0; hash_bytes(&metadata, line); got_selection = 1; continue; }
+        if (!strncmp(line, "edge ", 5)) { line[strcspn(line, "\r\n")] = 0; hash_bytes(&metadata, line); continue; }
         if (!strncmp(line, "model ", 6) && sscanf(line + 6, "%2047s", model) == 1) {
             got_model = 1; continue;
         }
@@ -149,11 +180,12 @@ static int replay_trace(const char *path) {
     char model[2048] = {0}, mode[64] = {0};
     size_t expected_steps = 0;
     int expected_exit = 0;
-    uint64_t expected_digest = 0, expected_model_digest = 0;
+    uint64_t expected_digest = 0, expected_model_digest = 0, expected_ir_digest = 0, expected_metadata_digest = 0;
+    char selection[64] = {0};
     wct_limits limits = {0};
     if (parse_trace(path, model, sizeof model, mode, sizeof mode, &limits,
                     &expected_steps, &expected_exit, &expected_digest,
-                    &expected_model_digest)) {
+                    &expected_model_digest, &expected_ir_digest, &expected_metadata_digest, selection, sizeof selection)) {
         fprintf(stderr, "error: invalid trace\n");
         return 1;
     }
@@ -169,7 +201,9 @@ static int replay_trace(const char *path) {
         fprintf(stderr, "error: %s\n", error[0] ? error : "failed to parse trace model");
         return 1;
     }
-    cli_context context = {.hash = trace_seed(), .quiet = 1};
+    if (strcmp(selection, limits.seed ? "seeded-xorshift" : "lexical-id-order")) { fprintf(stderr, "error: trace selection mismatch\n"); wct_state_graph_free(&state); wct_relation_graph_free(&relation); return 1; }
+    if (canonical_ir_digest(&state, &relation, mode) != expected_ir_digest) { fprintf(stderr, "error: trace IR checksum mismatch\n"); wct_state_graph_free(&state); wct_relation_graph_free(&relation); return 1; }
+    cli_context context = {.hash = trace_seed(), .quiet = 1, .state_graph = &state, .state_current = 0};
     wct_report report = {0};
     int rc = !strcmp(mode, "state")
         ? wct_run_state(&state, state_callback, &context, limits, &report)
@@ -245,26 +279,26 @@ int main(int argc, char **argv) {
         return 1;
     }
     FILE *trace = NULL;
-    cli_context context = {.hash = trace_seed()};
+    cli_context context = {.hash = trace_seed(), .state_graph = &state, .state_current = 0};
     if (trace_path) {
         trace = fopen(trace_path, "w");
-        if (!trace || write_trace_header(trace, model, mode, limits)) {
+        if (!trace || write_trace_header(trace, model, mode, limits, canonical_ir_digest(&state, &relation, mode))) {
             if (trace) fclose(trace);
             fprintf(stderr, "error: cannot write trace\n");
             wct_state_graph_free(&state); wct_relation_graph_free(&relation);
             return 1;
         }
         context.trace = trace;
-        fprintf(trace, "selection %s\n", limits.seed ? "seeded-xorshift" : "lexical-id-order");
+        cli_context metadata = {.hash = trace_seed()};
+        char metadata_line[4096];
+        snprintf(metadata_line, sizeof metadata_line, "selection %s", limits.seed ? "seeded-xorshift" : "lexical-id-order");
+        fprintf(trace, "%s\n", metadata_line); hash_bytes(&metadata, metadata_line);
         if (!strcmp(mode, "state")) {
-            for (size_t i = 0; i < state.transition_count; ++i)
-                fprintf(trace, "edge %s %s %s\n", state.transitions[i].id,
-                        state.transitions[i].from, state.transitions[i].to);
+            for (size_t i = 0; i < state.transition_count; ++i) { snprintf(metadata_line, sizeof metadata_line, "edge %s %s %s", state.transitions[i].id, state.transitions[i].from, state.transitions[i].to); fprintf(trace, "%s\n", metadata_line); hash_bytes(&metadata, metadata_line); }
         } else {
-            for (size_t i = 0; i < relation.relation_count; ++i)
-                fprintf(trace, "edge %s->%s\n", relation.relations[i].from,
-                        relation.relations[i].to);
+            for (size_t i = 0; i < relation.relation_count; ++i) { snprintf(metadata_line, sizeof metadata_line, "edge %s->%s", relation.relations[i].from, relation.relations[i].to); fprintf(trace, "%s\n", metadata_line); hash_bytes(&metadata, metadata_line); }
         }
+        fprintf(trace, "metadata_digest %016" PRIx64 "\n", metadata.hash);
     }
     wct_report report = {0};
     int rc;
