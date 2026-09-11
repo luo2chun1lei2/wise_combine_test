@@ -188,3 +188,28 @@ func close(h: FileHandle) -> int {
 ## 11. 相关决定
 
 本语法的各项决定记录在 `ai/adr.md`，尤其是 ADR-002、ADR-008、ADR-009、ADR-010、ADR-011、ADR-012。
+
+## 12. C++ 类方法映射
+
+函数除了映射到自由 C 函数，也可以映射到 C++ 类的成员方法。先声明类，再在函数里用 `receiver` 指定所属类：
+
+```
+class Store {
+  cpp: "Store"
+  header: "Store.h"
+}
+
+func put(data: string) -> int {
+  receiver: Store
+  symbol: "put"
+  signature: "int put(const char*)"
+  requires:
+  effects:
+  success: result == 0
+}
+```
+
+- `class` 声明 C++ 类：`cpp` 是类名，`header` 是包含该类声明的头文件。
+- `receiver` 表示该函数是 `Store` 的成员方法，`signature` 只写返回值、方法名和显式参数，不包含 `this`。
+- 生成 harness 时，会 `#include` 对应头文件，并在每个测试函数中创建一个默认构造的局部对象，调用形如 `对象.方法(参数)`。
+- 含 C++ 类的模型生成的是 C++ harness，需用 `g++` 编译；动态库加载模式暂不支持成员方法。
