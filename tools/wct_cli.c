@@ -337,6 +337,9 @@ int main(int argc, char **argv) {
         fprintf(stderr, "error: --trace cannot be combined with --isolate; replay the isolated run separately\n");
         return 2;
     }
+    /* CLI scenarios are isolated by default; trace capture remains an
+       explicit in-process compatibility mode so it can replay side effects. */
+    if (!trace_path) limits.isolate = 1;
     /* The trace format stores the model path as a whitespace-delimited field.
        Reject such paths rather than emitting a trace that cannot be replayed. */
     if (trace_path && contains_whitespace(model)) {

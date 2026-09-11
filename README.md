@@ -56,13 +56,14 @@ Production users should provide callbacks through the C API rather than
 relying on these example callbacks. Invalid models and callback failures
 return exit code 1; CLI usage errors return exit code 2.
 
-Use `--isolate --timeout-ms N` to execute each callback in a POSIX child
-process and terminate callbacks that exceed the deadline. Isolation status is
+The CLI isolates each complete scenario in a POSIX child by default. Use
+`--isolate --timeout-ms N` to make the deadline explicit and terminate a
+scenario that exceeds it. Isolation status is
 included in the report (`process_exit`, `process_signal`, `timed_out`). Trace
 capture is intentionally mutually exclusive with isolation because callback
 side effects and child-process output are not replayable in the parent.
 
-Isolation is transactional: the parent owns scenario state, the child executes
+Isolation is transactional and scenario-scoped: the parent owns scenario state, the child executes
 the callback under a monotonic deadline, and serialized post-state is committed
 only after the result satisfies the transition/call contract. Failed callbacks,
 timeouts, and assertion mismatches are discarded. Mutable API contexts must
