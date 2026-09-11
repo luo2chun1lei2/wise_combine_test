@@ -832,6 +832,9 @@ void Generator::state_dfs(const ObjectDecl& object, std::size_t state_index,
         if (tr.src != state.name) {
             continue;
         }
+        if (!guard_allows(tr)) {
+            continue;
+        }
         std::size_t next = object.states.size();
         for (std::size_t i = 0; i < object.states.size(); ++i) {
             if (object.states[i].name == tr.dst) {
@@ -948,6 +951,21 @@ bool Generator::parameter_respected(const Flow& flow) const {
         }
     }
     return true;
+}
+
+bool Generator::guard_allows(const TransitionDecl& transition) const {
+    if (transition.guard.empty()) {
+        return true;
+    }
+    if (!transition.expect_present) {
+        return true;
+    }
+    GuardExpr guard;
+    std::string err;
+    if (!parse_guard(transition.guard, guard, err)) {
+        return true;
+    }
+    return guard_satisfied(guard, transition.expect_return);
 }
 
 bool Generator::mutex_violated(const Flow& flow) const {

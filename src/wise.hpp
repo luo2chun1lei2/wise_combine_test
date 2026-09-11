@@ -184,6 +184,7 @@ private:
                         std::vector<Flow>& out) const;
     bool order_respected(const Flow& flow) const;
     bool parameter_respected(const Flow& flow) const;
+    bool guard_allows(const TransitionDecl& transition) const;
     bool mutex_violated(const Flow& flow) const;
     bool constraint_violated(const Flow& flow) const;
 };

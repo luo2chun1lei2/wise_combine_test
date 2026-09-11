@@ -327,6 +327,22 @@ int main() {
 
     {
         const std::string path = write_tmp(
+            "object x {\n"
+            " state A initial\n"
+            " state B final\n"
+            " transition A -> B by f() expect 1 guard return==0\n"
+            "}\n"
+            "function f()");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::Generator generator(model);
+        assert(generator.generate_state_flows().empty());
+    }
+
+    {
+        const std::string path = write_tmp(
             "function f()\n"
             "function g()\n"
             "constraint count(f) > 0 and count(g) > 0");
