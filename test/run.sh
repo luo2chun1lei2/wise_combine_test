@@ -54,6 +54,12 @@ echo "$concurrent_paths" | grep -q 'paths: 4'
 neg_sm="$("$BIN" doc/examples/connection.dsl --negative)"
 echo "$neg_sm" | grep -q 'negative:'
 
+deep_out="$("$BIN" doc/examples/deep-history.dsl --events power_on,to_b,power_off,resume_deep)"
+echo "$deep_out" | grep -q 'final: SUB1_B'
+
+shallow_hist="$("$BIN" doc/examples/deep-history.dsl --events power_on,to_b,power_off,resume_shallow)"
+echo "$shallow_hist" | grep -q 'final: SUB1_A'
+
 harness_c="$("$BIN" doc/examples/file-functions.dsl --max-length 2 --seed 42 --max-cases 3 --harness)"
 echo "$harness_c" | gcc -x c - -o /tmp/wise_harness
 (
