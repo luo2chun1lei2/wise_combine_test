@@ -77,6 +77,14 @@ struct ConstraintRel {
     int line = 0;
 };
 
+struct ValueConstraintRel {
+    std::string func;
+    std::string param;
+    std::string op;
+    std::string value;
+    int line = 0;
+};
+
 struct GuardExpr {
     std::string op;
     long value = 0;
@@ -90,6 +98,7 @@ struct Spec {
     std::vector<MutexRel> mutexes;
     std::vector<ConstraintRel> constraints;
     std::vector<std::string> state_constraints;
+    std::vector<ValueConstraintRel> value_constraints;
 };
 
 struct ParseError {
@@ -187,6 +196,9 @@ private:
     bool parameter_respected(const Flow& flow) const;
     bool guard_allows(const TransitionDecl& transition) const;
     bool state_allowed(const ObjectDecl& object, const std::string& state) const;
+    std::optional<std::string> resolve_param_const(
+        const std::string& func, const std::string& param,
+        std::unordered_set<std::string>& visiting) const;
     bool mutex_violated(const Flow& flow) const;
     bool constraint_violated(const Flow& flow) const;
 };

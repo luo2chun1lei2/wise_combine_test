@@ -369,6 +369,34 @@ int main() {
 
     {
         const std::string path = write_tmp(
+            "function g(config c)\n"
+            "parameter g.c = \"default\"\n"
+            "constraint value(g.c) == \"default\"");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::Generator generator(model);
+        const auto flows = generator.generate_function_flows();
+        assert(flows.size() == 1);
+        assert(flows[0] == (wct::Flow{"g"}));
+    }
+
+    {
+        const std::string path = write_tmp(
+            "function g(config c)\n"
+            "parameter g.c = \"default\"\n"
+            "constraint value(g.c) == \"other\"");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::Generator generator(model);
+        assert(generator.generate_function_flows().empty());
+    }
+
+    {
+        const std::string path = write_tmp(
             "function f()\n"
             "function g()\n"
             "constraint count(f) > 0 and count(g) > 0");

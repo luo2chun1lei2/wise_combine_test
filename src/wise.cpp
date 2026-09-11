@@ -532,6 +532,40 @@ void Parser::parse_constraint(const std::string& text, int line, Spec& spec) {
         spec.state_constraints.push_back(state);
         return;
     }
+    if (starts_with(expr, "value(")) {
+        const std::size_t close = expr.find(')', std::string("value(").size());
+        if (close == std::string::npos) {
+            fail(line, "constraint value missing ')'");
+        }
+        const std::string inner =
+            trim(expr.substr(std::string("value(").size(),
+                             close - std::string("value(").size()));
+        const std::size_t dot = inner.find('.');
+        if (dot == std::string::npos) {
+            fail(line, "constraint value must use func.param format");
+        }
+        ValueConstraintRel rel;
+        rel.line = line;
+        rel.func = trim(inner.substr(0, dot));
+        rel.param = trim(inner.substr(dot + 1));
+        if (rel.func.empty() || rel.param.empty()) {
+            fail(line, "constraint value has an empty function or parameter name");
+        }
+        const std::string rest = trim(expr.substr(close + 1));
+        const auto tokens = split_ws(rest);
+        if (tokens.size() != 2 || (tokens[0] != "==" && tokens[0] != "!=")) {
+            fail(line, "constraint value must be: value(<func>.<param>) ==|!= <literal>");
+        }
+        rel.op = tokens[0];
+        rel.value = tokens[1];
+        if (rel.value.size() >= 2 &&
+            ((rel.value.front() == '"' && rel.value.back() == '"') ||
+             (rel.value.front() == '\'' && rel.value.back() == '\''))) {
+            rel.value = rel.value.substr(1, rel.value.size() - 2);
+        }
+        spec.value_constraints.push_back(rel);
+        return;
+    }
     ConstraintRel rel;
     rel.line = line;
     rel.expr = expr;
@@ -775,6 +809,25 @@ void Model::validate() {
                              state};
         }
     }
+
+    for (const auto& rel : spec_.value_constraints) {
+        if (!has_function(rel.func)) {
+            throw ModelError{"value constraint references unknown function: " +
+                             rel.func};
+        }
+        const FunctionDecl& fn = function(rel.func);
+        bool param_found = false;
+        for (const auto& p : fn.params) {
+            if (p.name == rel.param) {
+                param_found = true;
+                break;
+            }
+        }
+        if (!param_found) {
+            throw ModelError{"value constraint references unknown parameter: " +
+                             rel.func + "." + rel.param};
+        }
+    }
 }
 
 const FunctionDecl& Model::function(const std::string& name) const {
@@ -1009,6 +1062,36 @@ bool Generator::state_allowed(const ObjectDecl& object,
     return false;
 }
 
+std::optional<std::string> Generator::resolve_param_const(
+    const std::string& func, const std::string& param,
+    std::unordered_set<std::string>& visiting) const {
+    const std::string key = func + "." + param;
+    if (!visiting.insert(key).second) {
+        return std::nullopt;
+    }
+    for (const auto& rel : model_.spec().parameters) {
+        if (rel.lhs_func != func || rel.lhs_param != param) {
+            continue;
+        }
+        if (rel.rhs_is_const) {
+            return rel.rhs_const;
+        }
+        const FunctionDecl& rhs_fn = model_.function(rel.rhs_func);
+        bool rhs_is_param = false;
+        for (const auto& p : rhs_fn.params) {
+            if (p.name == rel.rhs_param) {
+                rhs_is_param = true;
+                break;
+            }
+        }
+        if (!rhs_is_param) {
+            return std::nullopt;
+        }
+        return resolve_param_const(rel.rhs_func, rel.rhs_param, visiting);
+    }
+    return std::nullopt;
+}
+
 bool Generator::mutex_violated(const Flow& flow) const {
     std::unordered_set<std::string> present(flow.begin(), flow.end());
     for (const auto& rel : model_.spec().mutexes) {
@@ -1055,6 +1138,17 @@ bool Generator::constraint_violated(const Flow& flow) const {
             if (!ok) {
                 return true;
             }
+        }
+    }
+    for (const auto& rel : model_.spec().value_constraints) {
+        std::unordered_set<std::string> visiting;
+        const auto resolved = resolve_param_const(rel.func, rel.param, visiting);
+        if (!resolved.has_value()) {
+            continue;
+        }
+        const bool matches = resolved.value() == rel.value;
+        if ((rel.op == "==" && !matches) || (rel.op == "!=" && matches)) {
+            return true;
         }
     }
     return false;
