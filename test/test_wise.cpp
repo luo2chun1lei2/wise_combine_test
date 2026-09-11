@@ -397,6 +397,21 @@ int main() {
 
     {
         const std::string path = write_tmp(
+            "function a()\n"
+            "function b()\n"
+            "order b after a");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::Generator generator(model);
+        const auto flows = generator.generate_function_flows();
+        assert(flows.size() == 1);
+        assert(flows[0] == (wct::Flow{"a", "b"}));
+    }
+
+    {
+        const std::string path = write_tmp(
             "function f()\n"
             "function g()\n"
             "constraint count(f) > 0 and count(g) > 0");

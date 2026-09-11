@@ -33,7 +33,7 @@ object <对象名> {
 ```text
 function <函数名>(<参数列表>) [-> <返回参数>]
 parameter <函数名>.<参数名> = <函数名>.<参数名> | <常量>
-order <前驱函数> before <后继函数>
+order <前驱函数> before <后继函数> | order <后继函数> after <前驱函数>
 mutex <函数名> <函数名> [<函数名> ...]
 constraint count(<函数名>) <比较符> <整数> [and count(<函数名>) <比较符> <整数> ...]
 constraint state <状态名>
@@ -44,7 +44,7 @@ constraint value(<函数名>.<参数名>) ==|!= <字面量>
 
 - `function`：声明被测函数及其参数、返回参数。
 - `parameter`：声明参数之间的数据传递关系，右值可以是另一个函数的参数/返回值，也可以是常量（例如 `parameter start.config = "default"`）。
-- `order`：声明调用顺序约束，前驱函数必须先于后继函数调用。
+- `order`：声明调用顺序约束，前驱函数必须先于后继函数调用；`order a before b` 与 `order b after a` 等价。
 - `mutex`：声明一组函数互斥，同一组合调用流程中至多出现其中一个。
 - `constraint`：声明组合约束，支持一个或多个 `count(<函数名>) <比较符> <整数>` 用 `and` 连接；比较符可以是 `<`、`<=`、`>`、`>=`、`==`、`!=`；支持 `constraint state <状态名>` 限制状态路径最终状态；支持 `constraint value(<函数名>.<参数名>) ==|!= <字面量>` 校验参数常量值。
 

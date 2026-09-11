@@ -498,13 +498,19 @@ void Parser::parse_parameter(const std::string& text, int line, Spec& spec) {
 
 void Parser::parse_order(const std::string& text, int line, Spec& spec) {
     const auto tokens = split_ws(trim(text.substr(std::string("order").size())));
-    if (tokens.size() != 3 || tokens[1] != "before") {
-        fail(line, "order must be: order <a> before <b>");
+    if (tokens.size() != 3 ||
+        (tokens[1] != "before" && tokens[1] != "after")) {
+        fail(line, "order must be: order <a> before <b> or order <a> after <b>");
     }
     OrderRel rel;
     rel.line = line;
-    rel.before = tokens[0];
-    rel.after = tokens[2];
+    if (tokens[1] == "before") {
+        rel.before = tokens[0];
+        rel.after = tokens[2];
+    } else {
+        rel.before = tokens[2];
+        rel.after = tokens[0];
+    }
     spec.orders.push_back(rel);
 }
 
