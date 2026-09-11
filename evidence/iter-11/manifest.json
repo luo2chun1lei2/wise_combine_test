@@ -6,7 +6,7 @@
   "prior_summary_sha256": "4b07e889d408a720cd0180e2262c7b73cbff73850623809e6c5e16e710242c63",
   "git": {
     "commit": "2d99f9ca9e3b209430c618281e862ed6d294b76f",
-    "push": "PENDING"
+    "push": "PASS (origin/omx)"
   },
   "artifacts": [
     {
