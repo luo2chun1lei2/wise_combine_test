@@ -248,12 +248,19 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
   }
   if (coverage) {
     std::set<std::string> covered;
+    std::set<std::string> coveredPairs;
     for (const auto &seq : sequences) {
-      for (const auto &call : seq.calls) {
+      for (std::size_t i = 0; i < seq.calls.size(); ++i) {
+        const auto &call = seq.calls[i];
         covered.insert(call.function);
+        if (i + 1 < seq.calls.size()) {
+          coveredPairs.insert(call.function + " ; " + seq.calls[i + 1].function);
+        }
       }
     }
     std::cout << "covered_functions: " << covered.size() << "/" << m.functions.size() << std::endl;
+    std::cout << "covered_function_pairs: " << coveredPairs.size() << "/"
+              << (m.functions.size() * m.functions.size()) << std::endl;
   }
   std::cout << "OK" << std::endl;
   return 0;
