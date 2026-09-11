@@ -1,0 +1,13 @@
+WCT_TRACE 1
+model fixtures/function_relations.model
+model_digest 3b3060f8fd41bb5f
+mode relation
+seed 0
+max_steps 0
+max_flows 0
+step 1 call fetch 1 url result fetch
+step 2 call transform 1 json result transform
+step 3 call store 1 db result store
+steps 3
+exit 0
+digest 7b56384ed4fa4468
