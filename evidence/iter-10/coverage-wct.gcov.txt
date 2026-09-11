@@ -1,0 +1,7 @@
+File 'src/wct.c'
+Lines executed:19.30% of 653
+Branches executed:23.86% of 1098
+Taken at least once:14.57% of 1098
+Calls executed:23.36% of 321
+Creating 'wct.c.gcov'
+

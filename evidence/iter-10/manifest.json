@@ -237,6 +237,10 @@
     {
       "path": "evidence/iter-10/trace.log",
       "sha256": "e39c8910c9a314b9b4d648392011d88bd67309b154e5a12f370e08440b6e142d"
+    },
+    {
+      "path": "evidence/iter-10/coverage-wct.gcov.txt",
+      "sha256": "4d3bee577a1d45b897e3bee6d6c68fd5aa88e5c1085ba99c816ee54be543b7e1"
     }
   ]
 }
