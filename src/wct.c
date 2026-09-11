@@ -61,7 +61,9 @@ static int reap_deadline(pid_t pid, int *status, long long deadline) {
 static void kill_reap(pid_t pid) { (void)kill(pid, SIGKILL); while (waitpid(pid, NULL, 0) < 0 && errno == EINTR) {} }
 
 static int isolate_state_cb(wct_transition_fn fn, const char *input, char **actual,
-                            void *ctx, unsigned timeout_ms, const char **why,
+                            void *ctx, unsigned timeout_ms,
+                            wct_state_snapshot_fn snapshot_fn,
+                            wct_state_restore_fn restore_fn, const char **why,
                             int *exit_code, int *signal_no, int *timed_out) {
     if (timeout_ms > (unsigned)INT_MAX) { *why = "timeout exceeds poll limit"; return -1; }
     int p[2]; if (pipe(p) < 0) { *why = "isolation pipe failed"; return -1; }
@@ -70,27 +72,44 @@ static int isolate_state_cb(wct_transition_fn fn, const char *input, char **actu
     if (pid == 0) {
         close(p[0]); char *out = NULL; int rc = fn ? fn(input, &out, ctx) : 0;
         int present = out != NULL; uint64_t len = out ? strlen(out) : 0;
+        void *state = NULL; size_t state_size = 0;
+        if (!rc && snapshot_fn && snapshot_fn(ctx, &state, &state_size)) rc = -1;
+        uint64_t wire_state_size = (uint64_t)state_size;
         if (write_all(p[1], &rc, sizeof rc) ||
             write_all(p[1], &present, sizeof present) ||
             write_all(p[1], &len, sizeof len) ||
-            (len && write_all(p[1], out, (size_t)len))) _exit(111);
-        free(out); close(p[1]); _exit(0);
+            (len && write_all(p[1], out, (size_t)len)) ||
+            write_all(p[1], &wire_state_size, sizeof wire_state_size) ||
+            (wire_state_size && write_all(p[1], state, state_size))) _exit(111);
+        free(state); free(out); close(p[1]); _exit(0);
     }
     close(p[1]); long long deadline = timeout_ms ? now_ms() + timeout_ms : -1;
-    int rc = -1, present = 0; uint64_t len = 0;
+    int rc = -1, present = 0; uint64_t len = 0, state_size = 0;
+    void *state = NULL;
     int rr = read_exact_deadline(p[0], &rc, sizeof rc, deadline);
     if (!rr) rr = read_exact_deadline(p[0], &present, sizeof present, deadline);
     if (!rr) rr = read_exact_deadline(p[0], &len, sizeof len, deadline);
     if (!rr && len > WCT_MAX_RESULT) rr = -3;
     if (!rr && present) { *actual = malloc((size_t)len + 1); if (!*actual) rr = -1; else if (read_exact_deadline(p[0], *actual, (size_t)len, deadline)) { free(*actual); *actual = NULL; rr = -1; } else (*actual)[len] = '\0'; }
+    if (!rr) rr = read_exact_deadline(p[0], &state_size, sizeof state_size, deadline);
+    if (!rr && state_size > WCT_MAX_RESULT) rr = -3;
+    if (!rr && state_size) {
+        state = malloc((size_t)state_size);
+        if (!state) rr = -1;
+        else if (read_exact_deadline(p[0], state, (size_t)state_size, deadline)) rr = -1;
+    }
     close(p[0]); int status = 0;
-    if (rr == -2) { kill_reap(pid); *timed_out = 1; *signal_no = SIGKILL; *why = "callback timeout"; return -1; }
-    if (rr) { kill_reap(pid); *why = rr == -3 ? "callback result too large" : "isolation read failed"; return -1; }
+    if (rr == -2) { free(state); kill_reap(pid); *timed_out = 1; *signal_no = SIGKILL; *why = "callback timeout"; return -1; }
+    if (rr) { free(state); kill_reap(pid); *why = rr == -3 ? "callback result/state too large" : "isolation read failed"; return -1; }
     int wr = reap_deadline(pid, &status, deadline);
-    if (wr == 1) { kill_reap(pid); *timed_out = 1; *signal_no = SIGKILL; *why = "callback timeout"; return -1; }
-    if (wr < 0) { kill_reap(pid); *why = "isolation wait failed"; return -1; }
+    if (wr == 1) { free(state); kill_reap(pid); *timed_out = 1; *signal_no = SIGKILL; *why = "callback timeout"; return -1; }
+    if (wr < 0) { free(state); kill_reap(pid); *why = "isolation wait failed"; return -1; }
     if (WIFEXITED(status)) *exit_code = WEXITSTATUS(status); else if (WIFSIGNALED(status)) *signal_no = WTERMSIG(status);
-    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) { *why = "callback terminated"; return -1; }
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) { free(state); *why = "callback terminated"; return -1; }
+    if (!rc && restore_fn && restore_fn(ctx, state, (size_t)state_size)) {
+        free(state); *why = "state commit failed"; return -1;
+    }
+    free(state);
     return rc;
 }
 
@@ -368,6 +387,11 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
     if (!r) return -1;
     memset(r, 0, sizeof *r);
     r->seed = lim.seed;
+    if ((lim.state_snapshot == NULL) != (lim.state_restore == NULL)) {
+        r->error = dupstr("state snapshot and restore hooks must be paired");
+        r->failures = 1;
+        return -1;
+    }
     unsigned rng = lim.seed;
     char err[128];
     if (wct_validate_state(g, err, sizeof err)) {
@@ -437,8 +461,8 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
                 if (!seen[i] && source >= 0 && reachable[(size_t)source]) { target = (int)i; break; }
             }
             if (target >= 0) {
-                if (lim.isolate) {
-                    r->error = dupstr("isolated branch replay is unsupported; use state_reset without isolation");
+                if (lim.isolate && !lim.state_snapshot) {
+                    r->error = dupstr("isolated branch replay requires state snapshot/restore hooks");
                     r->failures = 1;
                     break;
                 }
@@ -491,11 +515,18 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
         if (picked < 0) break;
         const wct_transition *t = &g->transitions[(size_t)picked];
         char *actual = NULL;
+        void *before = NULL; size_t before_size = 0;
+        if (!lim.isolate && lim.state_snapshot && lim.state_snapshot(ctx, &before, &before_size)) {
+            r->error = dupstr("state snapshot failed"); r->failures = 1; break;
+        }
         const char *isolation_error = NULL;
-        int rc = lim.isolate ? isolate_state_cb(fn, t->input, &actual, ctx, lim.timeout_ms, &isolation_error,
+        int rc = lim.isolate ? isolate_state_cb(fn, t->input, &actual, ctx, lim.timeout_ms,
+                                                lim.state_snapshot, lim.state_restore, &isolation_error,
                                                 &r->process_exit, &r->process_signal, &r->timed_out)
                              : (fn ? fn(t->input, &actual, ctx) : 0);
         if (rc || !actual || strcmp(actual, t->expect)) {
+            if (!lim.isolate && lim.state_restore && before)
+                (void)lim.state_restore(ctx, before, before_size);
             r->failures++;
             r->failed_step = step + 1;
             r->scenario = dupstr(t->id);
@@ -503,9 +534,11 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
             r->actual = actual ? dupstr(actual) : NULL;
             r->error = dupstr(isolation_error ? isolation_error : (rc ? "transition callback failed" : "transition expectation failed"));
             free(actual);
+            free(before);
             break;
         }
         free(actual);
+        free(before);
         if (!seen[(size_t)picked]) {
             seen[(size_t)picked] = 1;
             r->covered++;

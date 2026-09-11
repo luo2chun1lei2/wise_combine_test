@@ -16,6 +16,10 @@ typedef struct { char *id; char *from; char *to; char *input; char *expect; } wc
 typedef int (*wct_transition_fn)(const char *input, char **actual, void *ctx);
 /* Optional hook invoked before replaying a state scenario from the initial state. */
 typedef int (*wct_state_reset_fn)(void *ctx);
+/* Optional transactional hooks. snapshot allocates an opaque copy that the
+ * runner frees with free(); restore must revert ctx to the snapshot. */
+typedef int (*wct_state_snapshot_fn)(void *ctx, void **snapshot, size_t *size);
+typedef int (*wct_state_restore_fn)(void *ctx, const void *snapshot, size_t size);
 typedef struct { char *id; char *initial; char **states; size_t state_count; wct_transition *transitions; size_t transition_count; } wct_state_graph;
 
 typedef struct {
@@ -40,6 +44,8 @@ typedef struct {
     unsigned timeout_ms;
     int isolate;
     wct_state_reset_fn state_reset;
+    wct_state_snapshot_fn state_snapshot;
+    wct_state_restore_fn state_restore;
 } wct_limits;
 typedef struct {
     size_t steps;
