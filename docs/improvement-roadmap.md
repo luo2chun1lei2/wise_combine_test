@@ -123,6 +123,10 @@ SUT；CMake 注册六项隔离测试，分别验证 clean 返回 0、matching mu
 
 ## P3：可选表达能力扩展
 
+持久化流程前置校验已增加：`c822f00`、`1aff5b0`、`215c931`。
+`generate::validate_flow` 校验状态连续性、flow_id、步数、before 与 argument producer
+前置关系，为 replay 执行提供安全边界；完整 replay 仍未实现。
+
 只有在需求冻结后实施，建议顺序为 guard/count/value、mutex、资源生命周期、parallel、多对象交互和负向流程。每项扩展必须同时更新 schema、model、generator、runtime、report、CLI、测试矩阵以及中英文 README，并提供正常、边界、非法和组合场景。
 
 ## 建议开发批次
