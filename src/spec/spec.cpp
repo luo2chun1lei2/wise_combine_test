@@ -89,6 +89,20 @@ AdapterResponse parse_adapter_response(const std::string& json) {
 void validate_report(const std::string& json) {
   const auto root = Parser(json).parse();
   const auto& report = obj(root, "");
+  if (report.find("generation_status") != report.end()) {
+    strict_keys(report, {"generation_status", "case_count", "passed", "failed", "wall_time_ns", "cpu_time_ns", "peak_rss_bytes", "seed"}, "");
+    const auto status = text(report, "generation_status", "");
+    if (status != "dead_end" && status != "case_limit" && status != "step_limit") invalid("/generation_status", "unknown generation status");
+    for (const char* key : {"case_count", "passed", "failed", "wall_time_ns", "cpu_time_ns", "peak_rss_bytes", "seed"}) {
+      const auto* value = std::get_if<std::int64_t>(&required(report, key, "").data);
+      if (value == nullptr || *value < 0) invalid(std::string("/") + key, "expected non-negative integer");
+    }
+    const auto cases = std::get<std::int64_t>(report.at("case_count").data);
+    const auto passed = std::get<std::int64_t>(report.at("passed").data);
+    const auto failed = std::get<std::int64_t>(report.at("failed").data);
+    if (passed > cases || failed != cases - passed) invalid("/case_count", "passed plus failed must equal case_count");
+    return;
+  }
   strict_keys(report, {"schema_version", "flow_id", "status", "steps"}, "");
   const auto* version = std::get_if<std::int64_t>(&required(report, "schema_version", "").data);
   if (!version || *version != 1) invalid("/schema_version", "expected integer 1");

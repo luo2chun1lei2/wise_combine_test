@@ -44,6 +44,7 @@ cmake --build build --parallel
   --reports reports --run-id relation
 ./build/wise-combine report reports/relation-0.txt
 ./build/wise-combine verify-report reports/relation-0.json
+./build/wise-combine verify-report reports/relation-summary.json
 ```
 
 `validate` 和 `generate` 会输出包含墙钟时间、CPU 时间和峰值 RSS 的 JSON。
@@ -53,6 +54,9 @@ cmake --build build --parallel
 summary 还会记录本次规范使用的 `seed`，便于复现生成结果。
 每个报告 step 都会在 `observed_state` 旁记录 `expected_state`，因此不匹配报告会
 包含该步骤使用的状态 oracle。
+`verify-report` 也支持运行摘要：计数、seed 与测量字段必须为非负整数，且
+`passed + failed` 必须等于 `case_count`。这只校验结构与一致性，不验证来源真实性
+或密码学完整性。
 
 退出码保持稳定：`0` 表示成功，`2` 表示规范格式错误或内容无效，`3` 表示有界
 生成耗尽（达到 `case_limit` 或 `step_limit`），`4` 表示适配器观察到不匹配，

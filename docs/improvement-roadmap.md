@@ -34,6 +34,7 @@
 - run-id 路径边界：当前增量。CLI 拒绝路径分隔符和特殊组件，防止报告文件写出指定目录。
 - 报告期望状态：当前增量。每个 step 记录 `expected_state`，`verify-report` 校验该字段类型，便于独立解释 mismatch。
 - summary seed 元数据：当前增量。运行摘要记录输入 `seed`，便于定位同一规范下的生成结果。
+- 摘要一致性校验：`verify-report` 检查摘要字段、状态、非负整数与计数守恒，不等同于哈希篡改检测。
 - 架构与追踪资料：`ee665d6`。新增 `docs/architecture.md`、`docs/requirements-matrix.md` 和 `docs/test-matrix.md`。
 - 高级约束边界决策：`docs/adr/0004-advanced-constraints-boundary.md`。冻结当前仅支持状态/函数/argument/before，避免未定义约束被隐式实现。
 

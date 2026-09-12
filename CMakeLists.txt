@@ -146,6 +146,10 @@ add_test(NAME cli_verify_report_invalid COMMAND ${CMAKE_COMMAND}
   -DCLI=$<TARGET_FILE:wise-combine>
   -DCASE_DIR=${CMAKE_CURRENT_BINARY_DIR}/invalid-report
   -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/verify_report_invalid.cmake)
+add_test(NAME cli_verify_summary COMMAND ${CMAKE_COMMAND}
+  -DCLI=$<TARGET_FILE:wise-combine>
+  -DCASE_DIR=${CMAKE_CURRENT_BINARY_DIR}/verify-summary
+  -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/verify_summary.cmake)
 foreach(evaluation_mutant RANGE 0 6)
   add_executable(adapter_eval_${evaluation_mutant} tests/evaluation/queue_adapter.cpp)
   target_compile_definitions(adapter_eval_${evaluation_mutant} PRIVATE MUTANT=${evaluation_mutant})
