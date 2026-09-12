@@ -44,5 +44,6 @@ void validate_report(const std::string& json);
 struct IntegrityEnvelope { std::string payload; std::string digest; };
 IntegrityEnvelope parse_integrity_envelope(const std::string& json);
 std::string encode_json_string(const std::string& value);
+void validate_json(const std::string& json);
 
 }  // namespace wise::spec

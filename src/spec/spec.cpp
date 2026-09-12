@@ -57,6 +57,7 @@ Document parse(const std::string& json) {
   try { d.model.validate(); } catch (const model::ModelError& e) { throw SpecError({{"", std::string("semantic validation failed: ") + e.what()}}); } d.canonical_json = canonical(Parser(json).parse()); return d;
 }
 std::string normalize(const std::string& json) { return parse(json).canonical_json; }
+void validate_json(const std::string& json) { static_cast<void>(Parser(json).parse()); }
 
 std::string encode_json_string(const std::string& value) { return quote(value); }
 
