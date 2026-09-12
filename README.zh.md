@@ -50,6 +50,7 @@ cmake --build build --parallel
 `run` 会为每条流程写出一对 `<run-id>-N.json` 与 `<run-id>-N.txt` 文件，另外
 写出包含 `case_count`、`passed`、`failed` 以及相同测量字段的
 `<run-id>-summary.json`。`report` 命令只打印之前生成的报告，不会修改报告文件。
+summary 还会记录本次规范使用的 `seed`，便于复现生成结果。
 每个报告 step 都会在 `observed_state` 旁记录 `expected_state`，因此不匹配报告会
 包含该步骤使用的状态 oracle。
 

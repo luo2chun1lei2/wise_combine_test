@@ -209,7 +209,8 @@ int command_run(const std::vector<std::string>& args) {
           << "\",\"case_count\":" << generated.flows.size() << ",\"passed\":" << passed
           << ",\"failed\":" << failed << ",\"wall_time_ns\":" << measurement.wall_time_ns
           << ",\"cpu_time_ns\":" << measurement.cpu_time_ns
-          << ",\"peak_rss_bytes\":" << measurement.peak_rss_bytes << "}\n";
+          << ",\"peak_rss_bytes\":" << measurement.peak_rss_bytes
+          << ",\"seed\":" << document.seed << "}\n";
   summary.flush();
   if (!summary) {
     std::cerr << "unable to finish writing reports summary in '" << reports << "'\n";
@@ -219,7 +220,8 @@ int command_run(const std::vector<std::string>& args) {
             << "\",\"case_count\":" << generated.flows.size() << ",\"passed\":" << passed
             << ",\"failed\":" << failed << ",\"wall_time_ns\":" << measurement.wall_time_ns
             << ",\"cpu_time_ns\":" << measurement.cpu_time_ns
-            << ",\"peak_rss_bytes\":" << measurement.peak_rss_bytes << "}\n";
+            << ",\"peak_rss_bytes\":" << measurement.peak_rss_bytes
+            << ",\"seed\":" << document.seed << "}\n";
   return exit_status;
 }
 

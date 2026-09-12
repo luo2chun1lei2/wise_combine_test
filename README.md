@@ -55,7 +55,7 @@ regressions, not proof of exhaustive automatic coverage.
 `validate` and `generate` print JSON containing wall time, CPU time, and peak
 RSS. `run` writes one `<run-id>-N.json` and `<run-id>-N.txt` pair per flow plus
 `<run-id>-summary.json` containing `case_count`, `passed`, `failed`, and the
-same measurement fields. The report command prints a previously generated
+same measurement fields plus the input `seed`. The report command prints a previously generated
 report without changing it.
 Each report step includes `expected_state` alongside `observed_state`, so a
 mismatch report records the state oracle used for that step.
