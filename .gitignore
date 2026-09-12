@@ -70,3 +70,4 @@ Testing/
 .cache/
 
 .agents/
+test/oracle/results.tsv
