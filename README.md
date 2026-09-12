@@ -17,6 +17,12 @@ report, exit-code, safety, or measurement usage changes, update both files in
 the same commit. Keep commands, JSON fields, limits, and behavioral guarantees
 aligned; only the explanatory language should differ.
 
+The ongoing improvement roadmap, based on the independent evaluation, is
+recorded in [`docs/improvement-roadmap.md`](docs/improvement-roadmap.md).
+It lists current boundaries, release blockers, planned enhancements, and
+acceptance conditions; implementation status must be updated there as work
+lands.
+
 ## Build and test
 
 ```sh
