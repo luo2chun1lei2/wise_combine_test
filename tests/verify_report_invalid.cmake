@@ -1,0 +1,10 @@
+if(NOT DEFINED CLI OR NOT DEFINED CASE_DIR)
+  message(FATAL_ERROR "missing test configuration")
+endif()
+file(MAKE_DIRECTORY "${CASE_DIR}")
+file(WRITE "${CASE_DIR}/bad.json" "{\"schema_version\":1,\"flow_id\":\"x\",\"status\":\"passed\",\"steps\":[{\"index\":2}]}\n")
+execute_process(COMMAND "${CLI}" verify-report "${CASE_DIR}/bad.json"
+  RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+if(NOT result STREQUAL "2" OR NOT output STREQUAL "" OR NOT error MATCHES "sequential step index")
+  message(FATAL_ERROR "expected invalid report rejection, got ${result}: ${output} ${error}")
+endif()
