@@ -30,6 +30,7 @@ void print_usage(std::ostream& out) {
     out << "  --dry-run                 只生成流程，不执行\n";
     out << "  --max-depth <n>           最大路径步数（默认 32）\n";
     out << "  --max-flows <n>           最大调用流程数量（默认 1000）\n";
+    out << "  --seed <n>                复现实验种子（默认 0）\n";
     out << "  --log-file <path>         日志文件（默认 build/wise_combine_test.log）\n";
     out << "  --log-max-size <bytes>    日志文件大小上限（默认 10485760）\n";
     out << "  --log-rotate-count <n>    保留日志文件数量（默认 5）\n";
@@ -118,6 +119,12 @@ CliOptions parse_args(int argc, char** argv) {
                 throw std::runtime_error("--max-flows requires a value");
             }
             o.gen.max_flows = parse_size(argv[++i], a);
+        } else if (a == "--seed") {
+            if (i + 1 >= argc) {
+                throw std::runtime_error("--seed requires a value");
+            }
+            o.gen.seed = parse_size(argv[++i], a);
+            o.gen.seed_set = true;
         } else if (a == "--log-file") {
             if (i + 1 >= argc) {
                 throw std::runtime_error("--log-file requires a value");
@@ -224,7 +231,9 @@ int main(int argc, char** argv) {
                                               " flows");
 
         if (o.mode == "standalone") {
-            wct::Runner runner({o.lib_path, true, 10, {}});
+            wct::RunnerOptions standalone_options = runner_options;
+            standalone_options.dry_run = true;
+            wct::Runner runner(standalone_options);
             const std::string source = runner.generate_standalone(flows);
             const std::string out_file = "build/wise_standalone.cpp";
             std::ofstream fout(out_file);
@@ -268,15 +277,21 @@ int main(int argc, char** argv) {
 
         wct::Runner runner(runner_options);
         const std::vector<wct::FlowResult> results = runner.run(flows);
+        bool any_failure = false;
         for (const auto& r : results) {
             logger.log(r.status == "passed" ? "info" : "warning", "runner",
                        wct::flow_id(r.flow), r.status + " " + r.detail);
+            if (r.status != "passed" && r.status != "not_executed") {
+                any_failure = true;
+            }
         }
-        std::cout << wct::render_report(results, o.report);
-        if (generator.truncated()) {
+        const wct::ReportMeta meta{o.gen.seed, o.gen.seed_set, o.files};
+        std::cout << wct::render_report(results, o.report, meta);
+        const bool truncated = generator.truncated();
+        if (truncated) {
             std::cout << "# warning: generation was truncated by --max-flows\n";
         }
-        return 0;
+        return any_failure ? 4 : (truncated ? 5 : 0);
     } catch (const wct::ParseError& e) {
         std::cerr << "parse error: " << e.file << ":" << e.line << ": "
                   << e.message << "\n";

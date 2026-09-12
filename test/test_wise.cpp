@@ -720,6 +720,20 @@ int main() {
         wct::Model model(std::move(spec));
         model.validate();
         wct::RunnerOptions opts;
+        opts.adapter_path = "test/fixtures/adapter_whitespace.sh";
+        opts.spec = &model.spec();
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"init"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "passed");
+    }
+
+    {
+        wct::Parser parser("test/fixtures/adapter.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::RunnerOptions opts;
         opts.adapter_path = "test/fixtures/adapter_error.sh";
         opts.spec = &model.spec();
         wct::Runner runner(opts);
@@ -752,6 +766,22 @@ int main() {
         wct::Model model(std::move(spec));
         model.validate();
         wct::RunnerOptions opts;
+        opts.adapter_path = "test/fixtures/adapter_bad_protocol.sh";
+        opts.spec = &model.spec();
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"init"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "failed");
+        assert(results[0].detail.find("protocol must be 1") !=
+               std::string::npos);
+    }
+
+    {
+        wct::Parser parser("test/fixtures/adapter.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::RunnerOptions opts;
         opts.adapter_path = "test/fixtures/adapter_sleep.sh";
         opts.spec = &model.spec();
         opts.timeout_seconds = 1;
@@ -773,8 +803,67 @@ int main() {
         wct::RunnerOptions opts;
         opts.spec = &model.spec();
         wct::Runner runner(opts);
-        const std::string code = runner.generate_standalone({{"a", "b"}});
-        assert(code.find("// b.x <- a.t") != std::string::npos);
+        bool rejected = false;
+        try {
+            const std::string code = runner.generate_standalone({{"a", "b"}});
+            static_cast<void>(code);
+        } catch (const std::runtime_error&) {
+            rejected = true;
+        }
+        assert(rejected);
+    }
+
+    assert(expect_model_error("function g(config c)"));
+
+    {
+        const std::string path = write_tmp(
+            "function init() -> handle\n"
+            "function start(handle h)\n"
+            "parameter start.h = init.handle");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::RunnerOptions opts;
+        opts.lib_path = "test/out/libtest.so";
+        opts.spec = &model.spec();
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"init", "start"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "failed");
+        assert(results[0].detail.find("direct mode does not support") !=
+               std::string::npos);
+    }
+
+    {
+        const std::string path = write_tmp(
+            "function init()\n");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        wct::RunnerOptions opts;
+        opts.lib_path = "test/out/libtest.so";
+        opts.spec = &model.spec();
+        opts.expected_outputs["init"] = "ok";
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"init"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "failed");
+        assert(results[0].detail.find("direct mode does not support") !=
+               std::string::npos);
+    }
+
+    {
+        wct::Parser parser("test/fixtures/valid.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        wct::GenerationOptions options;
+        options.max_flows = 1;
+        wct::Generator generator(model, options);
+        const auto state_flows = generator.generate_state_flows();
+        const auto function_flows = generator.generate_function_flows();
+        assert(state_flows.size() + function_flows.size() == 1);
+        assert(generator.truncated());
     }
 
     assert(expect_model_error("function f()\nconstraint count(f > 0"));

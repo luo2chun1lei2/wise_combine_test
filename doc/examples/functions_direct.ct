@@ -1,0 +1,10 @@
+# 函数关系示例：无参 C ABI 函数，适用于 direct / standalone 模式
+function init()
+function start()
+function finish()
+function fail()
+function release()
+
+order init before start
+order init before finish
+order finish before release

@@ -13,6 +13,8 @@
 #include <iomanip>
 #include <iostream>
 #include <poll.h>
+#include <signal.h>
+#include <stdexcept>
 #include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -184,123 +186,331 @@ std::string json_escape(const std::string& s) {
     return out.str();
 }
 
-bool json_string_field(const std::string& text, const std::string& key,
-                       std::string& value) {
-    const std::string needle = "\"" + key + "\":\"";
-    const std::size_t pos = text.find(needle);
-    if (pos == std::string::npos) {
+struct JsonValue {
+    enum class Type { Null, Bool, Number, String, Array, Object };
+
+    Type type = Type::Null;
+    bool boolean = false;
+    long number = 0;
+    std::string string;
+    std::vector<JsonValue> array;
+    std::map<std::string, JsonValue> object;
+};
+
+class JsonParser {
+public:
+    explicit JsonParser(std::string text) : text_(std::move(text)), pos_(0) {}
+
+    bool parse(JsonValue& out, std::string& err) {
+        skip_ws();
+        if (!parse_value(out, err)) {
+            return false;
+        }
+        skip_ws();
+        if (pos_ != text_.size()) {
+            err = "trailing content after JSON value";
+            return false;
+        }
+        return true;
+    }
+
+private:
+    std::string text_;
+    std::size_t pos_ = 0;
+
+    void skip_ws() {
+        while (pos_ < text_.size() &&
+               std::isspace(static_cast<unsigned char>(text_[pos_]))) {
+            ++pos_;
+        }
+    }
+
+    bool fail(const std::string& message, std::string& err) {
+        err = message + " at byte " + std::to_string(pos_);
         return false;
     }
-    std::size_t i = pos + needle.size();
-    std::string parsed;
-    while (i < text.size()) {
-        const char c = text[i];
+
+    bool parse_value(JsonValue& out, std::string& err) {
+        skip_ws();
+        if (pos_ >= text_.size()) {
+            return fail("unexpected end of JSON", err);
+        }
+        const char c = text_[pos_];
+        if (c == '{') {
+            return parse_object(out, err);
+        }
+        if (c == '[') {
+            return parse_array(out, err);
+        }
         if (c == '"') {
-            value = parsed;
+            out.type = JsonValue::Type::String;
+            return parse_string(out.string, err);
+        }
+        if (c == 't' || c == 'f') {
+            out.type = JsonValue::Type::Bool;
+            if (starts_with(text_.substr(pos_), "true")) {
+                out.boolean = true;
+                pos_ += 4;
+                return true;
+            }
+            if (starts_with(text_.substr(pos_), "false")) {
+                out.boolean = false;
+                pos_ += 5;
+                return true;
+            }
+            return fail("invalid literal", err);
+        }
+        if (c == 'n') {
+            out.type = JsonValue::Type::Null;
+            if (starts_with(text_.substr(pos_), "null")) {
+                pos_ += 4;
+                return true;
+            }
+            return fail("invalid literal", err);
+        }
+        if (c == '-' || std::isdigit(static_cast<unsigned char>(c))) {
+            out.type = JsonValue::Type::Number;
+            return parse_number(out.number, err);
+        }
+        return fail(std::string("unexpected character: ") + c, err);
+    }
+
+    bool parse_object(JsonValue& out, std::string& err) {
+        out.type = JsonValue::Type::Object;
+        ++pos_;
+        skip_ws();
+        if (pos_ < text_.size() && text_[pos_] == '}') {
+            ++pos_;
             return true;
         }
-        if (c == '\\' && i + 1 < text.size()) {
-            const char n = text[++i];
-            switch (n) {
+        while (pos_ < text_.size()) {
+            skip_ws();
+            if (pos_ >= text_.size() || text_[pos_] != '"') {
+                return fail("object key must be a string", err);
+            }
+            std::string key;
+            if (!parse_string(key, err)) {
+                return false;
+            }
+            skip_ws();
+            if (pos_ >= text_.size() || text_[pos_] != ':') {
+                return fail("expected ':' after object key", err);
+            }
+            ++pos_;
+            JsonValue value;
+            if (!parse_value(value, err)) {
+                return false;
+            }
+            if (!out.object.emplace(std::move(key), std::move(value)).second) {
+                return fail("duplicate object key", err);
+            }
+            skip_ws();
+            if (pos_ >= text_.size()) {
+                return fail("unterminated object", err);
+            }
+            if (text_[pos_] == ',') {
+                ++pos_;
+                continue;
+            }
+            if (text_[pos_] == '}') {
+                ++pos_;
+                return true;
+            }
+            return fail("expected ',' or '}' in object", err);
+        }
+        return fail("unterminated object", err);
+    }
+
+    bool parse_array(JsonValue& out, std::string& err) {
+        out.type = JsonValue::Type::Array;
+        ++pos_;
+        skip_ws();
+        if (pos_ < text_.size() && text_[pos_] == ']') {
+            ++pos_;
+            return true;
+        }
+        while (pos_ < text_.size()) {
+            JsonValue value;
+            if (!parse_value(value, err)) {
+                return false;
+            }
+            out.array.push_back(std::move(value));
+            skip_ws();
+            if (pos_ >= text_.size()) {
+                return fail("unterminated array", err);
+            }
+            if (text_[pos_] == ',') {
+                ++pos_;
+                continue;
+            }
+            if (text_[pos_] == ']') {
+                ++pos_;
+                return true;
+            }
+            return fail("expected ',' or ']' in array", err);
+        }
+        return fail("unterminated array", err);
+    }
+
+    bool parse_string(std::string& out, std::string& err) {
+        if (pos_ >= text_.size() || text_[pos_] != '"') {
+            return fail("expected string", err);
+        }
+        ++pos_;
+        while (pos_ < text_.size()) {
+            const char c = text_[pos_++];
+            if (c == '"') {
+                return true;
+            }
+            if (static_cast<unsigned char>(c) < 0x20U) {
+                return fail("unescaped control character in string", err);
+            }
+            if (c != '\\') {
+                out.push_back(c);
+                continue;
+            }
+            if (pos_ >= text_.size()) {
+                return fail("unterminated escape sequence", err);
+            }
+            const char esc = text_[pos_++];
+            switch (esc) {
                 case '"':
-                    parsed += '"';
+                    out.push_back('"');
                     break;
                 case '\\':
-                    parsed += '\\';
+                    out.push_back('\\');
+                    break;
+                case '/':
+                    out.push_back('/');
+                    break;
+                case 'b':
+                    out.push_back('\b');
+                    break;
+                case 'f':
+                    out.push_back('\f');
                     break;
                 case 'n':
-                    parsed += '\n';
+                    out.push_back('\n');
                     break;
                 case 'r':
-                    parsed += '\r';
+                    out.push_back('\r');
                     break;
                 case 't':
-                    parsed += '\t';
+                    out.push_back('\t');
                     break;
+                case 'u': {
+                    if (pos_ + 4 > text_.size()) {
+                        return fail("invalid unicode escape", err);
+                    }
+                    const std::string hex = text_.substr(pos_, 4);
+                    unsigned long cp = 0;
+                    try {
+                        cp = std::stoul(hex, nullptr, 16);
+                    } catch (...) {
+                        return fail("invalid unicode escape", err);
+                    }
+                    pos_ += 4;
+                    if (cp <= 0x7F) {
+                        out.push_back(static_cast<char>(cp));
+                    } else if (cp <= 0x7FF) {
+                        out.push_back(static_cast<char>(0xC0 | (cp >> 6)));
+                        out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+                    } else {
+                        out.push_back(static_cast<char>(0xE0 | (cp >> 12)));
+                        out.push_back(static_cast<char>(0x80 | ((cp >> 6) & 0x3F)));
+                        out.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+                    }
+                    break;
+                }
                 default:
-                    return false;
+                    return fail("invalid escape character", err);
             }
-        } else {
-            parsed += c;
         }
-        ++i;
+        return fail("unterminated string", err);
     }
-    return false;
-}
 
-bool json_int_field(const std::string& text, const std::string& key,
-                    long& value) {
-    const std::string needle = "\"" + key + "\":";
-    const std::size_t pos = text.find(needle);
-    if (pos == std::string::npos) {
-        return false;
+    bool parse_number(long& out, std::string& err) {
+        const std::size_t start = pos_;
+        if (pos_ < text_.size() && text_[pos_] == '-') {
+            ++pos_;
+        }
+        const std::size_t digit_start = pos_;
+        while (pos_ < text_.size() &&
+               std::isdigit(static_cast<unsigned char>(text_[pos_]))) {
+            ++pos_;
+        }
+        if (pos_ == digit_start) {
+            return fail("invalid number", err);
+        }
+        if (pos_ < text_.size() &&
+            (text_[pos_] == '.' || text_[pos_] == 'e' ||
+             text_[pos_] == 'E')) {
+            return fail("non-integer numbers are not supported", err);
+        }
+        try {
+            out = std::stol(text_.substr(start, pos_ - start));
+        } catch (...) {
+            return fail("number out of range", err);
+        }
+        return true;
     }
-    std::size_t start = pos + needle.size();
-    while (start < text.size() &&
-           (text[start] == ' ' || text[start] == '\t')) {
-        ++start;
-    }
-    if (start >= text.size()) {
-        return false;
-    }
-    std::size_t end = start;
-    while (end < text.size() && text[end] != ',' && text[end] != '}') {
-        ++end;
-    }
-    const std::string number = trim(text.substr(start, end - start));
-    try {
-        value = std::stol(number);
-    } catch (...) {
-        return false;
-    }
-    return true;
-}
+};
 
-bool parse_returns_json(const std::string& text,
-                        std::map<std::string, std::string>& values) {
-    const std::string marker = "\"returns\":{";
-    const std::size_t begin = text.find(marker);
-    if (begin == std::string::npos) {
+bool parse_adapter_response(const std::string& text, std::string& status,
+                            long& return_value, bool& has_return,
+                            std::map<std::string, std::string>& returns,
+                            std::string& stdout_text, std::string& err) {
+    JsonValue root;
+    JsonParser parser(text);
+    if (!parser.parse(root, err)) {
         return false;
     }
-    const std::size_t start = begin + marker.size();
-    const std::size_t end = text.find('}', start);
-    if (end == std::string::npos) {
+    if (root.type != JsonValue::Type::Object) {
+        err = "adapter response must be a JSON object";
         return false;
     }
-    std::size_t pos = start;
-    while (pos < end) {
-        while (pos < end && (text[pos] == ',' || text[pos] == ' ')) {
-            ++pos;
-        }
-        if (pos >= end) {
-            break;
-        }
-        if (text[pos] != '"') {
+    const auto protocol = root.object.find("protocol");
+    if (protocol == root.object.end() ||
+        protocol->second.type != JsonValue::Type::Number ||
+        protocol->second.number != 1) {
+        err = "adapter response protocol must be 1";
+        return false;
+    }
+    const auto status_it = root.object.find("status");
+    if (status_it == root.object.end() ||
+        status_it->second.type != JsonValue::Type::String) {
+        err = "adapter response status must be a string";
+        return false;
+    }
+    status = status_it->second.string;
+    const auto returns_it = root.object.find("returns");
+    if (returns_it == root.object.end() ||
+        returns_it->second.type != JsonValue::Type::Object) {
+        err = "adapter response returns must be an object";
+        return false;
+    }
+    for (const auto& [name, value] : returns_it->second.object) {
+        if (value.type != JsonValue::Type::String) {
+            err = "adapter return value '" + name + "' must be a string";
             return false;
         }
-        const std::size_t key_end = text.find('"', pos + 1);
-        if (key_end == std::string::npos || key_end >= end) {
+        returns[name] = value.string;
+    }
+    const auto stdout_it = root.object.find("stdout");
+    if (stdout_it == root.object.end() ||
+        stdout_it->second.type != JsonValue::Type::String) {
+        err = "adapter response stdout must be a string";
+        return false;
+    }
+    stdout_text = stdout_it->second.string;
+    const auto return_it = root.object.find("return");
+    if (return_it != root.object.end()) {
+        if (return_it->second.type != JsonValue::Type::Number) {
+            err = "adapter response return must be an integer";
             return false;
         }
-        const std::string key = text.substr(pos + 1, key_end - pos - 1);
-        const std::size_t colon = text.find(':', key_end + 1);
-        if (colon == std::string::npos || colon >= end) {
-            return false;
-        }
-        std::size_t value_start = colon + 1;
-        while (value_start < end && text[value_start] == ' ') {
-            ++value_start;
-        }
-        if (value_start >= end || text[value_start] != '"') {
-            return false;
-        }
-        const std::size_t value_end = text.find('"', value_start + 1);
-        if (value_end == std::string::npos || value_end > end) {
-            return false;
-        }
-        values[key] = text.substr(value_start + 1, value_end - value_start - 1);
-        pos = value_end + 1;
+        return_value = return_it->second.number;
+        has_return = true;
     }
     return true;
 }
@@ -962,6 +1172,15 @@ void Model::validate() {
         visit_param(key);
     }
 
+    for (const auto& fn : spec_.functions) {
+        for (const auto& param : fn.params) {
+            const std::string key = fn.name + "." + param.name;
+            if (param_keys.count(key) == 0) {
+                throw ModelError{"parameter " + key + " has no source"};
+            }
+        }
+    }
+
     std::unordered_map<std::string, std::size_t> indeg;
     for (const auto& fn : spec_.functions) {
         indeg[fn.name] = 0;
@@ -1096,7 +1315,7 @@ const ObjectDecl& Model::object(const std::string& name) const {
 }
 
 Generator::Generator(const Model& model, const GenerationOptions& options)
-    : model_(model), options_(options) {}
+    : model_(model), options_(options), remaining_flows_(options.max_flows) {}
 
 bool Generator::truncated() const {
     if (strategy_) {
@@ -1108,6 +1327,10 @@ bool Generator::truncated() const {
 std::vector<Flow> Generator::generate_state_flows() const {
     if (strategy_) {
         return strategy_->generate_state_flows();
+    }
+    if (remaining_flows_ == 0) {
+        options_.truncated = true;
+        return {};
     }
     std::vector<Flow> out;
     for (const auto& object : model_.spec().objects) {
@@ -1127,6 +1350,7 @@ std::vector<Flow> Generator::generate_state_flows() const {
         std::unordered_map<std::string, std::size_t> visits;
         state_dfs(object, initial, path, visits, out);
     }
+    remaining_flows_ -= out.size();
     return out;
 }
 
@@ -1134,7 +1358,7 @@ void Generator::state_dfs(const ObjectDecl& object, std::size_t state_index,
                           std::vector<std::string>& path,
                           std::unordered_map<std::string, std::size_t>& visits,
                           std::vector<Flow>& out) const {
-    if (out.size() >= options_.max_flows) {
+    if (out.size() >= remaining_flows_) {
         options_.truncated = true;
         return;
     }
@@ -1174,7 +1398,7 @@ void Generator::state_dfs(const ObjectDecl& object, std::size_t state_index,
         path.push_back(tr.func);
         state_dfs(object, next, path, visits, out);
         path.pop_back();
-        if (out.size() >= options_.max_flows) {
+        if (out.size() >= remaining_flows_) {
             options_.truncated = true;
         }
     }
@@ -1184,6 +1408,10 @@ void Generator::state_dfs(const ObjectDecl& object, std::size_t state_index,
 std::vector<Flow> Generator::generate_function_flows() const {
     if (strategy_) {
         return strategy_->generate_function_flows();
+    }
+    if (remaining_flows_ == 0) {
+        options_.truncated = true;
+        return {};
     }
     std::vector<Flow> out;
     std::map<std::string, std::size_t> indeg;
@@ -1197,13 +1425,14 @@ std::vector<Flow> Generator::generate_function_flows() const {
     }
     std::vector<std::string> current;
     topo_enumerate(current, indeg, out);
+    remaining_flows_ -= out.size();
     return out;
 }
 
 void Generator::topo_enumerate(std::vector<std::string>& current,
                                std::map<std::string, std::size_t>& indeg,
                                std::vector<Flow>& out) const {
-    if (out.size() >= options_.max_flows) {
+    if (out.size() >= remaining_flows_) {
         options_.truncated = true;
         return;
     }
@@ -1212,7 +1441,7 @@ void Generator::topo_enumerate(std::vector<std::string>& current,
             !mutex_violated(current) &&
             !constraint_violated(current)) {
             out.push_back(current);
-            if (out.size() >= options_.max_flows) {
+            if (out.size() >= remaining_flows_) {
                 options_.truncated = true;
             }
         }
@@ -1237,7 +1466,7 @@ void Generator::topo_enumerate(std::vector<std::string>& current,
         }
         indeg[name] = 0;
         current.pop_back();
-        if (out.size() >= options_.max_flows) {
+        if (out.size() >= remaining_flows_) {
             options_.truncated = true;
             return;
         }
@@ -1431,10 +1660,42 @@ std::vector<FlowResult> Runner::run(const std::vector<Flow>& flows) const {
         } else if (!options_.adapter_path.empty()) {
             results.push_back(run_adapter(flow));
         } else {
+            if (flow_has_parameterized_call(flow)) {
+                FlowResult r;
+                r.flow = flow;
+                r.status = "failed";
+                r.detail =
+                    "direct mode does not support parameterized calls or expect_output; "
+                    "use --adapter or --mode standalone";
+                r.bindings = flow_bindings(flow);
+                results.push_back(r);
+                continue;
+            }
             results.push_back(run_direct(flow));
         }
     }
     return results;
+}
+
+bool Runner::flow_has_parameterized_call(const Flow& flow) const {
+    for (const auto& name : flow) {
+        if (options_.expected_outputs.count(name) != 0) {
+            return true;
+        }
+    }
+    if (!options_.spec) {
+        return false;
+    }
+    for (const auto& name : flow) {
+        const auto it = std::find_if(
+            options_.spec->functions.begin(),
+            options_.spec->functions.end(),
+            [&name](const FunctionDecl& fn) { return fn.name == name; });
+        if (it != options_.spec->functions.end() && !it->params.empty()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 FlowResult Runner::run_not_executed(const Flow& flow) const {
@@ -1656,6 +1917,7 @@ FlowResult Runner::run_adapter(const Flow& flow) const {
         }
 
         if (pid == 0) {
+            setpgid(0, 0);
             dup2(in_pipe[0], STDIN_FILENO);
             dup2(out_pipe[1], STDOUT_FILENO);
             dup2(err_pipe[1], STDERR_FILENO);
@@ -1678,6 +1940,7 @@ FlowResult Runner::run_adapter(const Flow& flow) const {
             _exit(127);
         }
 
+        setpgid(pid, pid);
         close(in_pipe[0]);
         close(out_pipe[1]);
         close(err_pipe[1]);
@@ -1706,7 +1969,9 @@ FlowResult Runner::run_adapter(const Flow& flow) const {
         while (out_open || err_open) {
             const auto now = std::chrono::steady_clock::now();
             if (now >= deadline) {
-                kill(pid, SIGTERM);
+                if (kill(-pid, SIGTERM) != 0) {
+                    kill(pid, SIGTERM);
+                }
                 timed_out = true;
                 break;
             }
@@ -1742,6 +2007,12 @@ FlowResult Runner::run_adapter(const Flow& flow) const {
         close(err_pipe[0]);
 
         int status = 0;
+        if (timed_out) {
+            usleep(100000);
+            if (kill(-pid, SIGKILL) != 0) {
+                kill(pid, SIGKILL);
+            }
+        }
         while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {
         }
         if (timed_out) {
@@ -1760,11 +2031,14 @@ FlowResult Runner::run_adapter(const Flow& flow) const {
         std::string response_status;
         std::string stdout_text;
         std::map<std::string, std::string> returns;
-        if (!json_string_field(output, "status", response_status) ||
-            !parse_returns_json(output, returns) ||
-            !json_string_field(output, "stdout", stdout_text)) {
+        long return_value = 0;
+        bool has_return = false;
+        std::string protocol_err;
+        if (!parse_adapter_response(output, response_status, return_value,
+                                    has_return, returns, stdout_text,
+                                    protocol_err)) {
             result.status = "failed";
-            result.detail = "malformed adapter response";
+            result.detail = "malformed adapter response: " + protocol_err;
             result.bindings = flow_bindings(flow);
             return result;
         }
@@ -1774,9 +2048,6 @@ FlowResult Runner::run_adapter(const Flow& flow) const {
             result.bindings = flow_bindings(flow);
             return result;
         }
-
-        long return_value = 0;
-        const bool has_return = json_int_field(output, "return", return_value);
 
         const auto guard = options_.guards.find(function);
         if (guard != options_.guards.end() &&
@@ -1828,6 +2099,13 @@ FlowResult Runner::run_adapter(const Flow& flow) const {
 }
 
 std::string Runner::generate_standalone(const std::vector<Flow>& flows) const {
+    for (const auto& flow : flows) {
+        if (flow_has_parameterized_call(flow)) {
+            throw std::runtime_error(
+                "standalone mode does not support parameterized calls or expect_output; "
+                "use --adapter");
+        }
+    }
     std::ostringstream out;
     out << "#include <cstdio>\n";
     out << "#include <cstdlib>\n\n";
@@ -1915,9 +2193,14 @@ void Logger::log(const std::string& level, const std::string& module,
                  const std::string& flow, const std::string& message) {
     rotate_if_needed();
     std::ofstream out(options_.file, std::ios::app);
-    if (out) {
-        out << "[" << now_string() << "][" << level << "][" << module
-            << "][" << flow << "] " << message << "\n";
+    if (!out) {
+        throw std::runtime_error("cannot write log file: " + options_.file);
+    }
+    out << "[" << now_string() << "][" << level << "][" << module
+        << "][" << flow << "] " << message << "\n";
+    if (!out) {
+        throw std::runtime_error("failed while writing log file: " +
+                                 options_.file);
     }
 }
 
@@ -1933,7 +2216,8 @@ std::string flow_id(const Flow& flow) {
 }
 
 std::string render_report(const std::vector<FlowResult>& results,
-                          const std::string& format) {
+                          const std::string& format,
+                          const ReportMeta& meta) {
     const auto escape_json = [](const std::string& value) {
         std::ostringstream out;
         for (const unsigned char c : value) {
@@ -1976,6 +2260,16 @@ std::string render_report(const std::vector<FlowResult>& results,
     if (format == "json") {
         std::ostringstream out;
         out << "{\n";
+        out << "  \"seed\": " << meta.seed << ",\n";
+        out << "  \"seed_set\": " << (meta.seed_set ? "true" : "false") << ",\n";
+        out << "  \"files\": [";
+        for (std::size_t i = 0; i < meta.files.size(); ++i) {
+            if (i) {
+                out << ", ";
+            }
+            out << '"' << escape_json(meta.files[i]) << '"';
+        }
+        out << "],\n";
         out << "  \"total\": " << results.size() << ",\n";
         out << "  \"passed\": " << passed << ",\n";
         out << "  \"failed\": " << failed << ",\n";
@@ -1997,6 +2291,17 @@ std::string render_report(const std::vector<FlowResult>& results,
         return out.str();
     }
     std::ostringstream out;
+    out << "# seed=" << meta.seed;
+    if (!meta.files.empty()) {
+        out << " files=";
+        for (std::size_t i = 0; i < meta.files.size(); ++i) {
+            if (i) {
+                out << ",";
+            }
+            out << meta.files[i];
+        }
+    }
+    out << "\n";
     out << "total=" << results.size() << " passed=" << passed
         << " failed=" << failed << "\n";
     for (const auto& r : results) {

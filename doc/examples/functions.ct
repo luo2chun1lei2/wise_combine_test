@@ -1,6 +1,6 @@
 # 函数关系示例：连接相关函数
 function init() -> handle
-function start(handle h, config c)
+function start(handle h)
 function finish(handle h) -> status
 function fail(handle h) -> status
 function release(handle h)

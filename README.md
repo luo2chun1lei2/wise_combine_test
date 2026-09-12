@@ -87,9 +87,12 @@ wise_combine_test <描述文件> [选项]
 
 ```text
 make -C doc/examples
-./src/out/wise_combine_test doc/examples/connection.ct doc/examples/functions.ct \
+./src/out/wise_combine_test doc/examples/connection.ct doc/examples/functions_direct.ct \
   --lib doc/examples/libconn.so
 ```
+
+带参数的函数关系请使用 adapter 模式；`--mode direct` 和 `--mode standalone`
+只支持无参 C ABI 函数，遇到带参流程会明确报错。
 
 也可以使用 adapter 进程执行，并通过 JSON 协议进行真实的参数传递和标准输出校验：
 
@@ -98,16 +101,31 @@ make -C doc/examples
   --adapter test/fixtures/adapter_ok.sh --report text
 ```
 
-adapter 从标准输入读取一行 JSON 调用请求，执行对应函数后向标准输出写回一行 JSON 响应。响应需要包含 `status`、`returns`、`stdout` 字段；`returns` 中的前序函数返回值会按 `parameter` 关系传给后续函数。
+adapter 从标准输入读取一行 JSON 调用请求，执行对应函数后向标准输出写回一行 JSON 响应。响应必须是一个版本为 1 的 JSON 对象，包含 `protocol`、`status`、`returns`、`stdout` 字段，可选 `return`；`returns` 中的前序函数返回值会按 `parameter` 关系传给后续函数。解析器接受合法空白、字段顺序和转义，拒绝尾随内容、未知版本和缺失字段。
 
 只生成组合流程、不执行时使用 `--dry-run`；生成独立被测程序时使用 `--mode standalone`。完整命令选项可用 `wise_combine_test --help` 查看，DSL 语法见 [doc/dsl.md](doc/dsl.md)。
+
+### 执行模式边界
+
+- `--mode direct`：只支持无参 C ABI 函数；带参函数会直接失败并提示使用 adapter。
+- `--mode standalone`：只支持无参 C ABI 函数；带参函数会拒绝生成。
+- `--adapter <path>`：支持参数传递、返回值传递和 `expect_output`，是带参模型的主执行路径。
+
+### 退出码
+
+- `0`：所有流程通过，且生成未截断。
+- `1`：一般运行错误。
+- `2`：DSL 解析错误。
+- `3`：模型校验错误。
+- `4`：存在失败、崩溃或超时流程。
+- `5`：生成被 `--max-flows` 截断。
 
 ### 独立被测程序
 
 生成独立被测程序：
 
 ```text
-./src/out/wise_combine_test doc/examples/connection.ct doc/examples/functions.ct \
+./src/out/wise_combine_test doc/examples/connection.ct doc/examples/functions_direct.ct \
   --mode standalone --lib doc/examples/libconn.so
 ```
 

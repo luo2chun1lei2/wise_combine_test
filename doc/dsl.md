@@ -57,6 +57,7 @@ constraint value(<函数名>.<参数名>) ==|!= <字面量>
 - 迁移引用的源状态和目标状态必须已声明。
 - 迁移引用的函数必须在函数关系中已声明。
 - 迁移上的 `guard` 必须符合 `return <比较符> <整数>` 格式。
+- 每个函数参数必须有且仅有一个来源：`parameter` 常量、前序函数参数/返回值，或显式外部输入（当前以 `parameter` 常量表示外部输入）。
 - 参数传递两端的参数类型必须兼容。
 - `parameter` 的数据依赖不能形成循环。
 - `order` 不能形成循环依赖。
@@ -66,3 +67,9 @@ constraint value(<函数名>.<参数名>) ==|!= <字面量>
 - `constraint state` 引用的状态必须已声明。
 - `constraint value` 引用的函数和参数必须已声明。
 - 必须存在且仅存在一个初始状态。
+
+## 5. 执行模式与参数
+
+- `direct` 和 `standalone` 模式只支持无参 C ABI 函数；出现带参函数时会明确拒绝。
+- 需要参数传递、返回值传递或 `expect_output` 时，使用 `--adapter` 模式。
+- adapter 响应是版本为 1 的 JSON 对象，必须包含 `protocol`、`status`、`returns`、`stdout`，可选 `return`。

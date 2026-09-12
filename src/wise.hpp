@@ -128,7 +128,15 @@ struct GenerationOptions {
     std::size_t max_depth = 32;
     std::size_t max_flows = 1000;
     std::size_t max_state_visits = 8;
+    std::size_t seed = 0;
+    bool seed_set = false;
     bool truncated = false;
+};
+
+struct ReportMeta {
+    std::size_t seed = 0;
+    bool seed_set = false;
+    std::vector<std::string> files;
 };
 
 class Parser {
@@ -195,6 +203,7 @@ private:
     const Model& model_;
     mutable GenerationOptions options_;
     std::shared_ptr<GenerationStrategy> strategy_;
+    mutable std::size_t remaining_flows_ = 0;
 
     void state_dfs(const ObjectDecl& object, std::size_t state_index,
                    std::vector<std::string>& path,
@@ -246,6 +255,7 @@ private:
     FlowResult run_direct(const Flow& flow) const;
     FlowResult run_adapter(const Flow& flow) const;
     FlowResult run_not_executed(const Flow& flow) const;
+    bool flow_has_parameterized_call(const Flow& flow) const;
     std::string flow_bindings(const Flow& flow) const;
 };
 
@@ -268,7 +278,8 @@ private:
 };
 
 std::string render_report(const std::vector<FlowResult>& results,
-                          const std::string& format);
+                          const std::string& format,
+                          const ReportMeta& meta = {});
 
 std::string flow_id(const Flow& flow);
 
