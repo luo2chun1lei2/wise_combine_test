@@ -28,9 +28,7 @@ struct Search {
 
     std::vector<const model::Transition*> choices;
     for (const auto* transition : transitions) {
-      if (transition->from != state ||
-          (std::find(sequence.begin(), sequence.end(), transition->id) != sequence.end() &&
-           transition->from != transition->to)) {
+      if (transition->from != state) {
         continue;
       }
       const auto required = prerequisites.find(transition->id);

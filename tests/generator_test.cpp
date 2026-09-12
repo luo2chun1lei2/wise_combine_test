@@ -79,6 +79,24 @@ void self_loop_is_one_bounded_flow() {
   }
 }
 
+void non_self_cycle_can_repeat_within_step_limit() {
+  Model model;
+  model.add_state(State{"a"});
+  model.add_state(State{"b"});
+  model.add_function(Function{"tick", {}, {}});
+  model.set_initial_state("a");
+  model.set_limits({2, 3, 1});
+  model.add_transition(Transition{"forward", "a", "b", "tick"});
+  model.add_transition(Transition{"back", "b", "a", "tick"});
+  const auto result = generate(model, 1);
+  if (result.flows.size() != 1U ||
+      result.status != GenerationStatus::step_limit ||
+      result.flows.front().transition_ids !=
+          std::vector<std::string>{"forward", "back", "forward"}) {
+    throw std::runtime_error("non-self cycle was not bounded and repeated");
+  }
+}
+
 void ordering_cycle_is_rejected() {
   Model model = base_model();
   model.add_transition(Transition{"a", "start", "end", "f"});
@@ -111,6 +129,7 @@ int main() {
     linear_flow_is_terminal_and_deterministic();
     branch_respects_case_limit();
     self_loop_is_one_bounded_flow();
+    non_self_cycle_can_repeat_within_step_limit();
     ordering_cycle_is_rejected();
     zero_cases_is_explicit();
   } catch (const std::exception& error) {
