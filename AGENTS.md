@@ -45,7 +45,7 @@
 
 # PROJECT KNOWLEDGE BASE
 
-**Updated:** 2026-09-12  **Commit:** 2871ce6  **Branch:** layzcodex
+**Updated:** 2026-09-12  **Commit:** 8a19d50  **Branch:** layzcodex
 
 ## OVERVIEW
 
@@ -60,7 +60,7 @@ text form with CLI measurements and stable failure exit codes.
 ```text
 wise_combine_test.lazycodex/
 ├── AGENTS.md       # project specification and repository guidance
-├── CMakeLists.txt  # C++20 build, sanitizer option, and CTest registration
+├── CMakeLists.txt  # C++20 build, sanitizer/coverage options, and CTest registration
 ├── README.md       # English usage instructions
 ├── README.zh.md    # Chinese usage instructions
 ├── docs/           # improvement roadmap and future design records
@@ -136,6 +136,16 @@ cmake --build build-asan --parallel
 
 CLI usage, Valgrind, coverage, adapter safety, and report commands are
 maintained in `README.md` and `README.zh.md`.
+
+Coverage build and threshold check:
+
+```sh
+cmake -S . -B build-coverage -DCMAKE_BUILD_TYPE=Debug \
+  -DWISE_COMBINE_ENABLE_COVERAGE=ON
+cmake --build build-coverage --parallel
+(cd build-coverage && ctest --output-on-failure)
+cmake --build build-coverage --target coverage-check
+```
 
 ## NOTES
 
