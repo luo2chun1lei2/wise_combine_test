@@ -159,6 +159,13 @@ void persisted_flow_validation_rejects_invalid_sequences() {
   expect_reject(Flow{"x", {"finish", "finish"}});
   model.set_limits({1, 1, 1});
   expect_reject(Flow{"x", {"finish", "finish"}});
+  Model ordered = base_model();
+  ordered.add_transition(Transition{"first", "start", "end", "f"});
+  ordered.add_transition(Transition{"second", "end", "start", "f"});
+  ordered.add_ordering_relation(OrderingRelation{"first", "second"});
+  try { validate_flow(ordered, Flow{"x", {"second"}}); }
+  catch (const std::invalid_argument&) { return; }
+  throw std::runtime_error("ordering violation accepted");
 }
 
 }  // namespace
