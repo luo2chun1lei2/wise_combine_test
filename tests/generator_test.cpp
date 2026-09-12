@@ -95,6 +95,11 @@ void non_self_cycle_can_repeat_within_step_limit() {
           std::vector<std::string>{"forward", "back", "forward"}) {
     throw std::runtime_error("non-self cycle was not bounded and repeated");
   }
+  model.add_ordering_relation(OrderingRelation{"forward", "back"});
+  const auto ordered = generate(model, 1);
+  if (ordered.status != GenerationStatus::dead_end || ordered.flows.size() != 1U ||
+      ordered.flows.front().transition_ids != std::vector<std::string>{"forward", "back"})
+    throw std::runtime_error("repeat violated global before relation");
 }
 
 void ordering_cycle_is_rejected() {

@@ -55,6 +55,9 @@ cmake --build build --parallel
 
 ## 规范
 
+状态迁移（包括非自环循环）可以在 `max_steps` 范围内重复。全局 `before`
+关系仍然生效：`after` 迁移出现后，同一流程不能再次调用对应的 `before` 迁移。
+
 每个 transition 调用的函数参数都必须有常量参数或传入的 argument 关系作为来源。
 缺少来源会在模型校验阶段被拒绝；此前被接受的不完整模型需要补齐参数。
 

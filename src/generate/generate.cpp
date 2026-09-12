@@ -31,6 +31,13 @@ struct Search {
       if (transition->from != state) {
         continue;
       }
+      const bool violates_order = std::any_of(
+          model.ordering_relations().begin(), model.ordering_relations().end(),
+          [&](const auto& relation) {
+            return relation.before == transition->id &&
+                   std::find(sequence.begin(), sequence.end(), relation.after) != sequence.end();
+          });
+      if (violates_order) continue;
       const auto required = prerequisites.find(transition->id);
       if (required != prerequisites.end() &&
           !std::all_of(required->second.begin(), required->second.end(), [&](const auto& id) {

@@ -62,6 +62,10 @@ If `--reports` cannot be created as a directory (including a regular-file path),
 
 ## Specification
 
+State transitions, including non-self cycles, may repeat within `max_steps`.
+Global `before` relations still apply: once the `after` transition occurs,
+its `before` transition cannot occur again in that flow.
+
 Every declared function parameter used by a transition must have a literal
 argument or an incoming argument relation. Missing sources are rejected during
 model validation. This tightens validation of previously accepted incomplete models.
