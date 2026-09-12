@@ -29,6 +29,9 @@ model::Model FunctionModelBuilder::build(FunctionDslParser::ModelContext *ctx) {
 
 std::any FunctionModelBuilder::visitTypeMap(FunctionDslParser::TypeMapContext *ctx) {
   const std::string dslType = ctx->ID()->getText();
+  if (!seenTypes_.insert(dslType).second) {
+    model_.errors.push_back("duplicate type: " + dslType);
+  }
   const std::string cType = unquote(ctx->STRING()->getText());
   model_.typeMap[dslType] = cType;
   return nullptr;
@@ -37,6 +40,9 @@ std::any FunctionModelBuilder::visitTypeMap(FunctionDslParser::TypeMapContext *c
 std::any FunctionModelBuilder::visitValueSource(FunctionDslParser::ValueSourceContext *ctx) {
   model::ValueSource source;
   source.name = ctx->ID()->getText();
+  if (!seenValues_.insert(source.name).second) {
+    model_.errors.push_back("duplicate value source: " + source.name);
+  }
 
   if (ctx->list() != nullptr) {
     source.isRange = false;
@@ -56,6 +62,9 @@ std::any FunctionModelBuilder::visitValueSource(FunctionDslParser::ValueSourceCo
 std::any FunctionModelBuilder::visitResourceBlock(FunctionDslParser::ResourceBlockContext *ctx) {
   model::Resource resource;
   resource.name = ctx->ID()->getText();
+  if (!seenResources_.insert(resource.name).second) {
+    model_.errors.push_back("duplicate resource: " + resource.name);
+  }
 
   for (auto *decl : ctx->ctypeDecl()) {
     resource.ctype = unquote(decl->STRING()->getText());
@@ -135,6 +144,9 @@ std::any FunctionModelBuilder::visitSetupBlock(FunctionDslParser::SetupBlockCont
   for (auto *entry : ctx->setupEntry()) {
     model::SetupEntry setup;
     setup.name = entry->ID(0)->getText();
+    if (!seenSetups_.insert(setup.name).second) {
+      model_.errors.push_back("duplicate setup: " + setup.name);
+    }
     setup.function = entry->ID(1)->getText();
     for (auto *arg : entry->setupArg()) {
       if (arg->STRING() != nullptr) {
@@ -152,6 +164,9 @@ std::any FunctionModelBuilder::visitSetupBlock(FunctionDslParser::SetupBlockCont
 std::any FunctionModelBuilder::visitClassBlock(FunctionDslParser::ClassBlockContext *ctx) {
   model::ClassEntry entry;
   entry.name = ctx->ID()->getText();
+  if (!seenClasses_.insert(entry.name).second) {
+    model_.errors.push_back("duplicate class: " + entry.name);
+  }
   entry.cpp = unquote(ctx->cppDecl()->STRING()->getText());
   entry.header = unquote(ctx->headerDecl()->STRING()->getText());
   model_.classes[entry.name] = entry;

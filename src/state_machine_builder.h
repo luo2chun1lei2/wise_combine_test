@@ -1,5 +1,7 @@
 #pragma once
 
+#include <set>
+
 #include "StateMachineDslBaseVisitor.h"
 #include "state_machine_model.h"
 
@@ -18,6 +20,9 @@ class StateMachineBuilder : public StateMachineDslBaseVisitor {
  private:
   smodel::StateMachine machine_;
   std::string currentParent_;
+  std::set<std::string> seenStateBlocks_;
+  std::set<std::string> seenClasses_;
+  std::set<std::string> seenActions_;
 
   void validate();
   static std::string actionText(StateMachineDslParser::ActionContext *ctx);

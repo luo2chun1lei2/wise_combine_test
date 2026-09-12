@@ -94,6 +94,16 @@ echo "$dfs_out" | grep -q '^paths: 5$'
 if "$BIN" doc/examples/connection.dsl --max-length -1 >/dev/null 2>&1; then exit 1; fi
 if "$BIN" doc/examples/connection.dsl --max-length 1x >/dev/null 2>&1; then exit 1; fi
 
+duplicate_dsl="/tmp/wise_duplicate.dsl"
+printf 'resource R { ctype: "int" states: A initial: A }\nresource R { ctype: "int" states: A initial: A }\n' > "$duplicate_dsl"
+set +e
+duplicate_out="$("$BIN" "$duplicate_dsl" 2>&1)"
+duplicate_rc=$?
+set -e
+rm -f "$duplicate_dsl"
+[ "$duplicate_rc" -ne 0 ]
+echo "$duplicate_out" | grep -q 'duplicate resource: R'
+
 bfs_limit="$("$BIN" doc/examples/file-functions.dsl --algorithm bfs --max-length 3 --max-cases 1)"
 echo "$bfs_limit" | grep -q '^sequences: 1$'
 

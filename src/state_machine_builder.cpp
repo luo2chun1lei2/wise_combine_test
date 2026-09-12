@@ -53,6 +53,9 @@ std::any StateMachineBuilder::visitEventsDecl(StateMachineDslParser::EventsDeclC
 std::any StateMachineBuilder::visitStateBlock(StateMachineDslParser::StateBlockContext *ctx) {
   smodel::StateInfo info;
   const std::string name = ctx->ID()->getText();
+  if (!seenStateBlocks_.insert(name).second) {
+    machine_.errors.push_back("duplicate state block: " + name);
+  }
   info.parent = currentParent_;
   for (auto *entry : ctx->entryDecl()) {
     info.entry = actionText(entry->action());
@@ -104,6 +107,9 @@ std::any StateMachineBuilder::visitTransition(StateMachineDslParser::TransitionC
 std::any StateMachineBuilder::visitClassBlock(StateMachineDslParser::ClassBlockContext *ctx) {
   smodel::ClassEntry entry;
   entry.name = ctx->ID()->getText();
+  if (!seenClasses_.insert(entry.name).second) {
+    machine_.errors.push_back("duplicate class: " + entry.name);
+  }
   entry.cpp = unquote(ctx->cppDecl()->STRING()->getText());
   entry.header = unquote(ctx->headerDecl()->STRING()->getText());
   machine_.classes[entry.name] = entry;
@@ -113,9 +119,13 @@ std::any StateMachineBuilder::visitClassBlock(StateMachineDslParser::ClassBlockC
 std::any StateMachineBuilder::visitActionsBlock(StateMachineDslParser::ActionsBlockContext *ctx) {
   for (auto *map : ctx->actionMap()) {
     smodel::ActionMap action;
+    const std::string actionName = map->ID(0)->getText();
+    if (!seenActions_.insert(actionName).second) {
+      machine_.errors.push_back("duplicate action: " + actionName);
+    }
     action.className = map->ID(1)->getText();
     action.method = map->ID(2)->getText();
-    machine_.actions[map->ID(0)->getText()] = action;
+    machine_.actions[actionName] = action;
   }
   return nullptr;
 }
