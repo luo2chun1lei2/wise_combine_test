@@ -30,6 +30,7 @@ void print_usage(std::ostream& out) {
     out << "  --dry-run                 只生成流程，不执行\n";
     out << "  --max-depth <n>           最大路径步数（默认 32）\n";
     out << "  --max-flows <n>           最大调用流程数量（默认 1000）\n";
+    out << "  --max-function-repeats <n> 每个函数在函数组合中的最大出现次数（默认 2）\n";
     out << "  --seed <n>                复现实验种子（默认 0）\n";
     out << "  --log-file <path>         日志文件（默认 build/wise_combine_test.log）\n";
     out << "  --log-max-size <bytes>    日志文件大小上限（默认 10485760）\n";
@@ -119,6 +120,11 @@ CliOptions parse_args(int argc, char** argv) {
                 throw std::runtime_error("--max-flows requires a value");
             }
             o.gen.max_flows = parse_size(argv[++i], a);
+        } else if (a == "--max-function-repeats") {
+            if (i + 1 >= argc) {
+                throw std::runtime_error("--max-function-repeats requires a value");
+            }
+            o.gen.max_function_repeats = parse_size(argv[++i], a);
         } else if (a == "--seed") {
             if (i + 1 >= argc) {
                 throw std::runtime_error("--seed requires a value");
@@ -195,6 +201,7 @@ int main(int argc, char** argv) {
                                           parsed.value_constraints.end());
         }
 
+        const std::string model_digest = wct::spec_digest(spec);
         wct::Model model(std::move(spec));
         model.validate();
 
@@ -280,12 +287,14 @@ int main(int argc, char** argv) {
         bool any_failure = false;
         for (const auto& r : results) {
             logger.log(r.status == "passed" ? "info" : "warning", "runner",
-                       wct::flow_id(r.flow), r.status + " " + r.detail);
+                       r.id.empty() ? wct::flow_id(r.flow) : r.id,
+                       r.status + " " + r.detail);
             if (r.status != "passed" && r.status != "not_executed") {
                 any_failure = true;
             }
         }
-        const wct::ReportMeta meta{o.gen.seed, o.gen.seed_set, o.files};
+        const wct::ReportMeta meta{o.gen.seed, o.gen.seed_set,
+                                  "plan_goal-1.0.0", model_digest, o.files};
         std::cout << wct::render_report(results, o.report, meta);
         const bool truncated = generator.truncated();
         if (truncated) {

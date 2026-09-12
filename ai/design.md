@@ -172,7 +172,7 @@ mutex start finish
 
 在函数关系图上，依据调用顺序偏序约束生成拓扑序。参数传递关系用于确定每个函数实参的来源，从而生成可执行的调用序列。
 
-当存在多个满足约束的拓扑序时，枚举所有有效顺序；对顺序无约束的函数组，按可配置策略生成排列组合。
+函数组合生成器枚举满足约束的流程，包括空流程、子集、符合 `order` 的排列，以及每个函数至多出现 `--max-function-repeats` 次的有界重复调用。参数依赖、互斥、并行关系和组合约束用于过滤或剪枝。
 
 若存在互斥关系，则排除同时包含互斥函数的调用序列；附加组合约束在生成时记录，并在执行前或执行后求值，不满足约束的流程被标记为无效或失败。
 
@@ -249,6 +249,7 @@ mutex start finish
 - 每个调用流程的状态（成功、失败、崩溃、超时）。
 - 失败流程的调用栈信息。
 - 汇总统计。
+- 工具版本、seed、模型摘要和输入文件列表。
 
 报告可输出为文本或 JSON 格式。
 
@@ -265,12 +266,13 @@ wise_combine_test <描述文件> [选项]
 - `--mode direct|standalone`：选择执行模式。
 - `--max-depth <n>`：限制最大路径步数。
 - `--max-flows <n>`：限制最大调用流程数量。
+- `--max-function-repeats <n>`：限制单个函数在函数组合流程中的最大出现次数。
 - `--log-file <path>`：指定日志输出文件。
 - `--log-max-size <bytes>`：设置单个日志文件大小上限。
 - `--log-rotate-count <n>`：设置保留的历史日志文件数量。
 - `--report <text|json>`：指定报告格式。
 
-未指定参数时使用默认值：`--mode direct`、`--max-depth 32`、`--max-flows 1000`、`--log-file build/wise_combine_test.log`、`--log-max-size 10485760`（10 MiB）、`--log-rotate-count 5`、`--report text`。
+未指定参数时使用默认值：`--mode direct`、`--max-depth 32`、`--max-flows 1000`、`--max-function-repeats 2`、`--log-file build/wise_combine_test.log`、`--log-max-size 10485760`（10 MiB）、`--log-rotate-count 5`、`--report text`。
 
 ## 10. 测试与测量
 

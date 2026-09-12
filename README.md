@@ -105,6 +105,10 @@ adapter 从标准输入读取一行 JSON 调用请求，执行对应函数后向
 
 只生成组合流程、不执行时使用 `--dry-run`；生成独立被测程序时使用 `--mode standalone`。完整命令选项可用 `wise_combine_test --help` 查看，DSL 语法见 [doc/dsl.md](doc/dsl.md)。
 
+函数组合生成器会生成空流程、子集、符合 `order` 的排列以及有界重复调用；单个函数在函数组合中的最大出现次数由 `--max-function-repeats` 控制，默认 2。
+
+文本和 JSON 报告会包含工具版本、seed、模型摘要和输入文件列表，便于复现。
+
 ### 执行模式边界
 
 - `--mode direct`：只支持无参 C ABI 函数；带参函数会直接失败并提示使用 adapter。

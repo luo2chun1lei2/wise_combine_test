@@ -1370,7 +1370,9 @@ void Generator::state_dfs(const ObjectDecl& object, std::size_t state_index,
     ++visit;
     if (state.final && !path.empty()) {
         if (parameter_respected(path) && order_respected(path) &&
-            parallel_respected(path) && state_allowed(object, state.name)) {
+            parallel_respected(path) && !mutex_violated(path) &&
+            !constraint_violated(path) &&
+            state_allowed(object, state.name)) {
             out.push_back(path);
         }
     }
@@ -1414,63 +1416,83 @@ std::vector<Flow> Generator::generate_function_flows() const {
         return {};
     }
     std::vector<Flow> out;
-    std::map<std::string, std::size_t> indeg;
-    for (const auto& fn : model_.spec().functions) {
-        indeg[fn.name] = 0;
-    }
-    for (const auto& rel : model_.spec().orders) {
-        if (rel.condition.empty()) {
-            ++indeg[rel.after];
-        }
-    }
     std::vector<std::string> current;
-    topo_enumerate(current, indeg, out);
+    std::unordered_map<std::string, std::size_t> counts;
+    function_dfs(current, counts, out);
     remaining_flows_ -= out.size();
     return out;
 }
 
-void Generator::topo_enumerate(std::vector<std::string>& current,
-                               std::map<std::string, std::size_t>& indeg,
-                               std::vector<Flow>& out) const {
+void Generator::function_dfs(
+    std::vector<std::string>& current,
+    std::unordered_map<std::string, std::size_t>& counts,
+    std::vector<Flow>& out) const {
     if (out.size() >= remaining_flows_) {
         options_.truncated = true;
         return;
     }
-    if (current.size() == model_.spec().functions.size()) {
-        if (order_respected(current) && parameter_respected(current) &&
-            !mutex_violated(current) &&
-            !constraint_violated(current)) {
-            out.push_back(current);
-            if (out.size() >= remaining_flows_) {
-                options_.truncated = true;
-            }
+    if (valid_function_flow(current)) {
+        out.push_back(current);
+        if (out.size() >= remaining_flows_) {
+            options_.truncated = true;
+            return;
         }
+    }
+    if (current.size() >= options_.max_depth ||
+        function_flow_irreparable(current)) {
         return;
     }
-    for (const auto& [name, deg] : indeg) {
-        if (deg != 0) {
+    for (const auto& fn : model_.spec().functions) {
+        if (counts[fn.name] >= options_.max_function_repeats) {
             continue;
         }
-        current.push_back(name);
-        indeg[name] = static_cast<std::size_t>(-1);
-        for (const auto& rel : model_.spec().orders) {
-            if (rel.condition.empty() && rel.before == name) {
-                --indeg[rel.after];
-            }
-        }
-        topo_enumerate(current, indeg, out);
-        for (const auto& rel : model_.spec().orders) {
-            if (rel.condition.empty() && rel.before == name) {
-                ++indeg[rel.after];
-            }
-        }
-        indeg[name] = 0;
+        current.push_back(fn.name);
+        ++counts[fn.name];
+        function_dfs(current, counts, out);
+        --counts[fn.name];
         current.pop_back();
         if (out.size() >= remaining_flows_) {
             options_.truncated = true;
             return;
         }
     }
+}
+
+bool Generator::valid_function_flow(const Flow& flow) const {
+    return parameter_respected(flow) && order_respected(flow) &&
+           parallel_respected(flow) && !mutex_violated(flow) &&
+           !constraint_violated(flow);
+}
+
+bool Generator::function_flow_irreparable(const Flow& flow) const {
+    if (!parameter_respected(flow) || !order_respected(flow) ||
+        mutex_violated(flow)) {
+        return true;
+    }
+    std::unordered_map<std::string, std::size_t> counts;
+    for (const auto& name : flow) {
+        ++counts[name];
+    }
+    for (const auto& rel : model_.spec().constraints) {
+        std::vector<CountConstraint> ccs;
+        std::string err;
+        if (!parse_constraint_expr(rel.expr, ccs, err)) {
+            continue;
+        }
+        for (const auto& cc : ccs) {
+            const long actual = static_cast<long>(counts[cc.func]);
+            if (cc.op == "<" && actual >= cc.value) {
+                return true;
+            }
+            if (cc.op == "<=" && actual > cc.value) {
+                return true;
+            }
+            if (cc.op == "==" && actual > cc.value) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 bool Generator::order_respected(const Flow& flow) const {
@@ -1654,15 +1676,17 @@ Runner::Runner(const RunnerOptions& options) : options_(options) {}
 std::vector<FlowResult> Runner::run(const std::vector<Flow>& flows) const {
     std::vector<FlowResult> results;
     results.reserve(flows.size());
-    for (const auto& flow : flows) {
+    for (std::size_t i = 0; i < flows.size(); ++i) {
+        const Flow& flow = flows[i];
         if (options_.dry_run) {
-            results.push_back(run_not_executed(flow));
+            results.push_back(run_not_executed(flow, i));
         } else if (!options_.adapter_path.empty()) {
-            results.push_back(run_adapter(flow));
+            results.push_back(run_adapter(flow, i));
         } else {
             if (flow_has_parameterized_call(flow)) {
                 FlowResult r;
                 r.flow = flow;
+                r.id = flow_id_indexed(flow, i);
                 r.status = "failed";
                 r.detail =
                     "direct mode does not support parameterized calls or expect_output; "
@@ -1671,7 +1695,7 @@ std::vector<FlowResult> Runner::run(const std::vector<Flow>& flows) const {
                 results.push_back(r);
                 continue;
             }
-            results.push_back(run_direct(flow));
+            results.push_back(run_direct(flow, i));
         }
     }
     return results;
@@ -1698,9 +1722,11 @@ bool Runner::flow_has_parameterized_call(const Flow& flow) const {
     return false;
 }
 
-FlowResult Runner::run_not_executed(const Flow& flow) const {
+FlowResult Runner::run_not_executed(const Flow& flow,
+                                    std::size_t index) const {
     FlowResult r;
     r.flow = flow;
+    r.id = flow_id_indexed(flow, index);
     r.status = "not_executed";
     r.detail = "dry-run: no library loaded";
     r.bindings = flow_bindings(flow);
@@ -1731,9 +1757,10 @@ std::string Runner::flow_bindings(const Flow& flow) const {
     return out.str();
 }
 
-FlowResult Runner::run_direct(const Flow& flow) const {
+FlowResult Runner::run_direct(const Flow& flow, std::size_t index) const {
     FlowResult result;
     result.flow = flow;
+    result.id = flow_id_indexed(flow, index);
     int pipefd[2];
     if (pipe(pipefd) != 0) {
         result.status = "failed";
@@ -1851,9 +1878,10 @@ FlowResult Runner::run_direct(const Flow& flow) const {
     return result;
 }
 
-FlowResult Runner::run_adapter(const Flow& flow) const {
+FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
     FlowResult result;
     result.flow = flow;
+    result.id = flow_id_indexed(flow, index);
     if (!options_.spec) {
         result.status = "failed";
         result.detail = "adapter mode requires an internal model";
@@ -1946,7 +1974,7 @@ FlowResult Runner::run_adapter(const Flow& flow) const {
         close(err_pipe[1]);
 
         const std::string request =
-            make_adapter_request(flow_id(flow), i, function, args);
+            make_adapter_request(result.id, i, function, args);
         const ssize_t written =
             write(in_pipe[1], request.data(), request.size());
         (void)written;
@@ -2215,6 +2243,78 @@ std::string flow_id(const Flow& flow) {
     return out.str();
 }
 
+std::string flow_id_indexed(const Flow& flow, std::size_t index) {
+    return std::to_string(index) + ":" + flow_id(flow);
+}
+
+std::string spec_digest(const Spec& spec) {
+    std::ostringstream serialized;
+    for (const auto& fn : spec.functions) {
+        serialized << "fn:" << fn.name << "(";
+        for (const auto& p : fn.params) {
+            serialized << p.type << ":" << p.name << ",";
+        }
+        serialized << ")->" << fn.return_param << ":" << fn.return_type << ";";
+    }
+    for (const auto& object : spec.objects) {
+        serialized << "obj:" << object.name << "{";
+        for (const auto& state : object.states) {
+            serialized << "s:" << state.name << ":" << state.initial << ":"
+                       << state.final << ";";
+        }
+        for (const auto& tr : object.transitions) {
+            serialized << "t:" << tr.src << "->" << tr.dst << ":" << tr.func
+                       << ":" << tr.guard << ":" << tr.expect_present << ":"
+                       << tr.expect_return << ":" << tr.expect_output_present
+                       << ":" << tr.expect_output << ";";
+        }
+        serialized << "}";
+    }
+    for (const auto& rel : spec.parameters) {
+        serialized << "p:" << rel.lhs_func << "." << rel.lhs_param << "=";
+        if (rel.rhs_is_const) {
+            serialized << rel.rhs_const;
+        } else {
+            serialized << rel.rhs_func << "." << rel.rhs_param;
+        }
+        serialized << ";";
+    }
+    for (const auto& rel : spec.orders) {
+        serialized << "o:" << rel.before << "<" << rel.after << ":"
+                   << rel.condition << ";";
+    }
+    for (const auto& rel : spec.mutexes) {
+        serialized << "m:";
+        for (const auto& fn : rel.funcs) {
+            serialized << fn << ",";
+        }
+        serialized << ";";
+    }
+    for (const auto& rel : spec.parallels) {
+        serialized << "pa:" << rel.a << "," << rel.b << ";";
+    }
+    for (const auto& rel : spec.constraints) {
+        serialized << "c:" << rel.expr << ";";
+    }
+    for (const auto& rel : spec.state_constraints) {
+        serialized << "sc:" << rel << ";";
+    }
+    for (const auto& rel : spec.value_constraints) {
+        serialized << "vc:" << rel.func << "." << rel.param << rel.op
+                   << rel.value << ";";
+    }
+
+    std::uint64_t hash = 1469598103934665603ULL;
+    const std::string data = serialized.str();
+    for (const unsigned char c : data) {
+        hash ^= static_cast<std::uint64_t>(c);
+        hash *= 1099511628211ULL;
+    }
+    std::ostringstream out;
+    out << std::hex << std::setw(16) << std::setfill('0') << hash;
+    return out.str();
+}
+
 std::string render_report(const std::vector<FlowResult>& results,
                           const std::string& format,
                           const ReportMeta& meta) {
@@ -2262,6 +2362,9 @@ std::string render_report(const std::vector<FlowResult>& results,
         out << "{\n";
         out << "  \"seed\": " << meta.seed << ",\n";
         out << "  \"seed_set\": " << (meta.seed_set ? "true" : "false") << ",\n";
+        out << "  \"version\": \"" << escape_json(meta.version) << "\",\n";
+        out << "  \"model_digest\": \""
+            << escape_json(meta.model_digest) << "\",\n";
         out << "  \"files\": [";
         for (std::size_t i = 0; i < meta.files.size(); ++i) {
             if (i) {
@@ -2276,7 +2379,9 @@ std::string render_report(const std::vector<FlowResult>& results,
         out << "  \"flows\": [\n";
         for (std::size_t i = 0; i < results.size(); ++i) {
             const auto& r = results[i];
-            out << "    {\"id\": \"" << escape_json(flow_id(r.flow))
+            const std::string id =
+                r.id.empty() ? flow_id(r.flow) : r.id;
+            out << "    {\"id\": \"" << escape_json(id)
                 << "\", \"status\": \"" << escape_json(r.status)
                 << "\", \"exit_code\": " << r.exit_code
                 << ", \"detail\": \"" << escape_json(r.detail)
@@ -2291,7 +2396,8 @@ std::string render_report(const std::vector<FlowResult>& results,
         return out.str();
     }
     std::ostringstream out;
-    out << "# seed=" << meta.seed;
+    out << "# version=" << meta.version << " seed=" << meta.seed
+        << " model_digest=" << meta.model_digest;
     if (!meta.files.empty()) {
         out << " files=";
         for (std::size_t i = 0; i < meta.files.size(); ++i) {
@@ -2305,7 +2411,8 @@ std::string render_report(const std::vector<FlowResult>& results,
     out << "total=" << results.size() << " passed=" << passed
         << " failed=" << failed << "\n";
     for (const auto& r : results) {
-        out << "[" << r.status << "] " << flow_id(r.flow);
+        out << "[" << r.status << "] "
+            << (r.id.empty() ? flow_id(r.flow) : r.id);
         if (!r.detail.empty()) {
             out << " (" << r.detail << ")";
         }

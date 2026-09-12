@@ -2,6 +2,7 @@
 #define WISE_COMBINE_TEST_WISE_HPP
 
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
@@ -128,6 +129,7 @@ struct GenerationOptions {
     std::size_t max_depth = 32;
     std::size_t max_flows = 1000;
     std::size_t max_state_visits = 8;
+    std::size_t max_function_repeats = 2;
     std::size_t seed = 0;
     bool seed_set = false;
     bool truncated = false;
@@ -136,6 +138,8 @@ struct GenerationOptions {
 struct ReportMeta {
     std::size_t seed = 0;
     bool seed_set = false;
+    std::string version;
+    std::string model_digest;
     std::vector<std::string> files;
 };
 
@@ -209,9 +213,11 @@ private:
                    std::vector<std::string>& path,
                    std::unordered_map<std::string, std::size_t>& visits,
                    std::vector<Flow>& out) const;
-    void topo_enumerate(std::vector<std::string>& current,
-                        std::map<std::string, std::size_t>& indeg,
-                        std::vector<Flow>& out) const;
+    void function_dfs(std::vector<std::string>& current,
+                      std::unordered_map<std::string, std::size_t>& counts,
+                      std::vector<Flow>& out) const;
+    bool valid_function_flow(const Flow& flow) const;
+    bool function_flow_irreparable(const Flow& flow) const;
     bool order_respected(const Flow& flow) const;
     bool parameter_respected(const Flow& flow) const;
     bool guard_allows(const TransitionDecl& transition) const;
@@ -226,6 +232,7 @@ private:
 
 struct FlowResult {
     Flow flow;
+    std::string id;
     std::string status; // passed, failed, crashed, timeout, not_executed
     int exit_code = 0;
     std::string detail;
@@ -252,9 +259,9 @@ public:
 
 private:
     RunnerOptions options_;
-    FlowResult run_direct(const Flow& flow) const;
-    FlowResult run_adapter(const Flow& flow) const;
-    FlowResult run_not_executed(const Flow& flow) const;
+    FlowResult run_direct(const Flow& flow, std::size_t index) const;
+    FlowResult run_adapter(const Flow& flow, std::size_t index) const;
+    FlowResult run_not_executed(const Flow& flow, std::size_t index) const;
     bool flow_has_parameterized_call(const Flow& flow) const;
     std::string flow_bindings(const Flow& flow) const;
 };
@@ -282,6 +289,8 @@ std::string render_report(const std::vector<FlowResult>& results,
                           const ReportMeta& meta = {});
 
 std::string flow_id(const Flow& flow);
+std::string flow_id_indexed(const Flow& flow, std::size_t index);
+std::string spec_digest(const Spec& spec);
 
 bool parse_guard(const std::string& text, GuardExpr& out, std::string& err);
 bool guard_satisfied(const GuardExpr& guard, int return_value);

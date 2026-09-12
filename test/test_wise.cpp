@@ -1,5 +1,6 @@
 #include "../src/wise.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <iostream>
@@ -77,10 +78,12 @@ int main() {
         assert(state_flows[0][0] == "f");
 
         const auto function_flows = generator.generate_function_flows();
-        assert(function_flows.size() == 1);
-        assert(function_flows[0].size() == 2);
-        assert(function_flows[0][0] == "f");
-        assert(function_flows[0][1] == "g");
+        assert(std::find(function_flows.begin(), function_flows.end(),
+                         wct::Flow{"f", "g"}) != function_flows.end());
+        assert(std::find(function_flows.begin(), function_flows.end(),
+                         wct::Flow{"f"}) != function_flows.end());
+        assert(std::find(function_flows.begin(), function_flows.end(),
+                         wct::Flow{"g"}) != function_flows.end());
     }
 
     {
@@ -120,9 +123,10 @@ int main() {
         wct::Model model(std::move(spec));
         wct::Generator generator(model);
         const auto flows = generator.generate_function_flows();
-        assert(flows.size() == 1);
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"f"}) !=
+               flows.end());
         wct::Runner runner({"", true, 10, {}});
-        const std::string code = runner.generate_standalone(flows);
+        const std::string code = runner.generate_standalone({{"f"}});
         assert(code.find("extern \"C\" int f();") != std::string::npos);
         assert(code.find("run_flow_0") != std::string::npos);
     }
@@ -134,7 +138,12 @@ int main() {
         model.validate();
         wct::Generator generator(model);
         const auto flows = generator.generate_function_flows();
-        assert(flows.empty());
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"f"}) !=
+               flows.end());
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"g"}) !=
+               flows.end());
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"f", "g"}) ==
+               flows.end());
     }
 
     {
@@ -144,7 +153,10 @@ int main() {
         model.validate();
         wct::Generator generator(model);
         const auto flows = generator.generate_function_flows();
-        assert(flows.empty());
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"g"}) !=
+               flows.end());
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"f"}) ==
+               flows.end());
     }
 
     {
@@ -171,10 +183,12 @@ int main() {
         model.validate();
         wct::Generator generator(model);
         const auto state_flows = generator.generate_state_flows();
-        assert(state_flows.size() == 1);
-        assert(state_flows[0].size() == 2);
+        assert(state_flows.empty());
         const auto function_flows = generator.generate_function_flows();
-        assert(function_flows.empty());
+        assert(std::find(function_flows.begin(), function_flows.end(),
+                         wct::Flow{"init"}) != function_flows.end());
+        assert(std::find(function_flows.begin(), function_flows.end(),
+                         wct::Flow{"init", "close"}) == function_flows.end());
     }
 
     {
@@ -289,8 +303,8 @@ int main() {
         model.validate();
         wct::Generator generator(model);
         const auto flows = generator.generate_function_flows();
-        assert(flows.size() == 1);
-        assert(flows[0] == wct::Flow{"g"});
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"g"}) !=
+               flows.end());
     }
 
     {
@@ -306,8 +320,8 @@ int main() {
         model.validate();
         wct::Generator generator(model);
         const auto flows = generator.generate_function_flows();
-        assert(flows.size() == 1);
-        assert(flows[0] == (wct::Flow{"a", "b", "c"}));
+        assert(std::find(flows.begin(), flows.end(),
+                         wct::Flow{"a", "b", "c"}) != flows.end());
     }
 
     {
@@ -407,8 +421,8 @@ int main() {
         model.validate();
         wct::Generator generator(model);
         const auto flows = generator.generate_function_flows();
-        assert(flows.size() == 1);
-        assert(flows[0] == (wct::Flow{"g"}));
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"g"}) !=
+               flows.end());
     }
 
     {
@@ -438,7 +452,8 @@ int main() {
         model.validate();
         wct::Generator generator(model);
         const auto flows = generator.generate_function_flows();
-        assert(flows.size() == 3);
+        assert(std::find(flows.begin(), flows.end(),
+                         wct::Flow{"a", "b", "c"}) != flows.end());
     }
 
     {
@@ -468,8 +483,10 @@ int main() {
         model.validate();
         wct::Generator generator(model);
         const auto flows = generator.generate_function_flows();
-        assert(flows.size() == 1);
-        assert(flows[0] == (wct::Flow{"a", "b"}));
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"a", "b"}) !=
+               flows.end());
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"b", "a"}) ==
+               flows.end());
     }
 
     {
@@ -526,7 +543,10 @@ int main() {
         model.validate();
         wct::Generator generator(model);
         const auto flows = generator.generate_function_flows();
-        assert(flows.size() == 2);
+        assert(std::find(flows.begin(), flows.end(),
+                         wct::Flow{"f", "g"}) != flows.end());
+        assert(std::find(flows.begin(), flows.end(),
+                         wct::Flow{"g", "f"}) != flows.end());
     }
 
     {
@@ -541,7 +561,13 @@ int main() {
         model.validate();
         wct::Generator generator(model);
         const auto flows = generator.generate_function_flows();
-        assert(flows.empty());
+        for (const auto& flow : flows) {
+            const std::size_t present =
+                (std::find(flow.begin(), flow.end(), "f") != flow.end()) +
+                (std::find(flow.begin(), flow.end(), "g") != flow.end()) +
+                (std::find(flow.begin(), flow.end(), "h") != flow.end());
+            assert(present <= 1);
+        }
     }
 
     {
