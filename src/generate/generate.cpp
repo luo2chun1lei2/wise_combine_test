@@ -108,4 +108,23 @@ GenerationResult generate(const model::Model& model, std::uint64_t seed) {
   return search.result;
 }
 
+void validate_flow(const model::Model& model, const Flow& flow) {
+  model.validate();
+  std::string state = model.initial_state();
+  std::set<std::string> seen;
+  for (const auto& id : flow.transition_ids) {
+    const auto it = std::find_if(model.transitions().begin(), model.transitions().end(),
+                                 [&](const auto& t) { return t.id == id; });
+    if (it == model.transitions().end()) throw std::invalid_argument("flow references unknown transition: " + id);
+    if (it->from != state) throw std::invalid_argument("flow transition is not reachable: " + id);
+    for (const auto& relation : model.ordering_relations())
+      if (relation.after == id && seen.count(relation.before) == 0U)
+        throw std::invalid_argument("flow violates ordering relation: " + relation.before + " before " + id);
+    state = it->to;
+    seen.insert(id);
+  }
+  if (flow.transition_ids.size() > model.limits().max_steps)
+    throw std::invalid_argument("flow exceeds max_steps");
+}
+
 }  // namespace wise::generate

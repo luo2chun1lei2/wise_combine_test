@@ -31,4 +31,6 @@ struct GenerationResult {
 
 [[nodiscard]] GenerationResult generate(const model::Model& model, std::uint64_t seed);
 
+void validate_flow(const model::Model& model, const Flow& flow);
+
 }  // namespace wise::generate
