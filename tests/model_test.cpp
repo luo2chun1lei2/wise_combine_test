@@ -24,6 +24,9 @@ void expect_error(const std::function<void()>& operation,
     if (error.code() != expected) {
       throw std::runtime_error("unexpected model error code");
     }
+    if (expected == ModelError::Code::type_mismatch && std::string(error.code_name()) != "type_mismatch") {
+      throw std::runtime_error("unstable type mismatch code name");
+    }
     return;
   }
   throw std::runtime_error("expected model error");
