@@ -41,6 +41,7 @@
 - 摘要一致性校验：`verify-report` 检查摘要字段、状态、非负整数与计数守恒，不等同于哈希篡改检测。
 - summary schema 版本：`bdf3eab`。运行摘要增加 `schema_version: 1`，校验器据此区分报告类型并拒绝未知版本。
 - 报告完整性边界：`docs/adr/0005-report-integrity-boundary.md` 明确结构校验、可追溯元数据与真正 replay/哈希校验的差异及进入条件。
+- SHA-256 基础模块：`5bbb230`。新增 OpenSSL libcrypto 封装和空串/`abc` 已知向量测试；尚未接入 report v2 digest 字段。
 - 架构与追踪资料：`ee665d6`。新增 `docs/architecture.md`、`docs/requirements-matrix.md` 和 `docs/test-matrix.md`。
 - 高级约束边界决策：`docs/adr/0004-advanced-constraints-boundary.md`。冻结当前仅支持状态/函数/argument/before，避免未定义约束被隐式实现。
 

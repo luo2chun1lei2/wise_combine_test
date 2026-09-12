@@ -5,7 +5,8 @@
 会生成确定且有界的状态迁移流程；运行器通过显式的适配器进程执行每个步骤，
 并写出可复现的失败报告。
 
-实现使用 C++20、标准库和 POSIX 进程 API，不依赖运行时第三方模块。
+实现使用 C++20、POSIX 进程 API，并使用 OpenSSL libcrypto 提供 SHA-256 报告完整性能力。
+构建前请安装系统对应的 OpenSSL 开发包。
 
 ## 文档同步约定
 
@@ -28,6 +29,8 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --parallel
 (cd build && ctest --output-on-failure)
 ```
+
+Debian/Ubuntu 可使用 `sudo apt install libssl-dev` 安装依赖。
 
 测试覆盖模型、解析器、生成器、适配器、协议、超时、崩溃、输出上限和 CLI 集成
 场景。构建目录和测试二进制文件已被 git 忽略。

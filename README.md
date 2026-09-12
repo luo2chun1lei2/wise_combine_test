@@ -6,8 +6,9 @@ global ordering relations. The generator produces deterministic, bounded
 transition flows; the runtime executes each step through an explicit adapter
 process and writes reproducible failure reports.
 
-The implementation uses C++20 and the standard library plus POSIX process APIs.
-There is no runtime third-party dependency.
+The implementation uses C++20, POSIX process APIs, and OpenSSL libcrypto for
+SHA-256 report integrity work. Install the platform's OpenSSL development
+package before building.
 
 ## Documentation sync
 
@@ -32,6 +33,8 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --parallel
 (cd build && ctest --output-on-failure)
 ```
+
+On Debian/Ubuntu, install the dependency with `sudo apt install libssl-dev`.
 
 The tests include model, parser, generator, adapter, protocol, timeout, crash,
 output-cap, and CLI integration cases. Build paths and test binaries are
