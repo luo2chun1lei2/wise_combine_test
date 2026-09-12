@@ -53,8 +53,8 @@ struct Search {
     std::shuffle(choices.begin(), choices.end(), rng);
 
     if (choices.empty()) {
-      if (!sequence.empty() && emitted.insert(sequence).second) {
-        result.flows.push_back(Flow{sequence.front(), sequence});
+      if (emitted.insert(sequence).second) {
+        result.flows.push_back(Flow{sequence.empty() ? std::string{} : sequence.front(), sequence});
       }
       return;
     }

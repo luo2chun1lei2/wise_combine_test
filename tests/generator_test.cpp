@@ -127,6 +127,23 @@ void zero_cases_is_explicit() {
   }
 }
 
+void empty_model_emits_empty_flow() {
+  Model model = base_model();
+  model.set_limits({2, 8, 1});
+  const auto result = generate(model, 0);
+  if (result.status != GenerationStatus::dead_end || result.flows.size() != 1U ||
+      !result.flows.front().flow_id.empty() || !result.flows.front().transition_ids.empty()) {
+    throw std::runtime_error("empty model did not emit an empty flow: status=" + std::to_string(static_cast<int>(result.status)) + " size=" + std::to_string(result.flows.size()));
+  }
+  model.set_limits({1, 8, 1});
+  const auto bounded = generate(model, 0);
+  if (bounded.status != GenerationStatus::case_limit || bounded.flows != result.flows)
+    throw std::runtime_error("empty flow ignored case limit");
+  model.set_limits({0, 8, 1});
+  if (!generate(model, 0).flows.empty())
+    throw std::runtime_error("zero case budget emitted empty flow");
+}
+
 }  // namespace
 
 int main() {
@@ -137,6 +154,7 @@ int main() {
     non_self_cycle_can_repeat_within_step_limit();
     ordering_cycle_is_rejected();
     zero_cases_is_explicit();
+    empty_model_emits_empty_flow();
   } catch (const std::exception& error) {
     std::cerr << "generator test failure: " << error.what() << '\n';
     return 1;
