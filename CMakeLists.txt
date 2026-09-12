@@ -148,6 +148,8 @@ add_test(NAME cli_run_failure COMMAND wise-combine run
 set_tests_properties(cli_run_failure PROPERTIES WILL_FAIL TRUE)
 add_test(NAME cli_invalid COMMAND wise-combine validate
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/invalid.json)
+add_test(NAME cli_help COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_help_test.sh
+  $<TARGET_FILE:wise-combine>)
 set_tests_properties(cli_invalid PROPERTIES WILL_FAIL TRUE)
 add_test(NAME cli_report_write_failure COMMAND ${CMAKE_COMMAND}
   -DCLI=$<TARGET_FILE:wise-combine>
