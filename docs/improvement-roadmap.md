@@ -25,6 +25,7 @@
 - 项目知识库同步：`f2b7ff1`。`AGENTS.md` 已更新为当前实现目录、命令和维护边界。
 - Adapter 状态分类：`8e79eb5`。合法 `error`、`mismatch` 和未知状态已有独立回归；完整 JSON 语法解析仍待增强。
 - 非自环重复：`acc1c4d`。合法状态循环可在 `max_steps` 内重走，并有 `A→B→A` 回归测试。
+- 报告实际参数：`04be12e`、`93dbd4e`。每个 step 的 effective args（含关系注入值）进入 JSON 报告，并保留字符串转义和浮点精度。
 - 架构与追踪资料：`ee665d6`。新增 `docs/architecture.md`、`docs/requirements-matrix.md` 和 `docs/test-matrix.md`。
 
 ## P0：发布阻断
