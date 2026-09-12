@@ -3,6 +3,7 @@
 #include "model/model.hpp"
 #include <stdexcept>
 #include <cstdint>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -28,7 +29,16 @@ struct Document {
   std::string canonical_json;
 };
 
+struct AdapterResponse {
+  int protocol{0};
+  std::string status;
+  std::string observed_state;
+  std::map<std::string, model::Scalar> returns;
+  std::string stderr_output;
+};
+
 Document parse(const std::string& json);
 std::string normalize(const std::string& json);
+AdapterResponse parse_adapter_response(const std::string& json);
 
 }  // namespace wise::spec

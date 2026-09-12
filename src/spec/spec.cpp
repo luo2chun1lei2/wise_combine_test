@@ -57,4 +57,32 @@ Document parse(const std::string& json) {
   try { d.model.validate(); } catch (const model::ModelError& e) { throw SpecError({{"", std::string("semantic validation failed: ") + e.what()}}); } d.canonical_json = canonical(Parser(json).parse()); return d;
 }
 std::string normalize(const std::string& json) { return parse(json).canonical_json; }
+
+AdapterResponse parse_adapter_response(const std::string& json) {
+  const auto root = Parser(json).parse();
+  const auto& object = obj(root, "");
+  strict_keys(object, {"protocol", "status", "observed_state", "returns", "stderr"}, "");
+  const auto* protocol = std::get_if<std::int64_t>(&required(object, "protocol", "").data);
+  if (protocol == nullptr || *protocol != 1) invalid("/protocol", "expected integer 1");
+  AdapterResponse response; response.protocol = 1; response.status = text(object, "status", "");
+  const auto& state = required(object, "observed_state", "").data;
+  if (const auto* value = std::get_if<std::string>(&state)) response.observed_state = *value;
+  else if (!std::holds_alternative<std::nullptr_t>(state)) invalid("/observed_state", "expected string or null");
+  const auto& returns = obj(required(object, "returns", ""), "/returns");
+  for (const auto& [name, value] : returns) {
+    model::Scalar scalar;
+    if (std::holds_alternative<std::nullptr_t>(value.data)) scalar.kind = model::Scalar::Kind::null_value;
+    else if (const auto* boolean = std::get_if<bool>(&value.data)) { scalar.kind = model::Scalar::Kind::boolean; scalar.boolean_value = *boolean; }
+    else if (const auto* integer = std::get_if<std::int64_t>(&value.data)) { scalar.kind = model::Scalar::Kind::integer; scalar.integer_value = *integer; }
+    else if (const auto* number = std::get_if<double>(&value.data)) { scalar.kind = model::Scalar::Kind::number; scalar.number_value = *number; }
+    else if (const auto* string = std::get_if<std::string>(&value.data)) { scalar.kind = model::Scalar::Kind::string; scalar.string_value = *string; }
+    else invalid("/returns", "expected scalar values");
+    response.returns.emplace(name, std::move(scalar));
+  }
+  const auto& stderr_value = required(object, "stderr", "").data;
+  if (const auto* stderr_text = std::get_if<std::string>(&stderr_value)) response.stderr_output = *stderr_text;
+  else invalid("/stderr", "expected string");
+  if (response.status != "ok" && response.status != "mismatch" && response.status != "error") invalid("/status", "unsupported adapter status");
+  return response;
+}
 }

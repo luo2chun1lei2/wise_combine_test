@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
   if (argc > 3) o.step_timeout_ms = static_cast<std::size_t>(std::stoul(argv[3]));
   const auto r = wise::runtime::execute(m, flow, o);
   const std::string mode = argc > 2 ? argv[2] : "ok";
-  if (mode == "ok") assert(r.status == wise::runtime::Status::passed);
+  if (mode == "ok" || mode == "formatted") assert(r.status == wise::runtime::Status::passed);
   else if (mode == "mismatch") assert(r.status == wise::runtime::Status::mismatch);
   else if (mode == "error") assert(r.status == wise::runtime::Status::adapter_error);
   else if (mode == "malformed" || mode == "extra" || mode == "unknown-status" || mode == "duplicate-status") assert(r.status == wise::runtime::Status::protocol_error);

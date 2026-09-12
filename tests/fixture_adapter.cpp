@@ -27,5 +27,6 @@ int main(int argc, char** argv) {
   if (mode == "mismatch") { std::cerr << "adapter mismatch\n"; std::cout << "{\"protocol\":1,\"status\":\"mismatch\",\"observed_state\":\"wrong\",\"returns\":{},\"stderr\":\"\"}\n"; return 0; }
   if (mode == "unknown-status") { std::cout << "{\"protocol\":1,\"status\":\"unknown\",\"observed_state\":\"done\",\"returns\":{},\"stderr\":\"\"}\n"; return 0; }
   if (mode == "duplicate-status") { std::cout << "{\"protocol\":1,\"status\":\"ok\",\"status\":\"mismatch\",\"observed_state\":\"done\",\"returns\":{},\"stderr\":\"\"}\n"; return 0; }
+  if (mode == "formatted") { std::cout << "{ \"stderr\": \"\", \"returns\": { }, \"observed_state\": \"done\", \"status\": \"ok\", \"protocol\": 1 }\n"; return 0; }
   std::cout << "{\"protocol\":1,\"status\":\"ok\",\"observed_state\":\"done\",\"returns\":{},\"stderr\":\"\"}\n"; return 0;
 }
