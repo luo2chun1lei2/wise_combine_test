@@ -141,13 +141,22 @@ add_test(NAME cli_verify_report_invalid COMMAND ${CMAKE_COMMAND}
   -DCLI=$<TARGET_FILE:wise-combine>
   -DCASE_DIR=${CMAKE_CURRENT_BINARY_DIR}/invalid-report
   -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/verify_report_invalid.cmake)
+foreach(evaluation_mutant RANGE 0 6)
+  add_executable(adapter_eval_${evaluation_mutant} tests/evaluation/queue_adapter.cpp)
+  target_compile_definitions(adapter_eval_${evaluation_mutant} PRIVATE MUTANT=${evaluation_mutant})
+  target_link_libraries(adapter_eval_${evaluation_mutant} PRIVATE wise-combine-compile-options)
+  set_target_properties(adapter_eval_${evaluation_mutant} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/tests/fixtures/bin")
+endforeach()
 foreach(evaluation_scenario RANGE 1 6)
   add_test(NAME evaluation_q${evaluation_scenario} COMMAND ${CMAKE_COMMAND}
     -DCLI=$<TARGET_FILE:wise-combine>
-    -DCXX_COMPILER=${CMAKE_CXX_COMPILER}
+    -DCLEAN_ADAPTER=$<TARGET_FILE:adapter_eval_0>
+    -DMUTANT_ADAPTER=$<TARGET_FILE:adapter_eval_${evaluation_scenario}>
     -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
     -DCASE_DIR=${CMAKE_CURRENT_BINARY_DIR}/evaluation-q${evaluation_scenario}
     -DSCENARIO=${evaluation_scenario}
     -DMUTANT=${evaluation_scenario}
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/evaluation/run_case.cmake)
+  set_tests_properties(evaluation_q${evaluation_scenario} PROPERTIES TIMEOUT 30)
 endforeach()
