@@ -98,6 +98,8 @@ add_test(NAME runtime_pass COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-
 add_test(NAME runtime_mismatch COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> mismatch)
 add_test(NAME runtime_malformed COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> malformed)
 add_test(NAME runtime_extra_json COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> extra)
+add_test(NAME runtime_unknown_status COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> unknown-status)
+add_test(NAME runtime_adapter_error COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> error)
 add_test(NAME runtime_timeout COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> timeout 100)
 add_test(NAME runtime_crash COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> crash)
 add_test(NAME runtime_output_cap COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> cap)

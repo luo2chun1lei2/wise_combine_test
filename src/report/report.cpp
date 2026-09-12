@@ -4,7 +4,7 @@
 #include <sstream>
 #include <stdexcept>
 namespace wise::report {
-namespace { const char* name(runtime::Status s) { switch (s) { case runtime::Status::passed:return "passed"; case runtime::Status::mismatch:return "mismatch"; case runtime::Status::protocol_error:return "protocol_error"; case runtime::Status::timeout:return "timeout"; case runtime::Status::crashed:return "crashed"; default:return "launch_error"; } } }
+namespace { const char* name(runtime::Status s) { switch (s) { case runtime::Status::passed:return "passed"; case runtime::Status::mismatch:return "mismatch"; case runtime::Status::protocol_error:return "protocol_error"; case runtime::Status::adapter_error:return "adapter_error"; case runtime::Status::timeout:return "timeout"; case runtime::Status::crashed:return "crashed"; default:return "launch_error"; } } }
 std::string json(const runtime::RunResult& r) {
   auto esc = [](const std::string& s) { std::ostringstream o; for (unsigned char c : s) { switch (c) { case '"': o << "\\\""; break; case '\\': o << "\\\\"; break; case '\n': o << "\\n"; break; case '\r': o << "\\r"; break; case '\t': o << "\\t"; break; default: if (c < 0x20) o << "\\u00" << std::hex << static_cast<int>(c); else o << c; } } return o.str(); };
   std::ostringstream o; o << "{\"flow_id\":\"" << esc(r.flow_id) << "\",\"status\":\"" << name(r.status) << "\",\"steps\":[";

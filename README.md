@@ -99,6 +99,10 @@ diagnostic pointer. `max_cases` may be zero; `max_steps` and
 
 ## Adapter contract and safety
 
+An adapter `status` of `mismatch` yields exit code `4`. A valid `error`
+response is reported as `adapter_error` with exit code `5`; an unknown status
+is reported as `protocol_error`, also with exit code `5`.
+
 The adapter is an executable receiving one line on stdin:
 
 ```json

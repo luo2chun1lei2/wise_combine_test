@@ -10,7 +10,7 @@
 
 namespace wise::runtime {
 
-enum class Status { passed, mismatch, protocol_error, timeout, crashed, launch_error };
+enum class Status { passed, mismatch, protocol_error, adapter_error, timeout, crashed, launch_error };
 
 struct StepResult {
   Status status{Status::launch_error};

@@ -88,6 +88,9 @@ cmake --build build --parallel
 
 ## 适配器协议与安全
 
+适配器 `status` 为 `mismatch` 时退出码为 `4`。合法的 `error` 响应记录为
+`adapter_error`，退出码为 `5`；未知状态记录为 `protocol_error`，退出码也为 `5`。
+
 适配器是一个可执行文件，从标准输入接收一行 JSON：
 
 ```json
