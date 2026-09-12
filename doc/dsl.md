@@ -54,6 +54,8 @@ resource FileHandle {
   ctype: "int"
   states: CLOSED, OPEN
   initial: CLOSED
+  var open_count = 0
+  list items = []
 }
 ```
 
@@ -61,6 +63,8 @@ resource FileHandle {
 - `states`：资源的所有状态。
 - `initial`：资源的初始状态。
 - `observe`：可选，一个返回状态名字符串的 C 函数，用于在每次状态变化后校验实际状态。
+- `var 名称 = 整数`：可选，声明一个整数状态变量，初值为给定整数。
+- `list 名称 = [整数, ...]`：可选，声明一个整数列表状态变量，初值为给定列表。
 
 ## 6. func：函数
 
@@ -70,6 +74,7 @@ func 函数名(参数, ...) -> 返回类型 {
   signature: "完整 C 函数原型"
   requires: [条件, ...]
   effects: [效果, ...]
+  update: [更新表达式, ...]
   success: [返回值条件]
 }
 ```
@@ -78,6 +83,7 @@ func 函数名(参数, ...) -> 返回类型 {
 - `signature`：完整 C 函数原型，用于生成调用代码。
 - `requires`：调用前必须满足的资源状态条件，为空表示无条件。
 - `effects`：调用后资源状态的变化，为空表示所有资源状态不变。
+- `update`：调用后对 `var`/`list` 状态变量的更新，多个更新用逗号分隔。
 - `success`：调用后对原始 C 返回值的判定；不满足即判定该序列失败并终止。可以写 `true`、`false`，也可以写比较表达式。
 
 参数形式为 `名称: 类型`，值参数可以附加取值来源：`名称: 类型 from 来源`。输出缓冲区参数写成 `out 名称: 类型`，表示该参数由函数写入，生成桩代码时会为其分配可写缓冲区。
@@ -87,6 +93,8 @@ func 函数名(参数, ...) -> 返回类型 {
 - 条件形式：`<参数名> is <状态>`，多个条件用逗号分隔。
 - 效果形式：`<参数名> -> <状态>` 或 `result -> <状态>`，多个效果用逗号分隔。
 - 成功判定形式：`true`、`false`，或对 `result`/参数/常量/NULL 的比较表达式，例如 `result == 0`、`result >= 0`、`result != NULL`、`result == nmemb`；多个比较可用 `&&`、`||` 和括号组合。
+- 整数状态变量可直接作为操作数，列表状态变量可用 `len(列表)` 表示长度、`front(列表)` 表示队首元素。
+- 更新表达式形式：`var = 值`、`var += 值`、`var -= 值`、`list << 值`（追加）、`list >>`（弹出队首）。`值` 可以是整数、参数名或 `result`。
 - `result` 是关键字：在 `effects` 中表示返回值对应的资源实例；在 `success` 中表示原始 C 返回值。
 
 ## 8. 语义
@@ -184,6 +192,8 @@ func close(h: FileHandle) -> int {
 - `--harness-json`：harness 失败时输出结构化 JSON。
 - `--dylib`：生成需要动态加载被测库的 C harness 代码。
 - `--replay N`：输出第 N 个合法序列的 harness，便于复现。
+- `--sequence "f(...);..."`：按给定调用序列直接生成 harness，跳过序列枚举。
+- `--timeout N`：生成 harness 时单个序列的墙钟超时秒数，默认 10；0 表示不超时。
 
 
 ## 11. 相关决定

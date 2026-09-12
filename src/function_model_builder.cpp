@@ -1,5 +1,6 @@
 #include "function_model_builder.h"
 
+#include <cctype>
 #include <set>
 
 namespace {
@@ -15,6 +16,73 @@ bool contains(const std::vector<std::string> &vec, const std::string &value) {
     }
   }
   return false;
+}
+
+std::string trimCopy(const std::string &s) {
+  const auto first = s.find_first_not_of(" \t\r\n");
+  if (first == std::string::npos) {
+    return "";
+  }
+  const auto last = s.find_last_not_of(" \t\r\n");
+  return s.substr(first, last - first + 1);
+}
+
+bool parseUpdate(const std::string &text, model::Update &update, std::string &error) {
+  const std::string s = trimCopy(text);
+  if (s.empty()) {
+    error = "empty update expression";
+    return false;
+  }
+
+  std::size_t pos = std::string::npos;
+  model::Update::Kind kind = model::Update::Set;
+  if ((pos = s.rfind(">>")) != std::string::npos) {
+    kind = model::Update::PopFront;
+    update.target = trimCopy(s.substr(0, pos));
+  } else if ((pos = s.rfind("<<")) != std::string::npos) {
+    kind = model::Update::Append;
+    update.target = trimCopy(s.substr(0, pos));
+    update.valueName = trimCopy(s.substr(pos + 2));
+  } else if ((pos = s.rfind("+=")) != std::string::npos) {
+    kind = model::Update::Add;
+    update.target = trimCopy(s.substr(0, pos));
+    update.valueName = trimCopy(s.substr(pos + 2));
+  } else if ((pos = s.rfind("-=")) != std::string::npos) {
+    kind = model::Update::Sub;
+    update.target = trimCopy(s.substr(0, pos));
+    update.valueName = trimCopy(s.substr(pos + 2));
+  } else if ((pos = s.rfind('=')) != std::string::npos) {
+    kind = model::Update::Set;
+    update.target = trimCopy(s.substr(0, pos));
+    update.valueName = trimCopy(s.substr(pos + 1));
+  } else {
+    error = "unknown update operator in: " + s;
+    return false;
+  }
+
+  update.kind = kind;
+  if (update.target.empty()) {
+    error = "missing update target in: " + s;
+    return false;
+  }
+  if (kind != model::Update::PopFront && update.valueName.empty()) {
+    error = "missing update value in: " + s;
+    return false;
+  }
+  if (kind != model::Update::PopFront) {
+    bool numeric = true;
+    for (char c : update.valueName) {
+      if (!std::isdigit(static_cast<unsigned char>(c)) && c != '-') {
+        numeric = false;
+        break;
+      }
+    }
+    if (numeric) {
+      update.value = std::stoi(update.valueName);
+      update.valueName.clear();
+    }
+  }
+  return true;
 }
 
 }  // namespace
@@ -80,6 +148,16 @@ std::any FunctionModelBuilder::visitResourceBlock(FunctionDslParser::ResourceBlo
   for (auto *decl : ctx->observeDecl()) {
     resource.observe = decl->ID()->getText();
   }
+  for (auto *decl : ctx->varDecl()) {
+    resource.intVars[decl->ID()->getText()] = std::stoi(decl->INT()->getText());
+  }
+  for (auto *decl : ctx->listDecl()) {
+    std::vector<int> items;
+    for (auto *value : decl->INT()) {
+      items.push_back(std::stoi(value->getText()));
+    }
+    resource.listVars[decl->ID()->getText()] = items;
+  }
 
   model_.resources[resource.name] = resource;
   return nullptr;
@@ -133,6 +211,16 @@ std::any FunctionModelBuilder::visitFuncBlock(FunctionDslParser::FuncBlockContex
       function.success.expr = member->successDecl()->successExpr()->getText();
     } else if (member->receiverDecl() != nullptr) {
       function.receiver = member->receiverDecl()->ID()->getText();
+    } else if (member->updateDecl() != nullptr) {
+      for (auto *itemCtx : member->updateDecl()->updateItem()) {
+        model::Update update;
+        std::string error;
+        if (!parseUpdate(itemCtx->getText(), update, error)) {
+          model_.errors.push_back("function " + function.name + ": " + error);
+          continue;
+        }
+        function.updates.push_back(update);
+      }
     }
   }
 
@@ -279,6 +367,49 @@ void FunctionModelBuilder::validate() {
       auto it = model_.resources.find(paramType);
       if (it != model_.resources.end() && !contains(it->second.states, effect.state)) {
         model_.errors.push_back("function " + function.name + " effect uses unknown state: " + effect.state);
+      }
+    }
+
+    for (const auto &update : function.updates) {
+      bool isIntVar = false;
+      bool isListVar = false;
+      for (const auto &[resourceName, resource] : model_.resources) {
+        (void)resourceName;
+        if (resource.intVars.find(update.target) != resource.intVars.end()) {
+          isIntVar = true;
+        }
+        if (resource.listVars.find(update.target) != resource.listVars.end()) {
+          isListVar = true;
+        }
+      }
+      if (!isIntVar && !isListVar) {
+        model_.errors.push_back("function " + function.name + " updates unknown variable: " +
+                                update.target);
+        continue;
+      }
+      if ((update.kind == model::Update::Append || update.kind == model::Update::PopFront) &&
+          !isListVar) {
+        model_.errors.push_back("function " + function.name + " list update on non-list variable: " +
+                                update.target);
+      }
+      if ((update.kind == model::Update::Set || update.kind == model::Update::Add ||
+           update.kind == model::Update::Sub) &&
+          !isIntVar) {
+        model_.errors.push_back("function " + function.name + " integer update on non-integer variable: " +
+                                update.target);
+      }
+      if (!update.valueName.empty() && update.valueName != "result") {
+        bool isParam = false;
+        for (const auto &param : function.params) {
+          if (param.name == update.valueName) {
+            isParam = true;
+            break;
+          }
+        }
+        if (!isParam) {
+          model_.errors.push_back("function " + function.name + " update references unknown value: " +
+                                  update.valueName);
+        }
       }
     }
   }

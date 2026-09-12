@@ -131,8 +131,13 @@ void emitSetups(std::ostringstream &out, const model::Model &model, int &nextHan
   }
 }
 
-std::string translateSuccess(const std::map<std::string, std::string> &paramExpr,
-                             const std::string &returnVar, const std::string &expr) {
+std::string translateSuccess(const model::Model &model,
+                             const std::map<std::string, std::string> &paramExpr,
+                             const std::string &returnVar,
+                             const std::map<std::string, std::string> &stateExpr,
+                             const std::map<std::string, std::string> &listExpr,
+                             const std::string &expr) {
+  (void)model;
   std::string out;
   for (std::size_t i = 0; i < expr.size();) {
     const char c = expr[i];
@@ -145,6 +150,35 @@ std::string translateSuccess(const std::map<std::string, std::string> &paramExpr
       const std::string token = expr.substr(i, j - i);
       if (token == "result") {
         out += returnVar;
+      } else if (token == "len" || token == "front") {
+        std::size_t k = j;
+        while (k < expr.size() && std::isspace(static_cast<unsigned char>(expr[k]))) {
+          ++k;
+        }
+        if (k < expr.size() && expr[k] == '(') {
+          ++k;
+          while (k < expr.size() && std::isspace(static_cast<unsigned char>(expr[k]))) {
+            ++k;
+          }
+          std::size_t start = k;
+          while (k < expr.size() &&
+                 (std::isalnum(static_cast<unsigned char>(expr[k])) || expr[k] == '_')) {
+            ++k;
+          }
+          const std::string listName = expr.substr(start, k - start);
+          while (k < expr.size() && std::isspace(static_cast<unsigned char>(expr[k]))) {
+            ++k;
+          }
+          if (k < expr.size() && expr[k] == ')') {
+            const auto it = listExpr.find(listName);
+            if (it != listExpr.end()) {
+              out += (token == "len") ? (it->second + "_len") : (it->second + "[0]");
+              i = k + 1;
+              continue;
+            }
+          }
+        }
+        out += token;
       } else if (token == "true") {
         out += "1";
       } else if (token == "false") {
@@ -152,8 +186,15 @@ std::string translateSuccess(const std::map<std::string, std::string> &paramExpr
       } else if (token == "NULL") {
         out += "NULL";
       } else {
-        auto it = paramExpr.find(token);
-        out += (it != paramExpr.end()) ? it->second : token;
+        auto stateIt = stateExpr.find(token);
+        auto paramIt = paramExpr.find(token);
+        if (stateIt != stateExpr.end()) {
+          out += stateIt->second;
+        } else if (paramIt != paramExpr.end()) {
+          out += paramIt->second;
+        } else {
+          out += token;
+        }
       }
       i = j;
     } else if (std::isdigit(static_cast<unsigned char>(c))) {
@@ -323,6 +364,26 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
       out << "  " << cls.cpp << " obj_" << cls.name << ";\n";
     }
 
+    std::map<std::string, std::string> stateExpr;
+    std::map<std::string, std::string> listExpr;
+    for (const auto &[resourceName, resource] : model.resources) {
+      for (const auto &[varName, initial] : resource.intVars) {
+        const std::string cvar = "shadow_" + resourceName + "_" + varName;
+        out << "  int " << cvar << " = " << initial << ";\n";
+        stateExpr[varName] = cvar;
+      }
+      for (const auto &[varName, initial] : resource.listVars) {
+        const std::string base = "shadow_" + resourceName + "_" + varName;
+        out << "  int " << base << "[64];\n";
+        out << "  int " << base << "_len = 0;\n";
+        for (std::size_t idx = 0; idx < initial.size(); ++idx) {
+          out << "  " << base << "[" << idx << "] = " << initial[idx] << ";\n";
+        }
+        out << "  " << base << "_len = " << initial.size() << ";\n";
+        listExpr[varName] = base;
+      }
+    }
+
     int nextHandle = 0;
     emitSetups(out, model, nextHandle, dylib);
     for (std::size_t c = 0; c < seq.calls.size(); ++c) {
@@ -388,7 +449,8 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
       }
       out << "  " << callStmt << "\n";
 
-      const std::string success = translateSuccess(paramExpr, returnVar, fn.success.expr);
+      const std::string success =
+          translateSuccess(model, paramExpr, returnVar, stateExpr, listExpr, fn.success.expr);
       const bool hasSuccessActual = !fn.returnType.empty() && !returnVar.empty();
       const ActualValue successActual =
           hasSuccessActual ? actualValue(model, fn.returnType, returnVar) : ActualValue{};
@@ -437,6 +499,44 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
           } else {
             out << "  if (strcmp(" << observeFn << "(" << handleExpr << "), \"" << effect.state
                 << "\") != 0) { printf(\"FAIL " << s << " " << fn.name << " state\\n\"); return 1; }\n";
+          }
+        }
+      }
+
+      for (const auto &update : fn.updates) {
+        std::string valueExpr;
+        if (update.kind == model::Update::Set || update.kind == model::Update::Add ||
+            update.kind == model::Update::Sub || update.kind == model::Update::Append) {
+          if (update.valueName.empty()) {
+            valueExpr = std::to_string(update.value);
+          } else if (update.valueName == "result") {
+            valueExpr = returnVar;
+          } else {
+            valueExpr = paramExpr[update.valueName];
+          }
+        }
+
+        if (update.kind == model::Update::PopFront) {
+          const auto listIt = listExpr.find(update.target);
+          if (listIt != listExpr.end()) {
+            out << "  for (int _i = 1; _i < " << listIt->second << "_len; ++_i) { "
+                << listIt->second << "[_i - 1] = " << listIt->second << "[_i]; }\n";
+            out << "  if (" << listIt->second << "_len > 0) { " << listIt->second
+                << "_len -= 1; }\n";
+          }
+        } else if (update.kind == model::Update::Append) {
+          const auto listIt = listExpr.find(update.target);
+          if (listIt != listExpr.end()) {
+            out << "  " << listIt->second << "[" << listIt->second << "_len++] = " << valueExpr
+                << ";\n";
+          }
+        } else {
+          const auto stateIt = stateExpr.find(update.target);
+          if (stateIt != stateExpr.end()) {
+            const char *op = update.kind == model::Update::Add
+                                 ? " += "
+                                 : (update.kind == model::Update::Sub ? " -= " : " = ");
+            out << "  " << stateIt->second << op << valueExpr << ";\n";
           }
         }
       }

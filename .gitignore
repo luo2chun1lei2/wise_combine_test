@@ -71,3 +71,4 @@ Testing/
 
 .agents/
 test/oracle/results.tsv
+test/oracle/generation-probes.tsv

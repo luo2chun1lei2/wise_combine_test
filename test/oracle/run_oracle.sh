@@ -58,6 +58,38 @@ for case in q1 q2 q3 q4 q5 q6; do
   done
 done
 
+NATIVE_SEQUENCE='q_open();q_push(11);q_push(22);q_pop(0);q_pop(0);q_size(0)'
+for round in 1 2; do
+  for mutant in 0 2 5; do
+    work="$(mktemp -d)"
+    gcc -std=c11 -Wall -Wextra -DMUTANT="$mutant" -I"$ORACLE" \
+      -c "$ORACLE/queue_adapter.c" -o "$work/adapter.o"
+    "$BIN" "$ORACLE/native-q2.dsl" --sequence "$NATIVE_SEQUENCE" --harness \
+      > "$work/harness.c"
+    gcc -std=c11 -Wall -Wextra "$work/harness.c" "$work/adapter.o" -o "$work/test"
+
+    set +e
+    timeout 10s "$work/test" > "$work/result.log" 2>&1
+    rc=$?
+    set -e
+
+    if [[ "$mutant" == 0 ]]; then
+      expected=0
+    else
+      expected=1
+    fi
+
+    if [[ "$rc" == "$expected" ]]; then
+      status=PASS
+    else
+      status=FAIL
+    fi
+
+    printf '%s\t%s\t%s\t%s\n' "$round" "native-q2" "$mutant" "$status" >> "$OUT"
+    rm -rf "$work"
+  done
+done
+
 cat "$OUT"
 if grep -q '	FAIL' "$OUT"; then
   echo "unified oracle failed" >&2

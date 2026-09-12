@@ -39,6 +39,7 @@ test: $(BIN)
 
 oracle: $(BIN)
 	bash test/oracle/run_oracle.sh
+	bash test/oracle/generation_probes.sh
 
 ci: clean all test oracle
 

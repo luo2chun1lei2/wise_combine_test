@@ -20,6 +20,8 @@ struct Resource {
   std::vector<std::string> states;
   std::string initial;
   std::string observe;
+  std::map<std::string, int> intVars;
+  std::map<std::string, std::vector<int>> listVars;
 };
 
 struct Param {
@@ -43,6 +45,14 @@ struct SuccessExpr {
   std::string expr;
 };
 
+struct Update {
+  enum Kind { Set, Add, Sub, Append, PopFront };
+  Kind kind = Set;
+  std::string target;
+  int value = 0;
+  std::string valueName;
+};
+
 struct Function {
   std::string name;
   std::vector<Param> params;
@@ -52,6 +62,7 @@ struct Function {
   std::string receiver;
   std::vector<Cond> requiresConds;
   std::vector<Effect> effects;
+  std::vector<Update> updates;
   SuccessExpr success;
 };
 

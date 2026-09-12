@@ -23,7 +23,7 @@
 | `--events` 状态机执行 | Required | `--events` 回归 |
 | `--sequence` supplied-trigger | Required | `make oracle` 和 `observed.dsl --sequence` 回归 |
 | `--timeout` 子进程/进程组隔离 | Required | `slow.dsl` 超时回归 |
-| 函数 DSL 中的计数/集合/队列内容状态 | Unsupported | 通过 `--sequence` + adapter 桥接，见 `test/oracle/` |
+| 函数 DSL 中的整数/列表状态变量 | Advertised | `var`/`list`/`update` 与 `len`/`front`，见 `test/oracle/native-q2.dsl` |
 | 经典参数组合测试（t-way 参数组合、覆盖数组、PICT/ACTS） | Unsupported | `ai/proposal.md` 明确非目标 |
 | GUI | Unsupported | `ai/proposal.md` 明确非目标 |
 | 分布式、多线程函数调用序列 | Unsupported | `ai/proposal.md` 明确非目标 |
@@ -34,4 +34,3 @@
 - 编码：通过。
 - 测试：`make test` 与 `make oracle` 通过，故障注入覆盖 guard、超时、重复声明和负例。
 - 发布：有条件通过；`make ci` 作为发布前统一回归入口。
-

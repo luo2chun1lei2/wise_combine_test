@@ -36,6 +36,7 @@ int q_open(void) {
 
 int q_push1(void) { return enqueue(11); }
 int q_push2(void) { return enqueue(22); }
+int q_pushv(int value) { return enqueue(value); }
 
 int q_pop(void) {
   int i;
