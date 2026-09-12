@@ -26,3 +26,14 @@
 - 模型/提示版本：未采集。
 - 费用/token：未采集，尚不能计算 AI 净收益。
 - 人工复核：已确认 direct/standalone 能力边界和 oracle 判定口径。
+
+## 2026-09-12 覆盖率补测
+
+- 输入资料：覆盖率缺口、JSON parser 负例、模型错误分支和 Runner dry-run 路径。
+- 处理阶段：补充模型错误、约束运算符、trace 往返、严格 JSON 正负例和 dry-run 测试。
+- 验证命令：
+  - `make check`
+  - `make asan`
+  - `make coverage`
+- 结果：行覆盖率 80.10%，分支覆盖率 78.25%。
+- 模型/提示版本：未采集。

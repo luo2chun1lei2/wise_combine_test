@@ -306,6 +306,17 @@ int main() {
     assert(expect_parse_error("constraint state"));
     assert(expect_parse_error("constraint value(a.x"));
 
+    {
+        const std::string path = write_tmp(
+            "function g(config c)\n"
+            "parameter g.c = \"default\"\n"
+            "constraint value(g.c) == 'default'");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        assert(spec.value_constraints.size() == 1);
+        assert(spec.value_constraints[0].value == "default");
+    }
+
     assert(expect_model_error("function f()\nfunction f()"));
     assert(expect_parse_error("object x {\n state A initial\n state A\n}"));
     assert(expect_model_error("object x {\n state A initial\n}\nobject x {\n state A initial\n}"));
@@ -318,6 +329,48 @@ int main() {
     assert(expect_model_error("function f()\nmutex f g"));
     assert(expect_model_error("function f()\nconstraint count(g) == 1"));
     assert(expect_model_error("function f()\nconstraint bad"));
+    assert(expect_model_error(
+        "function f(a x)\n"
+        "parameter g.x = f.x"));
+    assert(expect_model_error(
+        "function f(a x)\n"
+        "parameter f.x = g.y"));
+    assert(expect_model_error(
+        "function f(a x)\n"
+        "function g(b y)\n"
+        "parameter f.x = g.y"));
+    assert(expect_model_error(
+        "object x {\n state A initial\n transition B -> A by f()\n}\n"
+        "function f()"));
+
+    {
+        wct::Parser parser("test/fixtures/valid.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        bool missing_function = false;
+        try {
+            model.function("missing");
+        } catch (const wct::ModelError&) {
+            missing_function = true;
+        }
+        assert(missing_function);
+        bool missing_object = false;
+        try {
+            model.object("missing");
+        } catch (const wct::ModelError&) {
+            missing_object = true;
+        }
+        assert(missing_object);
+    }
+
+    {
+        wct::RunnerOptions opts;
+        opts.dry_run = true;
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"f"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "not_executed");
+    }
 
     assert(expect_model_error(
         "function init() -> handle\n"
@@ -591,6 +644,68 @@ int main() {
                          wct::Flow{"f", "g"}) != flows.end());
         assert(std::find(flows.begin(), flows.end(),
                          wct::Flow{"g", "f"}) != flows.end());
+    }
+
+    {
+        const std::string path = write_tmp(
+            "function f()\n"
+            "constraint count(f) < 2");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        wct::Generator generator(model);
+        const auto flows = generator.generate_function_flows();
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{}) !=
+               flows.end());
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"f"}) !=
+               flows.end());
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"f", "f"}) ==
+               flows.end());
+    }
+
+    {
+        const std::string path = write_tmp(
+            "function f()\n"
+            "constraint count(f) <= 1");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        wct::Generator generator(model);
+        const auto flows = generator.generate_function_flows();
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"f"}) !=
+               flows.end());
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"f", "f"}) ==
+               flows.end());
+    }
+
+    {
+        const std::string path = write_tmp(
+            "function f()\n"
+            "constraint count(f) >= 1");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        wct::Generator generator(model);
+        const auto flows = generator.generate_function_flows();
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{}) ==
+               flows.end());
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"f"}) !=
+               flows.end());
+    }
+
+    {
+        const std::string path = write_tmp(
+            "function f()\n"
+            "constraint count(f) != 0");
+        wct::Parser parser(path);
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        wct::Generator generator(model);
+        const auto flows = generator.generate_function_flows();
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{}) ==
+               flows.end());
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"f"}) !=
+               flows.end());
     }
 
     {
