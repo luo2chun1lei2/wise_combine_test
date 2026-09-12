@@ -237,6 +237,8 @@ struct FlowResult {
     int exit_code = 0;
     std::string detail;
     std::string bindings;
+    std::string expected;
+    std::string actual;
 };
 
 struct RunnerOptions {

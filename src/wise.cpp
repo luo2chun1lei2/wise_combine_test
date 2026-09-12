@@ -2073,6 +2073,8 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
         if (response_status != "ok") {
             result.status = "failed";
             result.detail = "adapter reported " + response_status;
+            result.expected = "ok";
+            result.actual = response_status;
             result.bindings = flow_bindings(flow);
             return result;
         }
@@ -2083,6 +2085,9 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
             result.status = "failed";
             result.detail = "guard not satisfied for " + function +
                             " (return=" + std::to_string(return_value) + ")";
+            result.expected = "guard " + guard->second.op + " " +
+                              std::to_string(guard->second.value);
+            result.actual = std::to_string(return_value);
             result.bindings = flow_bindings(flow);
             return result;
         }
@@ -2096,6 +2101,8 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
                                 ": expected " +
                                 std::to_string(expected->second.value()) +
                                 ", got " + std::to_string(return_value);
+                result.expected = std::to_string(expected->second.value());
+                result.actual = std::to_string(return_value);
                 result.bindings = flow_bindings(flow);
                 return result;
             }
@@ -2103,6 +2110,8 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
             result.status = "failed";
             result.detail = "function returned non-zero: " + function + " (" +
                             std::to_string(return_value) + ")";
+            result.expected = "0";
+            result.actual = std::to_string(return_value);
             result.bindings = flow_bindings(flow);
             return result;
         }
@@ -2114,6 +2123,8 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
             result.detail = "output mismatch for " + function + ": expected \"" +
                             expected_output->second + "\", got \"" +
                             stdout_text + "\"";
+            result.expected = expected_output->second;
+            result.actual = stdout_text;
             result.bindings = flow_bindings(flow);
             return result;
         }
@@ -2385,6 +2396,8 @@ std::string render_report(const std::vector<FlowResult>& results,
                 << "\", \"status\": \"" << escape_json(r.status)
                 << "\", \"exit_code\": " << r.exit_code
                 << ", \"detail\": \"" << escape_json(r.detail)
+                << "\", \"expected\": \"" << escape_json(r.expected)
+                << "\", \"actual\": \"" << escape_json(r.actual)
                 << "\", \"bindings\": \"" << escape_json(r.bindings) << "\"}";
             if (i + 1 < results.size()) {
                 out << ",";
