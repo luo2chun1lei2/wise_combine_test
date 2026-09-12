@@ -202,7 +202,7 @@ int main() {
         bad.flow = {"h"};
         bad.status = "failed";
         bad.exit_code = 1;
-        bad.detail = "boom";
+        bad.detail = "a\"b\\c\nd\re\tf\x01";
         bad.bindings = "h.x = \"v\"";
         const std::string text =
             wct::render_report({ok, bad}, "text");
@@ -236,6 +236,27 @@ int main() {
     }
 
     {
+        wct::Spec spec;
+        spec.functions.push_back({"f", {{"x", "s"}}, "", "", 1});
+        wct::ParameterRel rel;
+        rel.lhs_func = "f";
+        rel.lhs_param = "x";
+        rel.rhs_is_const = true;
+        rel.rhs_const = "a\"b\\c\nd\re\tf\x01";
+        spec.parameters.push_back(rel);
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::RunnerOptions opts;
+        opts.adapter_path = "test/fixtures/adapter_json_cases.sh";
+        opts.adapter_args = {"ok"};
+        opts.spec = &model.spec();
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"f"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "passed");
+    }
+
+    {
         wct::LogOptions opts;
         opts.file = "/tmp/wise_test_rotation.log";
         opts.max_size = 64;
@@ -244,6 +265,19 @@ int main() {
             wct::Logger logger(opts);
             logger.log("info", "test", "flow", "one");
             logger.log("error", "test", "flow", "two");
+        }
+        std::ifstream in(opts.file);
+        assert(in.good());
+    }
+
+    {
+        wct::LogOptions opts;
+        opts.file = "/tmp/wise_test_rotation_multi.log";
+        opts.max_size = 32;
+        opts.rotate_count = 3;
+        wct::Logger logger(opts);
+        for (int i = 0; i < 8; ++i) {
+            logger.log("info", "test", "flow", std::string(64, 'x'));
         }
         std::ifstream in(opts.file);
         assert(in.good());
@@ -967,8 +1001,10 @@ int main() {
         wct::Model model(std::move(spec));
         model.validate();
         const std::vector<std::string> invalid = {
-            "trailing", "missing_status", "bad_return_type", "bad_returns",
-            "bad_stdout", "non_integer", "invalid_literal", "unexpected_char",
+            "trailing", "missing_status", "status_wrong_type",
+            "returns_missing", "bad_return_type", "bad_returns",
+            "bad_stdout", "stdout_wrong_type", "protocol_wrong_type",
+            "non_integer", "invalid_literal", "unexpected_char",
             "object_key", "missing_colon", "duplicate_key",
             "unterminated_object"};
         for (const auto& case_name : invalid) {

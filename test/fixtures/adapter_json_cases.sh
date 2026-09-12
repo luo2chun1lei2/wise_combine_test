@@ -8,6 +8,12 @@ case "$case_name" in
   missing_status)
     printf '%s\n' '{"protocol":1,"returns":{},"stdout":""}'
     ;;
+  status_wrong_type)
+    printf '%s\n' '{"protocol":1,"status":1,"returns":{},"stdout":""}'
+    ;;
+  returns_missing)
+    printf '%s\n' '{"protocol":1,"status":"ok","stdout":""}'
+    ;;
   bad_return_type)
     printf '%s\n' '{"protocol":1,"status":"ok","returns":{},"stdout":"","return":"0"}'
     ;;
@@ -16,6 +22,12 @@ case "$case_name" in
     ;;
   bad_stdout)
     printf '%s\n' '{"protocol":1,"status":"ok","returns":{}}'
+    ;;
+  stdout_wrong_type)
+    printf '%s\n' '{"protocol":1,"status":"ok","returns":{},"stdout":1}'
+    ;;
+  protocol_wrong_type)
+    printf '%s\n' '{"protocol":"1","status":"ok","returns":{},"stdout":""}'
     ;;
   non_integer)
     printf '%s\n' '{"protocol":1,"status":"ok","returns":{},"stdout":"","return":1.5}'
