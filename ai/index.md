@@ -11,6 +11,7 @@
 | DOC-005 | 函数 DSL | `doc/dsl.md` | 函数模型语法 | 2026-09-10 | 待提交 |
 | DOC-006 | 状态机 DSL | `doc/state-machine-dsl.md` | 状态机语法与 guard 语义 | 2026-09-12 | 待提交 |
 | DOC-007 | 构建/测试命令 | `README.md`、`Makefile` | 构建、测试、CLI | 2026-09-12 | 待提交 |
+| DOC-010 | JSON 报告结构 | `doc/report-schema.md` | `--json`/`--harness-json` 字段说明 | 2026-09-12 | 待提交 |
 | DOC-008 | AI 使用记录 | `ai/AI-USAGE.md` | AI 协助审计 | 2026-09-12 | 待提交 |
 | DOC-009 | AI 安全检查表 | `ai/ai-security-checklist.md` | 提示注入、凭证、许可、升级风险 | 2026-09-12 | 待提交 |
 
@@ -19,4 +20,3 @@
 - 引用资料时优先使用 ID，并标注版本或 commit。
 - 重大 DSL/CLI 变更需同步更新 DOC-005、DOC-006、DOC-007 和 DOC-003。
 - 每次 AI 协助任务在 `ai/AI-USAGE.md` 留痕，并在此处补充分支证据。
-
