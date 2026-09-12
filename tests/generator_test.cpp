@@ -6,7 +6,9 @@
 #include <vector>
 
 using wise::generate::GenerationStatus;
+using wise::generate::Flow;
 using wise::generate::generate;
+using wise::generate::validate_flow;
 using wise::model::Function;
 using wise::model::Model;
 using wise::model::ModelError;
@@ -144,6 +146,21 @@ void empty_model_emits_empty_flow() {
     throw std::runtime_error("zero case budget emitted empty flow");
 }
 
+void persisted_flow_validation_rejects_invalid_sequences() {
+  Model model = base_model();
+  model.add_transition(Transition{"finish", "start", "end", "f"});
+  validate_flow(model, generate(model, 0).flows.front());
+  const auto expect_reject = [&](Flow flow) {
+    try { validate_flow(model, flow); }
+    catch (const std::invalid_argument&) { return; }
+    throw std::runtime_error("invalid persisted flow accepted");
+  };
+  expect_reject(Flow{"x", {"unknown"}});
+  expect_reject(Flow{"x", {"finish", "finish"}});
+  model.set_limits({1, 1, 1});
+  expect_reject(Flow{"x", {"finish", "finish"}});
+}
+
 }  // namespace
 
 int main() {
@@ -155,6 +172,7 @@ int main() {
     ordering_cycle_is_rejected();
     zero_cases_is_explicit();
     empty_model_emits_empty_flow();
+    persisted_flow_validation_rejects_invalid_sequences();
   } catch (const std::exception& error) {
     std::cerr << "generator test failure: " << error.what() << '\n';
     return 1;
