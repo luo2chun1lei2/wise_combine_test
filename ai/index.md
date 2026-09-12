@@ -12,6 +12,7 @@
 | DOC-006 | 状态机 DSL | `doc/state-machine-dsl.md` | 状态机语法与 guard 语义 | 2026-09-12 | 待提交 |
 | DOC-007 | 构建/测试命令 | `README.md`、`Makefile` | 构建、测试、CLI | 2026-09-12 | 待提交 |
 | DOC-010 | JSON 报告结构 | `doc/report-schema.md` | `--json`/`--harness-json` 字段说明 | 2026-09-12 | 待提交 |
+| DOC-011 | 能力状态与边界 | `doc/capabilities.md` | Required/Advertised/Optional/Unsupported 矩阵 | 2026-09-12 | 待提交 |
 | DOC-008 | AI 使用记录 | `ai/AI-USAGE.md` | AI 协助审计 | 2026-09-12 | 待提交 |
 | DOC-009 | AI 安全检查表 | `ai/ai-security-checklist.md` | 提示注入、凭证、许可、升级风险 | 2026-09-12 | 待提交 |
 

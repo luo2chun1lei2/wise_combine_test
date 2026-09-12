@@ -29,6 +29,7 @@
 - `dsl.md`：函数调用序列 DSL 语法定义。
 - `state-machine-dsl.md`：状态机 DSL 语法定义。
 - `report-schema.md`：`--json` 和 `--harness-json` 输出字段说明。
+- `capabilities.md`：能力状态与边界矩阵。
 - `layout.md`：本文件，说明目录结构。
 - `examples/`：可运行的 DSL 示例模型。
   - `file-functions.dsl`：libc 文件函数组示例。

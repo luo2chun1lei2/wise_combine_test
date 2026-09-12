@@ -6,6 +6,7 @@
 - 状态机路径测试：根据状态图生成并执行不同长度和途径的路径。
 
 详细背景见 [doc/MBT.md](doc/MBT.md)，项目目标与范围见 [ai/proposal.md](ai/proposal.md)。
+能力状态与边界见 [doc/capabilities.md](doc/capabilities.md)。
 
 ## 目录结构
 
