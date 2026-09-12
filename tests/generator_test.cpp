@@ -156,6 +156,7 @@ void persisted_flow_validation_rejects_invalid_sequences() {
     throw std::runtime_error("invalid persisted flow accepted");
   };
   expect_reject(Flow{"x", {"unknown"}});
+  expect_reject(Flow{"wrong-id", {"finish"}});
   expect_reject(Flow{"x", {"finish", "finish"}});
   model.set_limits({1, 1, 1});
   expect_reject(Flow{"x", {"finish", "finish"}});

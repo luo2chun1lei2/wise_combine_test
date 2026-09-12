@@ -110,6 +110,11 @@ GenerationResult generate(const model::Model& model, std::uint64_t seed) {
 
 void validate_flow(const model::Model& model, const Flow& flow) {
   model.validate();
+  if (flow.transition_ids.empty()) {
+    if (!flow.flow_id.empty()) throw std::invalid_argument("empty flow must have empty flow_id");
+  } else if (flow.flow_id != flow.transition_ids.front()) {
+    throw std::invalid_argument("flow_id must match first transition");
+  }
   std::string state = model.initial_state();
   std::set<std::string> seen;
   for (const auto& id : flow.transition_ids) {
