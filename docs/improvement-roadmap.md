@@ -25,7 +25,7 @@
 - 项目知识库同步：`f2b7ff1`。`AGENTS.md` 已更新为当前实现目录、命令和维护边界。
 - Adapter 状态分类：`8e79eb5`。合法 `error`、`mismatch` 和未知状态已有独立回归；完整 JSON 语法解析仍待增强。
 - 合法 JSON 转义回归：`720483e`、当前增量。覆盖 Unicode surrogate、斜杠、引号、反斜杠、制表符和 CRLF 字符串。
-- 覆盖率构建入口：当前增量。CMake 提供 `WISE_COMBINE_ENABLE_COVERAGE`，使用编译器原生 instrumentation；覆盖率阈值仍待需求冻结。
+- 覆盖率构建入口：`18a17a0`。CMake 提供 `WISE_COMBINE_ENABLE_COVERAGE`，使用编译器原生插桩。项目可选要求已明确为 80%；启用插桩和测试通过本身不代表覆盖率达标，仍需度量与阈值检查。
 - 非自环重复：`acc1c4d`。合法状态循环可在 `max_steps` 内重走，并有 `A→B→A` 回归测试。
 - 报告实际参数：`04be12e`、`93dbd4e`。每个 step 的 effective args（含关系注入值）进入 JSON 报告，并保留字符串转义和浮点精度。
 - 重复 adapter 字段：`b859c59`。重复 `status` 字段会被拒绝为 protocol error，并有独立回归测试。
