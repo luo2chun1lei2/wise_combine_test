@@ -487,6 +487,10 @@ int main() {
                flows.end());
         assert(std::find(flows.begin(), flows.end(), wct::Flow{"b", "a"}) ==
                flows.end());
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{"b"}) !=
+               flows.end());
+        assert(std::find(flows.begin(), flows.end(), wct::Flow{}) !=
+               flows.end());
     }
 
     {
