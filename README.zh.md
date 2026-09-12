@@ -65,6 +65,9 @@ cmake --build build --parallel
 生成器使用 `seed` 对多个合法候选进行确定性打乱：相同规范和 seed 产生相同流程，
 存在多个候选时不同 seed 可能产生不同顺序。
 
+如果合法模型没有任何 transition 且 `max_cases` 为正数，生成器会产生一条可执行的
+空流程，其 `flow_id` 为空；`max_cases` 为零时仍不会产生流程。
+
 顶层 JSON 对象包含 `version: 1`、`states`、`initial_state`、`transitions`、
 `functions`、`relations`、`limits` 和 `seed` 字段。对象和数组在适用时会按稳定的
 字典序规范化。

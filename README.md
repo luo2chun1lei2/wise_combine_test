@@ -75,6 +75,10 @@ The generator uses `seed` to deterministically shuffle multiple legal choices:
 the same specification and seed produce the same flows, while different seeds
 may choose a different order when alternatives exist.
 
+If a valid model has no transitions and `max_cases` is positive, the generator
+emits one executable empty flow with an empty `flow_id`; a zero `max_cases`
+budget still emits no flows.
+
 The top-level JSON object has `version: 1`, `states`, `initial_state`,
 `transitions`, `functions`, `relations`, `limits`, and `seed`. Objects and
 arrays are normalized into stable lexicographic order where applicable.
