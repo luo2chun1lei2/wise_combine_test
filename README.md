@@ -62,6 +62,7 @@ regressions, not proof of exhaustive automatic coverage.
 ./build/wise-combine report reports/relation-0.txt
 ./build/wise-combine verify-report reports/relation-0.json
 ./build/wise-combine verify-report reports/relation-summary.json
+./build/wise-combine hash-report reports/relation-0.json
 ```
 
 `validate` and `generate` print JSON containing wall time, CPU time, and peak
@@ -71,6 +72,8 @@ same measurement fields plus the input `seed` and `schema_version: 1`. The repor
 report without changing it.
 Each report step includes `expected_state` alongside `observed_state`, so a
 mismatch report records the state oracle used for that step.
+`hash-report` prints a SHA-256 digest of the exact report bytes for external
+integrity comparison; it does not authenticate the source.
 `verify-report` also validates run summaries: counters, seed and measurements
 must be non-negative integers, and `passed + failed` must equal `case_count`.
 This checks structure and consistency, not authenticity or cryptographic integrity.
