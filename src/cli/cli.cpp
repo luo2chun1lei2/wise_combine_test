@@ -259,6 +259,10 @@ int command_wrap_report_v2(const std::string& path) {
 }  // namespace
 
 int run(int argc, char** argv) {
+  if (argc == 2 && (std::string(argv[1]) == "help" || std::string(argv[1]) == "--help")) {
+    usage(std::cout);
+    return 0;
+  }
   if (argc < 3) { usage(std::cerr); return kUsageError; }
   const std::string command = argv[1];
   if (command == "validate" && argc == 3) return command_validate(argv[2]);
