@@ -1,5 +1,7 @@
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <optional>
@@ -13,6 +15,7 @@
 #include "StateMachineDslParser.h"
 #include "antlr4-runtime.h"
 #include "function_model_builder.h"
+#include "guard.h"
 #include "harness_generator.h"
 #include "sequence_generator.h"
 #include "state_machine_builder.h"
@@ -20,9 +23,32 @@
 
 namespace {
 
+constexpr const char *kToolVersion = "0.2";
+
+std::string modelHash(const std::string &text) {
+  std::uint64_t hash = 1469598103934665603ULL;
+  for (unsigned char c : text) {
+    hash ^= c;
+    hash *= 1099511628211ULL;
+  }
+  char buf[17] = {0};
+  std::snprintf(buf, sizeof(buf), "%016llx",
+                static_cast<unsigned long long>(hash));
+  return buf;
+}
+
 std::string ltrim(const std::string &s) {
   const auto pos = s.find_first_not_of(" \t\r\n");
   return pos == std::string::npos ? "" : s.substr(pos);
+}
+
+std::string trim(const std::string &s) {
+  const auto first = s.find_first_not_of(" \t\r\n");
+  if (first == std::string::npos) {
+    return "";
+  }
+  const auto last = s.find_last_not_of(" \t\r\n");
+  return s.substr(first, last - first + 1);
 }
 
 std::string firstKeyword(const std::string &s) {
@@ -85,163 +111,123 @@ std::vector<std::string> splitCsv(const std::string &s) {
   return out;
 }
 
-bool isNumber(const std::string &s) {
-  if (s.empty()) {
-    return false;
-  }
-  std::size_t i = (s[0] == '-') ? 1 : 0;
-  if (i == s.size()) {
-    return false;
-  }
-  for (; i < s.size(); ++i) {
-    if (!std::isdigit(static_cast<unsigned char>(s[i]))) {
-      return false;
+bool parseFunctionSequence(const model::Model &model, const std::string &text,
+                           gen::Sequence &sequence, std::string &error) {
+  sequence.calls.clear();
+  std::string rest = text;
+  while (!rest.empty()) {
+    const std::size_t semi = rest.find(';');
+    std::string item = trim(rest.substr(0, semi));
+    if (!item.empty()) {
+      const std::size_t open = item.find('(');
+      const std::size_t close = item.rfind(')');
+      if (open == std::string::npos || close == std::string::npos || close < open) {
+        error = "invalid call in --sequence: " + item;
+        return false;
+      }
+      const std::string name = trim(item.substr(0, open));
+      const std::string argsText = item.substr(open + 1, close - open - 1);
+
+      const model::Function *function = nullptr;
+      for (const auto &fn : model.functions) {
+        if (fn.name == name) {
+          function = &fn;
+          break;
+        }
+      }
+      if (function == nullptr) {
+        error = "unknown function in --sequence: " + name;
+        return false;
+      }
+
+      std::vector<std::string> argTokens;
+      if (!trim(argsText).empty()) {
+        std::size_t start = 0;
+        while (start <= argsText.size()) {
+          const std::size_t comma = argsText.find(',', start);
+          const std::size_t end = (comma == std::string::npos) ? argsText.size() : comma;
+          argTokens.push_back(trim(argsText.substr(start, end - start)));
+          if (comma == std::string::npos) {
+            break;
+          }
+          start = comma + 1;
+        }
+      }
+      if (argTokens.size() != function->params.size()) {
+        error = "argument count mismatch in --sequence for " + name;
+        return false;
+      }
+
+      gen::Call call;
+      call.function = name;
+      for (std::size_t i = 0; i < function->params.size(); ++i) {
+        const std::string &token = argTokens[i];
+        const bool isResource =
+            model.resources.find(function->params[i].type) != model.resources.end();
+        if (isResource) {
+          call.resourceArgs.push_back(token == "_" ? -1 : std::stoi(token));
+          call.values.push_back("");
+        } else {
+          call.resourceArgs.push_back(-1);
+          call.values.push_back(token == "_" ? "" : token);
+        }
+      }
+      sequence.calls.push_back(call);
     }
+    if (semi == std::string::npos) {
+      break;
+    }
+    rest = rest.substr(semi + 1);
+  }
+  if (sequence.calls.empty()) {
+    error = "empty --sequence";
+    return false;
   }
   return true;
 }
 
-bool evalGuard(const std::string &guard, const std::map<std::string, std::string> &values) {
-  if (guard.empty()) {
-    return true;
-  }
-
-  struct Token {
-    std::string text;
-    std::string kind;  // "id" | "num" | "str" | "op"
-  };
-  std::vector<Token> tokens;
-  for (std::size_t i = 0; i < guard.size();) {
-    const char c = guard[i];
-    if (std::isspace(static_cast<unsigned char>(c))) {
-      ++i;
-    } else if (std::isalpha(static_cast<unsigned char>(c)) || c == '_') {
-      std::size_t j = i;
-      while (j < guard.size() &&
-             (std::isalnum(static_cast<unsigned char>(guard[j])) || guard[j] == '_')) {
-        ++j;
-      }
-      tokens.push_back({guard.substr(i, j - i), "id"});
-      i = j;
-    } else if (std::isdigit(static_cast<unsigned char>(c))) {
-      std::size_t j = i;
-      while (j < guard.size() && std::isdigit(static_cast<unsigned char>(guard[j]))) {
-        ++j;
-      }
-      tokens.push_back({guard.substr(i, j - i), "num"});
-      i = j;
-    } else if (c == '"') {
-      std::size_t j = i + 1;
-      while (j < guard.size() && guard[j] != '"') {
-        ++j;
-      }
-      if (j < guard.size()) {
-        ++j;
-      }
-      tokens.push_back({guard.substr(i, j - i), "str"});
-      i = j;
-    } else if (i + 1 < guard.size() &&
-               (guard.substr(i, 2) == "==" || guard.substr(i, 2) == "!=" ||
-                guard.substr(i, 2) == ">=" || guard.substr(i, 2) == "<=" ||
-                guard.substr(i, 2) == "&&" || guard.substr(i, 2) == "||")) {
-      tokens.push_back({guard.substr(i, 2), "op"});
-      i += 2;
-    } else if (c == '>' || c == '<' || c == '(' || c == ')') {
-      tokens.push_back({std::string(1, c), "op"});
-      ++i;
-    } else {
-      ++i;
-    }
-  }
-
-  std::size_t index = 0;
-  auto peek = [&]() -> const Token * {
-    return index < tokens.size() ? &tokens[index] : nullptr;
-  };
-  auto consume = [&](const std::string &text) -> bool {
-    if (peek() != nullptr && peek()->text == text) {
-      ++index;
-      return true;
-    }
+bool parseNonNegativeInt(const std::string &text, int &out) {
+  if (text.empty()) {
     return false;
-  };
+  }
+  for (char c : text) {
+    if (!std::isdigit(static_cast<unsigned char>(c))) {
+      return false;
+    }
+  }
+  std::size_t pos = 0;
+  try {
+    const long long value = std::stoll(text, &pos);
+    if (pos != text.size() || value < 0 || value > 2147483647LL) {
+      return false;
+    }
+    out = static_cast<int>(value);
+    return true;
+  } catch (const std::exception &) {
+    return false;
+  }
+}
 
-  std::function<bool()> parseOr;
-  std::function<bool()> parseAnd;
-  std::function<bool()> parsePrimary;
-
-  parsePrimary = [&]() -> bool {
-    if (consume("(")) {
-      const bool value = parseOr();
-      consume(")");
-      return value;
+bool parseNonNegativeUnsigned(const std::string &text, unsigned &out) {
+  if (text.empty()) {
+    return false;
+  }
+  for (char c : text) {
+    if (!std::isdigit(static_cast<unsigned char>(c))) {
+      return false;
     }
-    const Token *left = peek();
-    if (left == nullptr || left->kind != "id") {
-      return true;
+  }
+  std::size_t pos = 0;
+  try {
+    const unsigned long long value = std::stoull(text, &pos);
+    if (pos != text.size() || value > 4294967295ULL) {
+      return false;
     }
-    ++index;
-    const Token *op = peek();
-    if (op == nullptr || op->kind != "op") {
-      return true;
-    }
-    ++index;
-    const Token *right = peek();
-    std::string rightValue;
-    if (right == nullptr) {
-      return true;
-    }
-    if (right->kind == "num") {
-      rightValue = right->text;
-    } else if (right->kind == "str") {
-      rightValue = right->text.substr(1, right->text.size() - 2);
-    } else if (right->kind == "id") {
-      auto it = values.find(right->text);
-      rightValue = it != values.end() ? it->second : right->text;
-    } else {
-      return true;
-    }
-    ++index;
-
-    auto it = values.find(left->text);
-    if (it == values.end()) {
-      return true;
-    }
-    const std::string leftValue = it->second;
-
-    if (op->text == "==") return leftValue == rightValue;
-    if (op->text == "!=") return leftValue != rightValue;
-    if (isNumber(leftValue) && isNumber(rightValue)) {
-      const long long a = std::stoll(leftValue);
-      const long long b = std::stoll(rightValue);
-      if (op->text == ">") return a > b;
-      if (op->text == ">=") return a >= b;
-      if (op->text == "<") return a < b;
-      return a <= b;
-    }
-    if (op->text == ">") return leftValue > rightValue;
-    if (op->text == ">=") return leftValue >= rightValue;
-    if (op->text == "<") return leftValue < rightValue;
-    return leftValue <= rightValue;
-  };
-
-  parseAnd = [&]() -> bool {
-    bool value = parsePrimary();
-    while (consume("&&")) {
-      value = parsePrimary() && value;
-    }
-    return value;
-  };
-
-  parseOr = [&]() -> bool {
-    bool value = parseAnd();
-    while (consume("||")) {
-      value = parseAnd() || value;
-    }
-    return value;
-  };
-
-  return parseOr();
+    out = static_cast<unsigned>(value);
+    return true;
+  } catch (const std::exception &) {
+    return false;
+  }
 }
 
 std::string transitionKey(const smodel::Transition &t) {
@@ -267,7 +253,7 @@ void collectNswitch(const smodel::StateMachine &machine, const std::string &stat
 int runFunction(const std::string &text, int maxLength, unsigned seed, bool json, bool negative,
                 int maxCases, bool coverage, bool harness, bool dylib, bool randomAlgorithm,
                 bool bfsAlgorithm, bool bindRandom, bool cover, int replayIndex, bool harnessJson,
-                int tWay) {
+                int tWay, int timeoutSeconds, const std::string &sequenceText) {
   antlr4::ANTLRInputStream input(text);
   FunctionDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -281,17 +267,28 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
 
   FunctionModelBuilder builder;
   model::Model m = builder.build(tree);
-  gen::SequenceGenerator generator(m, maxLength, seed, negative, maxCases);
-  generator.setBindRandom(bindRandom);
   std::vector<gen::Sequence> sequences;
-  if (bfsAlgorithm) {
-    sequences = generator.generateBfs();
-  } else if (randomAlgorithm) {
-    sequences = generator.generateRandom(seed, maxCases);
+  std::vector<gen::Sequence> negativeSequences;
+  if (!sequenceText.empty()) {
+    gen::Sequence supplied;
+    std::string error;
+    if (!parseFunctionSequence(m, sequenceText, supplied, error)) {
+      std::cerr << error << std::endl;
+      return 1;
+    }
+    sequences.push_back(supplied);
   } else {
-    sequences = generator.generate();
+    gen::SequenceGenerator generator(m, maxLength, seed, negative, maxCases);
+    generator.setBindRandom(bindRandom);
+    if (bfsAlgorithm) {
+      sequences = generator.generateBfs();
+    } else if (randomAlgorithm) {
+      sequences = generator.generateRandom(seed, maxCases);
+    } else {
+      sequences = generator.generate();
+    }
+    negativeSequences = generator.negativeSequences();
   }
-  const std::vector<gen::Sequence> &negativeSequences = generator.negativeSequences();
 
   if (replayIndex >= 0) {
     if (replayIndex >= static_cast<int>(sequences.size())) {
@@ -299,12 +296,12 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
       return 1;
     }
     std::vector<gen::Sequence> one{sequences[replayIndex]};
-    std::cout << harness::generate(m, one, false, harnessJson);
+    std::cout << harness::generate(m, one, false, harnessJson, timeoutSeconds);
     return 0;
   }
 
   if (harness) {
-    std::cout << harness::generate(m, sequences, dylib, harnessJson);
+    std::cout << harness::generate(m, sequences, dylib, harnessJson, timeoutSeconds);
     return 0;
   }
 
@@ -341,6 +338,9 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
       }
     }
     std::cout << "{\"kind\":\"function\"";
+    std::cout << ",\"version\":\"" << kToolVersion << "\"";
+    std::cout << ",\"model_hash\":\"" << modelHash(text) << "\"";
+    std::cout << ",\"seed\":" << seed;
     std::cout << ",\"types\":" << m.typeMap.size();
     std::cout << ",\"values\":" << m.values.size();
     std::cout << ",\"resources\":" << m.resources.size();
@@ -484,7 +484,7 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
                     bool randomAlgorithm, bool tourAlgorithm, bool bfsAlgorithm, unsigned seed, int maxCases,
                     const std::string &events, int replayIndex, int nSwitch,
                     const std::map<std::string, std::string> &guardValues, bool negative,
-                    bool harness) {
+                    bool harness, int timeoutSeconds) {
   antlr4::ANTLRInputStream input(text);
   StateMachineDslLexer lexer(&input);
   antlr4::CommonTokenStream tokens(&lexer);
@@ -510,10 +510,10 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
       std::cerr << "state machine harness requires --events" << std::endl;
       return 2;
     }
-    std::cout << harness::generateStateMachine(m, splitCsv(events));
+    std::cout << harness::generateStateMachine(m, splitCsv(events), guardValues, timeoutSeconds);
     return 0;
   }
-  spath::StateMachinePathGenerator generator(m, maxLength);
+  spath::StateMachinePathGenerator generator(m, maxLength, guardValues, maxCases);
   std::vector<spath::Path> paths;
   if (tourAlgorithm) {
     paths = generator.generateTour();
@@ -628,20 +628,38 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
 
     for (const auto &event : splitCsv(events)) {
       const smodel::Transition *chosen = nullptr;
+      std::string guardError;
       for (const auto &leaf : active) {
-        auto it = std::find_if(m.transitions.begin(), m.transitions.end(),
-                               [&](const smodel::Transition &t) {
-                                 return (t.from == leaf || smodel::isDescendantOf(m, leaf, t.from)) &&
-                                        t.event == event && evalGuard(t.guard, guardValues);
-                               });
-        if (it != m.transitions.end()) {
-          chosen = &*it;
+        for (const auto &transition : m.transitions) {
+          if (!(transition.from == leaf ||
+                smodel::isDescendantOf(m, leaf, transition.from))) {
+            continue;
+          }
+          if (transition.event != event) {
+            continue;
+          }
+          if (transition.guard.empty()) {
+            chosen = &transition;
+            break;
+          }
+          std::string error;
+          if (guard::evalGuard(transition.guard, guardValues, &error)) {
+            chosen = &transition;
+            break;
+          }
+          if (!error.empty()) {
+            guardError = error;
+          }
+        }
+        if (chosen != nullptr || !guardError.empty()) {
           break;
         }
       }
       if (chosen == nullptr) {
         failed = true;
-        failure = "no transition for event " + event + " in active states " + activeText();
+        failure = guardError.empty()
+                      ? "no transition for event " + event + " in active states " + activeText()
+                      : "guard " + guardError + " for event " + event;
         break;
       }
 
@@ -740,6 +758,9 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
       }
     }
     std::cout << "{\"kind\":\"state_machine\"";
+    std::cout << ",\"version\":\"" << kToolVersion << "\"";
+    std::cout << ",\"model_hash\":\"" << modelHash(text) << "\"";
+    std::cout << ",\"seed\":" << seed;
     std::cout << ",\"machine\":\"" << jsonEscape(m.name) << "\"";
     std::cout << ",\"states\":" << m.states.size();
     std::cout << ",\"events\":" << m.events.size();
@@ -760,6 +781,19 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
     if (negative) {
       std::cout << ",\"negative\":";
       printJsonStrings(negatives);
+    }
+    if (!generator.skippedGuards().empty()) {
+      const std::vector<std::string> skipped(generator.skippedGuards().begin(),
+                                             generator.skippedGuards().end());
+      std::cout << ",\"skipped_guards\":";
+      printJsonStrings(skipped);
+    }
+    if (tourAlgorithm && generator.truncated()) {
+      const std::vector<std::string> uncovered(generator.uncoveredTransitions().begin(),
+                                               generator.uncoveredTransitions().end());
+      std::cout << ",\"truncated\":true";
+      std::cout << ",\"uncovered_transitions\":";
+      printJsonStrings(uncovered);
     }
     std::cout << ",\"errors\":";
     printJsonStrings(m.errors);
@@ -861,6 +895,20 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
   for (const auto &path : paths) {
     std::cout << "  " << path.text() << std::endl;
   }
+  if (!generator.skippedGuards().empty()) {
+    std::cout << "skipped_guards: " << generator.skippedGuards().size() << std::endl;
+    for (const auto &reason : generator.skippedGuards()) {
+      std::cout << "  " << reason << std::endl;
+    }
+  }
+  if (tourAlgorithm && generator.truncated()) {
+    std::cout << "tour truncated: true" << std::endl;
+    std::cout << "uncovered_transitions: " << generator.uncoveredTransitions().size()
+              << std::endl;
+    for (const auto &transition : generator.uncoveredTransitions()) {
+      std::cout << "  " << transition << std::endl;
+    }
+  }
   if (coverage) {
     std::set<std::string> coveredStates;
     std::set<std::string> coveredTransitions;
@@ -913,6 +961,7 @@ int main(int argc, char **argv) {
               << " <model.dsl> [--max-length N] [--seed N] [--json] [--negative] [--coverage]"
               << " [--cover] [--algorithm dfs|bfs|random|tour] [--harness] [--harness-json] [--dylib] [--events e1,e2,...]"
               << " [--bind enumerate|random] [--n-switch N] [--t-way N] [--guard k=v] [--replay N] [--max-cases N]"
+              << " [--timeout N] [--sequence \"f(...);...\"]"
               << std::endl;
     return 2;
   }
@@ -933,8 +982,10 @@ int main(int argc, char **argv) {
   int nSwitch = 0;
   int tWay = 0;
   int maxCases = 0;
+  int timeoutSeconds = 10;
   int replayIndex = -1;
   std::string events;
+  std::string sequenceText;
   std::map<std::string, std::string> guardValues;
   std::string modelPath;
 
@@ -957,6 +1008,9 @@ int main(int argc, char **argv) {
         tourAlgorithm = true;
       } else if (algorithm == "bfs") {
         bfsAlgorithm = true;
+      } else if (algorithm == "dfs") {
+        // dfs is the default; accepting the explicit option keeps the CLI
+        // contract consistent with README.
       } else {
         std::cerr << "unknown algorithm: " << algorithm << std::endl;
         return 2;
@@ -972,10 +1026,18 @@ int main(int argc, char **argv) {
         return 2;
       }
     } else if (arg == "--n-switch" && i + 1 < argc) {
-      nSwitch = std::stoi(argv[++i]);
+      const std::string value = argv[++i];
+      if (!parseNonNegativeInt(value, nSwitch)) {
+        std::cerr << "invalid value for --n-switch: " << value << std::endl;
+        return 2;
+      }
       coverage = true;
     } else if (arg == "--t-way" && i + 1 < argc) {
-      tWay = std::stoi(argv[++i]);
+      const std::string value = argv[++i];
+      if (!parseNonNegativeInt(value, tWay) || tWay <= 0) {
+        std::cerr << "invalid value for --t-way: " << value << std::endl;
+        return 2;
+      }
       coverage = true;
     } else if (arg == "--harness") {
       harness = true;
@@ -987,6 +1049,8 @@ int main(int argc, char **argv) {
       harnessJson = true;
     } else if (arg == "--events" && i + 1 < argc) {
       events = argv[++i];
+    } else if (arg == "--sequence" && i + 1 < argc) {
+      sequenceText = argv[++i];
     } else if (arg == "--guard" && i + 1 < argc) {
       const std::string spec = argv[++i];
       const std::size_t eq = spec.find('=');
@@ -996,13 +1060,35 @@ int main(int argc, char **argv) {
       }
       guardValues[spec.substr(0, eq)] = spec.substr(eq + 1);
     } else if (arg == "--max-length" && i + 1 < argc) {
-      maxLength = std::stoi(argv[++i]);
+      const std::string value = argv[++i];
+      if (!parseNonNegativeInt(value, maxLength)) {
+        std::cerr << "invalid value for --max-length: " << value << std::endl;
+        return 2;
+      }
     } else if (arg == "--seed" && i + 1 < argc) {
-      seed = static_cast<unsigned>(std::stoul(argv[++i]));
+      const std::string value = argv[++i];
+      if (!parseNonNegativeUnsigned(value, seed)) {
+        std::cerr << "invalid value for --seed: " << value << std::endl;
+        return 2;
+      }
     } else if (arg == "--max-cases" && i + 1 < argc) {
-      maxCases = std::stoi(argv[++i]);
+      const std::string value = argv[++i];
+      if (!parseNonNegativeInt(value, maxCases)) {
+        std::cerr << "invalid value for --max-cases: " << value << std::endl;
+        return 2;
+      }
+    } else if (arg == "--timeout" && i + 1 < argc) {
+      const std::string value = argv[++i];
+      if (!parseNonNegativeInt(value, timeoutSeconds)) {
+        std::cerr << "invalid value for --timeout: " << value << std::endl;
+        return 2;
+      }
     } else if (arg == "--replay" && i + 1 < argc) {
-      replayIndex = std::stoi(argv[++i]);
+      const std::string value = argv[++i];
+      if (!parseNonNegativeInt(value, replayIndex)) {
+        std::cerr << "invalid value for --replay: " << value << std::endl;
+        return 2;
+      }
     } else if (modelPath.empty()) {
       modelPath = arg;
     } else {
@@ -1039,11 +1125,11 @@ int main(int argc, char **argv) {
     if (isMachine) {
       return runStateMachine(text, maxLength, json, coverage, cover, randomAlgorithm, tourAlgorithm,
                              bfsAlgorithm, seed, maxCases, events, replayIndex, nSwitch, guardValues,
-                             negative, harness);
+                             negative, harness, timeoutSeconds);
     }
     return runFunction(text, maxLength, seed, json, negative, maxCases, coverage, harness, dylib,
                        randomAlgorithm, bfsAlgorithm, bindRandom, cover, replayIndex, harnessJson,
-                       tWay);
+                       tWay, timeoutSeconds, sequenceText);
   } catch (const std::exception &e) {
     std::cerr << "exception: " << e.what() << std::endl;
     return 3;

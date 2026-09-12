@@ -89,12 +89,16 @@ std::vector<Sequence> SequenceGenerator::generateBfs() {
   queue.push_back({initialEnv, {}, initialNextId});
 
   while (!queue.empty()) {
+    if (reachedLimit()) {
+      break;
+    }
     Node node = queue.front();
     queue.pop_front();
     if (static_cast<int>(node.seq.calls.size()) >= maxLength_) {
       continue;
     }
 
+    bool stop = false;
     for (const auto &function : model_.functions) {
       std::vector<int> bindings(function.params.size(), -1);
       std::vector<bool> used(node.env.size(), false);
@@ -123,8 +127,14 @@ std::vector<Sequence> SequenceGenerator::generateBfs() {
         if (seen_.insert(next.text()).second) {
           results_.push_back(next);
           queue.push_back({newEnv, next, newNextId});
+          if (reachedLimit()) {
+            stop = true;
+          }
         }
       });
+      if (stop) {
+        break;
+      }
     }
   }
   return results_;

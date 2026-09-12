@@ -3,6 +3,8 @@
 #include <deque>
 #include <random>
 
+#include "guard.h"
+
 namespace spath {
 
 namespace {
@@ -56,13 +58,40 @@ std::string Path::text() const {
   return out;
 }
 
-StateMachinePathGenerator::StateMachinePathGenerator(const smodel::StateMachine &machine,
-                                                     int maxLength)
-    : machine_(machine), maxLength_(maxLength) {}
+StateMachinePathGenerator::StateMachinePathGenerator(
+    const smodel::StateMachine &machine, int maxLength,
+    const std::map<std::string, std::string> &guardValues, int maxCases)
+    : machine_(machine),
+      maxLength_(maxLength),
+      guardValues_(guardValues),
+      maxCases_(maxCases) {}
+
+bool StateMachinePathGenerator::reachedLimit() const {
+  return maxCases_ > 0 && static_cast<int>(results_.size()) >= maxCases_;
+}
+
+bool StateMachinePathGenerator::canFire(const std::set<std::string> &active,
+                                        const smodel::Transition &transition) {
+  if (!matches(machine_, active, transition)) {
+    return false;
+  }
+  if (transition.guard.empty()) {
+    return true;
+  }
+
+  std::string error;
+  const bool ok = guard::evalGuard(transition.guard, guardValues_, &error);
+  if (!ok && !error.empty()) {
+    skippedGuards_.insert(transition.from + " -" + transition.event + "-> " +
+                          transition.to + " (" + error + ")");
+  }
+  return ok;
+}
 
 std::vector<Path> StateMachinePathGenerator::generate() {
   results_.clear();
   seen_.clear();
+  skippedGuards_.clear();
   Path path;
   dfs(smodel::enterLeaves(machine_, machine_.initial), path);
   return results_;
@@ -74,47 +103,60 @@ std::vector<Path> StateMachinePathGenerator::generateBfs() {
     Path path;
   };
 
-  std::vector<Path> out;
-  std::set<std::string> seen;
   std::deque<Node> queue;
   queue.push_back({smodel::enterLeaves(machine_, machine_.initial), {}});
 
+  results_.clear();
+  seen_.clear();
+  skippedGuards_.clear();
+
   while (!queue.empty()) {
+    if (reachedLimit()) {
+      break;
+    }
     Node node = queue.front();
     queue.pop_front();
     if (static_cast<int>(node.path.steps.size()) >= maxLength_) {
       continue;
     }
     for (const auto &transition : machine_.transitions) {
-      if (!matches(machine_, node.active, transition)) {
+      if (!canFire(node.active, transition)) {
         continue;
       }
       Path next = node.path;
       Step step;
       step.transition = transition;
       next.steps.push_back(step);
-      if (seen.insert(next.text()).second) {
-        out.push_back(next);
+      if (seen_.insert(next.text()).second) {
+        results_.push_back(next);
         queue.push_back({fire(machine_, node.active, transition), next});
+        if (reachedLimit()) {
+          break;
+        }
       }
     }
   }
-  return out;
+  return results_;
 }
 
 std::vector<Path> StateMachinePathGenerator::generateRandom(unsigned seed, int count) {
-  std::vector<Path> out;
-  std::set<std::string> seen;
   std::mt19937 rng(seed);
   const int attempts = (count <= 0) ? 20 : count;
 
+  results_.clear();
+  seen_.clear();
+  skippedGuards_.clear();
+
   for (int i = 0; i < attempts; ++i) {
+    if (reachedLimit()) {
+      break;
+    }
     Path path;
     Active active = smodel::enterLeaves(machine_, machine_.initial);
     while (static_cast<int>(path.steps.size()) < maxLength_) {
       std::vector<const smodel::Transition *> outgoing;
       for (const auto &transition : machine_.transitions) {
-        if (matches(machine_, active, transition)) {
+        if (canFire(active, transition)) {
           outgoing.push_back(&transition);
         }
       }
@@ -127,15 +169,17 @@ std::vector<Path> StateMachinePathGenerator::generateRandom(unsigned seed, int c
       path.steps.push_back(step);
       active = fire(machine_, active, *transition);
     }
-    if (!path.steps.empty() && seen.insert(path.text()).second) {
-      out.push_back(path);
+    if (!path.steps.empty() && seen_.insert(path.text()).second) {
+      results_.push_back(path);
     }
   }
-  return out;
+  return results_;
 }
 
 std::vector<Path> StateMachinePathGenerator::generateTour() {
   std::vector<Path> out;
+  uncoveredTransitions_.clear();
+  truncated_ = false;
   if (machine_.transitions.empty()) {
     return out;
   }
@@ -143,12 +187,14 @@ std::vector<Path> StateMachinePathGenerator::generateTour() {
   Path path;
   Active active = smodel::enterLeaves(machine_, machine_.initial);
   std::set<std::string> covered;
-  const std::size_t maxSteps = machine_.transitions.size() * 32 + 64;
+  const std::size_t maxSteps =
+      maxLength_ > 0 ? static_cast<std::size_t>(maxLength_)
+                     : machine_.transitions.size() * 32 + 64;
 
   while (covered.size() < machine_.transitions.size() && path.steps.size() < maxSteps) {
     const smodel::Transition *pick = nullptr;
     for (const auto &transition : machine_.transitions) {
-      if (matches(machine_, active, transition) &&
+      if (canFire(active, transition) &&
           covered.find(transitionKey(transition)) == covered.end()) {
         pick = &transition;
         break;
@@ -156,7 +202,7 @@ std::vector<Path> StateMachinePathGenerator::generateTour() {
     }
     if (pick == nullptr) {
       for (const auto &transition : machine_.transitions) {
-        if (matches(machine_, active, transition)) {
+        if (canFire(active, transition)) {
           pick = &transition;
           break;
         }
@@ -175,16 +221,28 @@ std::vector<Path> StateMachinePathGenerator::generateTour() {
   if (!path.steps.empty()) {
     out.push_back(path);
   }
+
+  if (covered.size() < machine_.transitions.size()) {
+    truncated_ = true;
+    for (const auto &transition : machine_.transitions) {
+      if (covered.find(transitionKey(transition)) == covered.end()) {
+        uncoveredTransitions_.insert(transitionKey(transition));
+      }
+    }
+  }
   return out;
 }
 
 void StateMachinePathGenerator::dfs(const Active &active, Path &path) {
-  if (static_cast<int>(path.steps.size()) >= maxLength_) {
+  if (reachedLimit() || static_cast<int>(path.steps.size()) >= maxLength_) {
     return;
   }
 
   for (const auto &transition : machine_.transitions) {
-    if (!matches(machine_, active, transition)) {
+    if (reachedLimit()) {
+      return;
+    }
+    if (!canFire(active, transition)) {
       continue;
     }
     Path next = path;

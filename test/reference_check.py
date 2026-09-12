@@ -7,7 +7,9 @@ from collections import defaultdict
 def connection_paths(max_len: int) -> int:
     transitions = [
         ("DISCONNECTED", "CONNECTING"),
-        ("CONNECTING", "CONNECTED"),
+        # CONNECTING -> CONNECTED carries a guard. Without an explicit
+        # --guard binding the tool skips guarded transitions instead of
+        # treating them as unconditionally enabled.
         ("CONNECTING", "DISCONNECTED"),
         ("CONNECTED", "DISCONNECTED"),
         ("DISCONNECTED", "CLOSED"),

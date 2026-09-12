@@ -5,6 +5,8 @@
 #include <map>
 #include <sstream>
 
+#include "guard.h"
+
 namespace harness {
 
 namespace {
@@ -49,6 +51,29 @@ bool isVoidPointer(const std::string &cType) {
 
 bool isStringPointer(const std::string &cType) {
   return cType.find("char") != std::string::npos;
+}
+
+struct ActualValue {
+  std::string format;
+  std::string expr;
+};
+
+ActualValue actualValue(const model::Model &model, const std::string &type,
+                        const std::string &expr) {
+  const std::string ctype = cTypeOf(model, type);
+  if (ctype.find("char") != std::string::npos && ctype.find("*") != std::string::npos) {
+    return {"%s", expr};
+  }
+  if (ctype.find("*") != std::string::npos) {
+    return {"%p", "(void*)(" + expr + ")"};
+  }
+  if (ctype == "size_t" || ctype == "unsigned long" || ctype == "unsigned long long") {
+    return {"%zu", expr};
+  }
+  if (ctype == "long" || ctype == "long long") {
+    return {"%lld", "(long long)(" + expr + ")"};
+  }
+  return {"%d", "(int)(" + expr + ")"};
 }
 
 std::string observeOf(const model::Model &model, const std::string &type) {
@@ -164,14 +189,64 @@ std::string translateSuccess(const std::map<std::string, std::string> &paramExpr
   return out;
 }
 
+std::string isolationIncludes() {
+  return "#include <sys/types.h>\n"
+         "#include <sys/wait.h>\n"
+         "#include <unistd.h>\n"
+         "#include <signal.h>\n"
+         "#include <time.h>\n";
+}
+
+std::string featureMacro() {
+  return "#ifndef _DEFAULT_SOURCE\n"
+         "#define _DEFAULT_SOURCE 1\n"
+         "#endif\n";
+}
+
+std::string runTestHelper() {
+  return "\n"
+         "static int run_test(int timeout_seconds, int (*fn)(void)) {\n"
+         "  pid_t pid = fork();\n"
+         "  if (pid < 0) { return 1; }\n"
+         "  if (pid == 0) {\n"
+         "    setpgid(0, 0);\n"
+         "    int rc = fn();\n"
+         "    fflush(stdout);\n"
+         "    fflush(stderr);\n"
+         "    _exit(rc == 0 ? 0 : 1);\n"
+         "  }\n"
+         "  setpgid(pid, pid);\n"
+         "  int status = 0;\n"
+         "  if (timeout_seconds <= 0) {\n"
+         "    waitpid(pid, &status, 0);\n"
+         "  } else {\n"
+         "    const time_t deadline = time(NULL) + (time_t)timeout_seconds;\n"
+         "    while (1) {\n"
+         "      pid_t r = waitpid(pid, &status, WNOHANG);\n"
+         "      if (r == pid) { break; }\n"
+         "      if (time(NULL) >= deadline) {\n"
+         "        kill(-pid, SIGKILL);\n"
+         "        waitpid(pid, &status, 0);\n"
+         "        return 2;\n"
+         "      }\n"
+         "      usleep(10000);\n"
+         "    }\n"
+         "  }\n"
+         "  if (WIFEXITED(status)) { return WEXITSTATUS(status) == 0 ? 0 : 1; }\n"
+         "  return 1;\n"
+         "}\n";
+}
+
 }  // namespace
 
 std::string generate(const model::Model &model, const std::vector<gen::Sequence> &sequences,
-                     bool dylib, bool jsonFailures) {
+                     bool dylib, bool jsonFailures, int timeoutSeconds) {
   std::ostringstream out;
+  out << featureMacro();
   out << "#include <stddef.h>\n";
   out << "#include <stdio.h>\n";
   out << "#include <string.h>\n";
+  out << isolationIncludes();
   for (const auto &[name, cls] : model.classes) {
     (void)name;
     if (!cls.header.empty()) {
@@ -181,6 +256,7 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
   if (dylib) {
     out << "#include <dlfcn.h>\n";
   }
+  out << runTestHelper();
   out << "\n";
 
   if (dylib) {
@@ -219,8 +295,29 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
 
   for (std::size_t s = 0; s < sequences.size(); ++s) {
     const gen::Sequence &seq = sequences[s];
+    bool needBuffer = false;
+    for (const auto &call : seq.calls) {
+      const auto fnIt = std::find_if(model.functions.begin(), model.functions.end(),
+                                     [&](const model::Function &f) {
+                                       return f.name == call.function;
+                                     });
+      if (fnIt == model.functions.end()) {
+        continue;
+      }
+      for (const auto &param : fnIt->params) {
+        if (isVoidPointer(cTypeOf(model, param.type))) {
+          needBuffer = true;
+          break;
+        }
+      }
+      if (needBuffer) {
+        break;
+      }
+    }
     out << "static int test_" << s << "(void) {\n";
-    out << "  char buf[256] = {0};\n";
+    if (needBuffer) {
+      out << "  char buf[256] = {0};\n";
+    }
     for (const auto &[name, cls] : model.classes) {
       (void)name;
       out << "  " << cls.cpp << " obj_" << cls.name << ";\n";
@@ -292,11 +389,22 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
       out << "  " << callStmt << "\n";
 
       const std::string success = translateSuccess(paramExpr, returnVar, fn.success.expr);
+      const bool hasSuccessActual = !fn.returnType.empty() && !returnVar.empty();
+      const ActualValue successActual =
+          hasSuccessActual ? actualValue(model, fn.returnType, returnVar) : ActualValue{};
 
       if (jsonFailures) {
         out << "  if (!(" << success << ")) { printf(\"{\\\"kind\\\":\\\"failure\\\",\\\"seq\\\":"
             << s << ",\\\"step\\\":\\\"" << fn.name << "\\\",\\\"expected\\\":\\\""
-            << escapeCString(fn.success.expr) << "\\\"}\\n\"); return 1; }\n";
+            << escapeCString(fn.success.expr) << "\\\"";
+        if (hasSuccessActual) {
+          out << ",\\\"actual\\\":\\\"" << successActual.format << "\\\"";
+        }
+        out << "}\\n\"";
+        if (hasSuccessActual) {
+          out << ", " << successActual.expr;
+        }
+        out << "); return 1; }\n";
       } else {
         out << "  if (!(" << success << ")) { printf(\"FAIL " << s << " " << fn.name
             << "\\n\"); return 1; }\n";
@@ -324,7 +432,8 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
             out << "  if (strcmp(" << observeFn << "(" << handleExpr << "), \"" << effect.state
                 << "\") != 0) { printf(\"{\\\"kind\\\":\\\"failure\\\",\\\"seq\\\":" << s
                 << ",\\\"step\\\":\\\"" << fn.name << "\\\",\\\"expected\\\":\\\"" << effect.state
-                << "\\\"}\\n\"); return 1; }\n";
+                << "\\\",\\\"actual\\\":\\\"%s\\\"}\\n\", " << observeFn << "(" << handleExpr
+                << ")); return 1; }\n";
           } else {
             out << "  if (strcmp(" << observeFn << "(" << handleExpr << "), \"" << effect.state
                 << "\") != 0) { printf(\"FAIL " << s << " " << fn.name << " state\\n\"); return 1; }\n";
@@ -366,9 +475,24 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
     out << "int main(void) {\n";
   }
 
+  if (!sequences.empty()) {
+    out << "  static int (*const tests[])(void) = {";
+    for (std::size_t s = 0; s < sequences.size(); ++s) {
+      if (s > 0) {
+        out << ", ";
+      }
+      out << "test_" << s;
+    }
+    out << "};\n";
+  }
+
   out << "  int failed = 0;\n";
   for (std::size_t s = 0; s < sequences.size(); ++s) {
-    out << "  failed += test_" << s << "();\n";
+    out << "  {\n";
+    out << "    int rc = run_test(" << timeoutSeconds << ", tests[" << s << "]);\n";
+    out << "    if (rc == 2) { printf(\"TIMEOUT " << s << "\\n\"); failed++; }\n";
+    out << "    else { failed += rc; }\n";
+    out << "  }\n";
   }
   if (dylib) {
     out << "  dlclose(lib);\n";
@@ -382,16 +506,21 @@ std::string generate(const model::Model &model, const std::vector<gen::Sequence>
 }
 
 std::string generateStateMachine(const smodel::StateMachine &machine,
-                                 const std::vector<std::string> &events) {
+                                 const std::vector<std::string> &events,
+                                 const std::map<std::string, std::string> &guardValues,
+                                 int timeoutSeconds) {
   std::ostringstream out;
+  out << featureMacro();
   out << "#include <cstdio>\n";
   out << "#include <cstring>\n";
+  out << isolationIncludes();
   for (const auto &[name, cls] : machine.classes) {
     (void)name;
     if (!cls.header.empty()) {
       out << "#include \"" << cls.header << "\"\n";
     }
   }
+  out << runTestHelper();
   out << "\n";
 
   for (const auto &[name, cls] : machine.classes) {
@@ -407,7 +536,7 @@ std::string generateStateMachine(const smodel::StateMachine &machine,
   }
   out << "}\n\n";
 
-  out << "int main() {\n";
+  out << "static int run_sm(void) {\n";
   out << "  const char* current = \"" << smodel::leafOf(machine, machine.initial) << "\";\n";
   out << "  const char* events[] = {";
   for (std::size_t i = 0; i < events.size(); ++i) {
@@ -421,8 +550,36 @@ std::string generateStateMachine(const smodel::StateMachine &machine,
   out << "    const char* next = 0;\n";
 
   for (const auto &transition : machine.transitions) {
-    out << "    if (std::strcmp(current, \"" << transition.from << "\") == 0 && std::strcmp(e, \""
-        << transition.event << "\") == 0) {\n";
+    std::string guardError;
+    if (!transition.guard.empty() &&
+        !guard::evalGuard(transition.guard, guardValues, &guardError)) {
+      continue;
+    }
+
+    std::vector<std::string> fireableLeaves;
+    for (const auto &state : machine.states) {
+      const auto *info = smodel::findState(machine, state);
+      if (info == nullptr || !info->children.empty()) {
+        continue;
+      }
+      if (state == transition.from ||
+          smodel::isDescendantOf(machine, state, transition.from)) {
+        fireableLeaves.push_back(state);
+      }
+    }
+    if (fireableLeaves.empty()) {
+      fireableLeaves.push_back(transition.from);
+    }
+
+    out << "    if ((";
+    for (std::size_t i = 0; i < fireableLeaves.size(); ++i) {
+      if (i > 0) {
+        out << " || ";
+      }
+      out << "std::strcmp(current, \"" << escapeCString(fireableLeaves[i]) << "\") == 0";
+    }
+    out << ") && std::strcmp(e, \"" << escapeCString(transition.event)
+        << "\") == 0) {\n";
     auto emitAction = [&](const std::string &name) {
       if (!name.empty()) {
         out << "      run_action(\"" << escapeCString(name) << "\");\n";
@@ -447,6 +604,12 @@ std::string generateStateMachine(const smodel::StateMachine &machine,
   out << "  }\n";
   out << "  std::printf(\"ALL PASS\\n\");\n";
   out << "  return 0;\n";
+  out << "}\n";
+  out << "\n";
+  out << "int main() {\n";
+  out << "  int rc = run_test(" << timeoutSeconds << ", run_sm);\n";
+  out << "  if (rc == 2) { std::printf(\"TIMEOUT\\n\"); return 1; }\n";
+  out << "  return rc;\n";
   out << "}\n";
   return out.str();
 }

@@ -17,6 +17,9 @@
 - `task.md`：任务清单和执行状态。
 - `adr.md`：架构决定记录。
 - `*-checklist.md`：提案、设计、任务各阶段的评审检查表。
+- `index.md`：AI 可延续资料索引，记录资料版本、来源和适用 commit。
+- `AI-USAGE.md`：AI 使用记录模板，用于留痕模型、输入、产出、人工批准和成本。
+- `ai-security-checklist.md`：AI 生成物的安全与质量控制检查表。
 
 ## `doc/`
 
@@ -31,6 +34,8 @@
   - `string-functions.dsl`：libc 字符串函数组示例。
   - `observed.dsl`：带状态观察函数的句柄示例。
   - `connection.dsl`：状态机示例。
+  - `guard.dsl`：带 guard 的状态机示例。
+  - `slow.dsl`：用于验证 harness 超时隔离的函数示例。
 
 ## `src/`
 
@@ -54,6 +59,8 @@
 
 - `run.sh`：命令行回归测试脚本，由 `make test` 调用。
 - `observed_sut.c`：供状态观察、直接链接和动态库加载测试使用的最小被测实现。
+- `slow_sut.c`：用于验证生成 harness 超时隔离的最小挂起实现。
+- `oracle/`：统一 Q1–Q6 有状态队列 oracle，包括 `queue_sut.h`、`queue_adapter.c`、`q1.dsl`–`q6.dsl` 和 `run_oracle.sh`；由 `make oracle` 调用。
 
 ## `third_party/`
 

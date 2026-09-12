@@ -13,8 +13,16 @@
 - 已完成：T17（BFS）、T18（N-switch 覆盖）、T19（--bind 绑定策略）、T20（状态机事件执行 JSON 失败详情）、T21（success 逻辑组合）、T22（setup 预创建多实例）。
 - 已完成：T16（嵌套、复合、浅历史、并发状态）。
 - 已完成：T23（增量构建）、T26（函数对覆盖）、T27（浅/深历史）、T29（函数桩代码 JSON 失败详情）。
-- 已完成：T24（guard 运行时求值，--guard）、T25（entry/exit/action 动作轨迹）、T28（并发状态静态路径生成）。
+- 已完成：T24（guard 运行时求值，--guard；路径生成与 harness 的 guard 语义已补齐）、T25（entry/exit/action 动作轨迹）、T28（并发状态静态路径生成）。
 - 已完成：T30（新增独立 Python 参考实现对照）。
+
+## 近期修复（截至 2026-09-12）
+
+- 统一 guard 语义：路径生成、`--events` 执行和生成 harness 共用 `src/guard.cpp` 求值器；未绑定 guard 变量不再静默当作成立，而是在路径生成时跳过并报告，在执行时返回非零退出码。
+- 修 CLI 契约：接受 `--algorithm dfs`；`--max-length`、`--max-cases`、`--seed`、`--replay`、`--n-switch`、`--t-way`、`--timeout` 严格校验；`--max-cases` 对 BFS/tour 生效，`--max-length` 对 tour 生效。
+- 增加生成 harness 的执行隔离：每条函数序列/状态路径在子进程运行，支持 `--timeout`、崩溃/超时判定和进程组清理。
+- 增加 supplied-trigger 入口：函数模型可用 `--sequence "f(...);..."` 直接生成指定序列 harness，避免先枚举庞大序列。
+- 报告增强：JSON 增加 `version`、`model_hash`、`seed`；harness JSON 失败记录增加 `actual`。
 
 ## 阶段 1：基础设施
 
