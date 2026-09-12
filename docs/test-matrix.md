@@ -23,5 +23,5 @@
 - 完整合法 JSON 的字段重排、嵌套 returns、Unicode 和复杂转义；
 - 报告 replay、版本不匹配、哈希篡改；
 - 多对象、资源生命周期、guard/mutex/parallel/count/value；
-- Q1–Q6 评审资产在产品仓库内的自动化入口；
+- 报告 step 的 `expected_state`、summary seed 与计数一致性（`cli_verify_report`、`cli_verify_summary`）；
 - 覆盖率分母、约束覆盖和未覆盖原因的统一报告。
