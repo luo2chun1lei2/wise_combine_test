@@ -135,6 +135,11 @@ add_test(NAME cli_reports_error COMMAND bash
   $<TARGET_FILE:wise-combine>
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/relation_workflow.json
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/bin/adapter_ok)
+add_test(NAME cli_run_id_error COMMAND bash
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_run_id_error_test.sh
+  $<TARGET_FILE:wise-combine>
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/relation_workflow.json
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/bin/adapter_ok)
 add_test(NAME cli_verify_report COMMAND bash
   -c "$<TARGET_FILE:wise-combine> run ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/relation_workflow.json --adapter ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/bin/adapter_ok --reports ${CMAKE_CURRENT_BINARY_DIR}/verify-reports --run-id verify >/dev/null && $<TARGET_FILE:wise-combine> verify-report ${CMAKE_CURRENT_BINARY_DIR}/verify-reports/verify-0.json")
 add_test(NAME cli_verify_report_invalid COMMAND ${CMAKE_COMMAND}

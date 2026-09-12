@@ -171,6 +171,11 @@ int command_run(const std::vector<std::string>& args) {
     else if (args[i] == "--run-id" && i + 1U < args.size()) run_id = args[++i];
     else return kUsageError;
   }
+  if (run_id.empty() || run_id == "." || run_id == ".." ||
+      run_id.find_first_of("/\\") != std::string::npos) {
+    std::cerr << "run-id must be a single file-name component\n";
+    return kUsageError;
+  }
   const auto generated = generate::generate(document.model, document.seed);
   std::error_code report_directory_error;
   std::filesystem::create_directories(reports, report_directory_error);
