@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
   if (mode == "ok") assert(r.status == wise::runtime::Status::passed);
   else if (mode == "mismatch") assert(r.status == wise::runtime::Status::mismatch);
   else if (mode == "error") assert(r.status == wise::runtime::Status::adapter_error);
-  else if (mode == "malformed" || mode == "extra" || mode == "unknown-status") assert(r.status == wise::runtime::Status::protocol_error);
+  else if (mode == "malformed" || mode == "extra" || mode == "unknown-status" || mode == "duplicate-status") assert(r.status == wise::runtime::Status::protocol_error);
   else if (mode == "timeout") assert(r.status == wise::runtime::Status::timeout);
   else if (mode == "crash" || mode == "cap") assert(r.status == wise::runtime::Status::crashed);
   else if (mode == "relation") assert(r.status == wise::runtime::Status::passed);

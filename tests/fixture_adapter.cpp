@@ -26,5 +26,6 @@ int main(int argc, char** argv) {
   if (mode == "cap") { std::cout << std::string(17 * 1024 * 1024, 'x') << std::flush; return 0; }
   if (mode == "mismatch") { std::cerr << "adapter mismatch\n"; std::cout << "{\"protocol\":1,\"status\":\"mismatch\",\"observed_state\":\"wrong\",\"returns\":{},\"stderr\":\"\"}\n"; return 0; }
   if (mode == "unknown-status") { std::cout << "{\"protocol\":1,\"status\":\"unknown\",\"observed_state\":\"done\",\"returns\":{},\"stderr\":\"\"}\n"; return 0; }
+  if (mode == "duplicate-status") { std::cout << "{\"protocol\":1,\"status\":\"ok\",\"status\":\"mismatch\",\"observed_state\":\"done\",\"returns\":{},\"stderr\":\"\"}\n"; return 0; }
   std::cout << "{\"protocol\":1,\"status\":\"ok\",\"observed_state\":\"done\",\"returns\":{},\"stderr\":\"\"}\n"; return 0;
 }

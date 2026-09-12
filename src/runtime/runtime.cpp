@@ -81,6 +81,7 @@ bool field(const std::string& text, const std::string& key, std::string& value) 
   const auto needle = "\"" + key + "\":";
   const auto pos = text.find(needle);
   if (pos == std::string::npos) return false;
+  if (text.find(needle, pos + needle.size()) != std::string::npos) return false;
   auto start = pos + needle.size();
   if (start < text.size() && text[start] == '"') {
     ++start; std::string parsed;
