@@ -38,6 +38,7 @@ int main(int argc, char** argv) {
   const auto r = wise::runtime::execute(m, flow, o);
   if (wise::report::json(r).find("\"expected_state\":\"") == std::string::npos) return 1;
   const std::string mode = argc > 2 ? argv[2] : "ok";
+  if (mode == "allowlist") { assert(r.status == wise::runtime::Status::launch_error); return 0; }
   if (mode == "ok" || mode == "formatted" || mode == "unicode" || mode == "escaped") assert(r.status == wise::runtime::Status::passed);
   if (mode == "escaped") { assert(r.steps.front().returns.at("value").string_value == "quote \" slash \\ tab \t"); assert(r.steps.front().stderr_text == "line\r\n"); }
   if (mode == "unicode") { assert(r.steps.front().observed_state == "你好/😀"); assert(r.steps.front().stderr_text == "line\ntext"); }

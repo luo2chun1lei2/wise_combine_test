@@ -103,6 +103,7 @@ add_executable(wise-combine-runtime-test tests/runtime_test.cpp)
 target_link_libraries(wise-combine-runtime-test PRIVATE wise-combine-report
   wise-combine-runtime wise-combine-generate wise-combine-compile-options)
 add_test(NAME runtime_pass COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture>)
+add_test(NAME runtime_allowlist COMMAND wise-combine-runtime-test /bin/true allowlist)
 add_test(NAME runtime_mismatch COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> mismatch)
 add_test(NAME runtime_malformed COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> malformed)
 add_test(NAME runtime_extra_json COMMAND wise-combine-runtime-test $<TARGET_FILE:wise-combine-runtime-fixture> extra)

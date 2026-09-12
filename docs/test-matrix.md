@@ -7,7 +7,7 @@
 | model | 合法状态/关系 | 重复、未知引用、类型、缺参、环 | 不适用 | `ctest -R model` |
 | spec | version 1、规范化 | malformed JSON、重复 key、非法版本 | 不适用 | `ctest -R spec` |
 | generator | 线性、分支、seed、循环 | case/step=0、order cycle | dead-end/limit | `ctest -R generator` |
-| runtime | ok、argument relation | malformed、extra、unknown status | mismatch、error、timeout、crash、cap | `ctest -R runtime` |
+| runtime | ok、argument relation | malformed、extra、unknown status、allowlist | mismatch、error、timeout、crash、cap | `ctest -R runtime` |
 | CLI | validate/generate/run/report | invalid spec、reports path | adapter failure、报告写入失败 | `ctest -R cli` |
 
 ## 每次变更的验证要求
