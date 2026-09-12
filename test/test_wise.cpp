@@ -360,7 +360,9 @@ int main() {
     assert(expect_model_error("function f(a x)\nfunction g() -> y\nparameter f.z = g.y"));
     assert(expect_model_error("function f(a x)\nfunction g() -> z\nparameter f.x = g.y"));
     assert(expect_model_error("function f()\norder f before g"));
+    assert(expect_model_error("function f()\norder f before f"));
     assert(expect_model_error("function f()\nmutex f g"));
+    assert(expect_model_error("function f()\nmutex f f"));
     assert(expect_model_error("function f()\nconstraint count(g) == 1"));
     assert(expect_model_error("function f()\nconstraint bad"));
     assert(expect_model_error(
