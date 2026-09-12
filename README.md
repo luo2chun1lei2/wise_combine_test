@@ -63,6 +63,7 @@ regressions, not proof of exhaustive automatic coverage.
 ./build/wise-combine verify-report reports/relation-0.json
 ./build/wise-combine verify-report reports/relation-summary.json
 ./build/wise-combine verify-report-v2 reports/report-v2.json
+./build/wise-combine wrap-report-v2 payload.json
 ./build/wise-combine hash-report reports/relation-0.json [EXPECTED_SHA256]
 ```
 
@@ -79,6 +80,8 @@ authenticate the source.
 `verify-report-v2` validates the SHA-256 envelope and reports
 `integrity_verified:true`; the v2 payload schema and replay command remain
 separate follow-up work.
+`wrap-report-v2` reads a payload file and emits a SHA-256 envelope for later
+verification.
 `verify-report` also validates run summaries: counters, seed and measurements
 must be non-negative integers, and `passed + failed` must equal `case_count`.
 This checks structure and consistency, not authenticity or cryptographic integrity.

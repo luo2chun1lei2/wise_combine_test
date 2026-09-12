@@ -55,6 +55,7 @@ Debian/Ubuntu 可使用 `sudo apt install libssl-dev` 安装依赖。
 ./build/wise-combine verify-report reports/relation-0.json
 ./build/wise-combine verify-report reports/relation-summary.json
 ./build/wise-combine verify-report-v2 reports/report-v2.json
+./build/wise-combine wrap-report-v2 payload.json
 ./build/wise-combine hash-report reports/relation-0.json [EXPECTED_SHA256]
 ```
 
@@ -69,6 +70,7 @@ summary 还会记录 `schema_version: 1` 和本次规范使用的 `seed`，便�
 不匹配返回 `4`；它不负责验证来源身份。
 `verify-report-v2` 会校验 SHA-256 envelope 并输出 `integrity_verified:true`；v2
 payload 完整 schema 与 replay 命令仍是后续工作。
+`wrap-report-v2` 读取 payload 文件并输出带 SHA-256 的 envelope，供之后校验。
 `verify-report` 也支持运行摘要：计数、seed 与测量字段必须为非负整数，且
 `passed + failed` 必须等于 `case_count`。这只校验结构与一致性，不验证来源真实性
 或密码学完整性。
