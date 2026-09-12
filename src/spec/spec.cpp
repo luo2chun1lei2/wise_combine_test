@@ -58,6 +58,25 @@ Document parse(const std::string& json) {
 }
 std::string normalize(const std::string& json) { return parse(json).canonical_json; }
 
+std::string encode_json_string(const std::string& value) { return quote(value); }
+
+IntegrityEnvelope parse_integrity_envelope(const std::string& json) {
+  const auto root = Parser(json).parse();
+  const auto& envelope = obj(root, "");
+  strict_keys(envelope, {"schema_version", "payload", "integrity"}, "");
+  const auto* version = std::get_if<std::int64_t>(&required(envelope, "schema_version", "").data);
+  if (!version || *version != 2) invalid("/schema_version", "expected integer 2");
+  const auto* payload = std::get_if<std::string>(&required(envelope, "payload", "").data);
+  if (!payload) invalid("/payload", "expected string");
+  const auto& integrity = obj(required(envelope, "integrity", ""), "/integrity");
+  strict_keys(integrity, {"algorithm", "digest"}, "/integrity");
+  if (text(integrity, "algorithm", "/integrity") != "sha256") invalid("/integrity/algorithm", "expected sha256");
+  const auto digest = text(integrity, "digest", "/integrity");
+  if (digest.size() != 64 || digest.find_first_not_of("0123456789abcdef") != std::string::npos)
+    invalid("/integrity/digest", "expected 64 lowercase hexadecimal digits");
+  return {*payload, digest};
+}
+
 AdapterResponse parse_adapter_response(const std::string& json) {
   const auto root = Parser(json).parse();
   const auto& object = obj(root, "");

@@ -41,5 +41,8 @@ Document parse(const std::string& json);
 std::string normalize(const std::string& json);
 AdapterResponse parse_adapter_response(const std::string& json);
 void validate_report(const std::string& json);
+struct IntegrityEnvelope { std::string payload; std::string digest; };
+IntegrityEnvelope parse_integrity_envelope(const std::string& json);
+std::string encode_json_string(const std::string& value);
 
 }  // namespace wise::spec
