@@ -89,7 +89,7 @@ void usage(std::ostream& out) {
       << "  run SPEC --adapter EXEC [--arg ARG]... [--reports DIR] [--run-id ID]\n"
       << "  report REPORT.json|REPORT.txt\n"
       << "  verify-report REPORT.json\n"
-      << "  hash-report REPORT\n";
+      << "  hash-report REPORT [EXPECTED_SHA256]\n";
 }
 
 int parse_spec(const std::string& path, spec::Document& document) {
@@ -241,8 +241,8 @@ int command_verify_report(const std::string& path) {
   } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return kParseError; }
 }
 
-int command_hash_report(const std::string& path) {
-  try { std::cout << wise::integrity::sha256_hex(read_file(path)) << '\n'; return 0; }
+int command_hash_report(const std::string& path, const std::string& expected = {}) {
+  try { const auto digest = wise::integrity::sha256_hex(read_file(path)); std::cout << digest << '\n'; return expected.empty() || digest == expected ? 0 : kObservedFailure; }
   catch (const std::exception& error) { std::cerr << error.what() << '\n'; return kParseError; }
 }
 
@@ -255,7 +255,7 @@ int run(int argc, char** argv) {
   if (command == "generate" && argc == 3) return command_generate(argv[2]);
   if (command == "report" && argc == 3) return command_report(argv[2]);
   if (command == "verify-report" && argc == 3) return command_verify_report(argv[2]);
-  if (command == "hash-report" && argc == 3) return command_hash_report(argv[2]);
+  if (command == "hash-report" && (argc == 3 || argc == 4)) return command_hash_report(argv[2], argc == 4 ? argv[3] : "");
   if (command == "run") {
     std::vector<std::string> args;
     for (int i = 2; i < argc; ++i) args.emplace_back(argv[i]);

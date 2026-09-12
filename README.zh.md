@@ -54,7 +54,7 @@ Debian/Ubuntu 可使用 `sudo apt install libssl-dev` 安装依赖。
 ./build/wise-combine report reports/relation-0.txt
 ./build/wise-combine verify-report reports/relation-0.json
 ./build/wise-combine verify-report reports/relation-summary.json
-./build/wise-combine hash-report reports/relation-0.json
+./build/wise-combine hash-report reports/relation-0.json [EXPECTED_SHA256]
 ```
 
 `validate` 和 `generate` 会输出包含墙钟时间、CPU 时间和峰值 RSS 的 JSON。
@@ -64,8 +64,8 @@ Debian/Ubuntu 可使用 `sudo apt install libssl-dev` 安装依赖。
 summary 还会记录 `schema_version: 1` 和本次规范使用的 `seed`，便于复现生成结果。
 每个报告 step 都会在 `observed_state` 旁记录 `expected_state`，因此不匹配报告会
 包含该步骤使用的状态 oracle。
-`hash-report` 会输出报告原始字节的 SHA-256 摘要，供外部完整性比对；它不负责验证
-来源身份。
+`hash-report` 会输出报告原始字节的 SHA-256 摘要。提供期望摘要时，匹配返回 `0`，
+不匹配返回 `4`；它不负责验证来源身份。
 `verify-report` 也支持运行摘要：计数、seed 与测量字段必须为非负整数，且
 `passed + failed` 必须等于 `case_count`。这只校验结构与一致性，不验证来源真实性
 或密码学完整性。
