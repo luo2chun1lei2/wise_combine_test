@@ -18,6 +18,9 @@ arguments、expected/observed state 和 step 序列属于可追溯元数据，�
 
 ## 进入实现条件
 
+具体 v2 字节编码、输入字段、重放信任边界和验收顺序已在
+[ADR 0003](0003-report-and-replay-format.md) 确定；设计未实现不构成需要外部授权的阻塞。
+
 先冻结 report schema v2：定义规范/adapter 指纹、参数和环境白名单、规范化字节编码、
 哈希算法与版本，再实现 `replay` 命令及篡改失败测试。实现前不得将结构校验描述为
 密码学完整性，也不得把 supplied-trigger 回归当作自动覆盖证明。
