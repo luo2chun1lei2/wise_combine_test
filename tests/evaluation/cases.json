@@ -1,0 +1,8 @@
+[
+ {"id":"Q1","mutant":1,"defect":"empty pop returns item","calls":[["q_open",0],["q_pop",-2]]},
+ {"id":"Q2","mutant":2,"defect":"LIFO instead of FIFO","calls":[["q_open",0],["q_push1",0],["q_push2",0],["q_pop",11]]},
+ {"id":"Q3","mutant":3,"defect":"reopen keeps stale items","calls":[["q_open",0],["q_push1",0],["q_close",0],["q_open",0],["q_size",0]]},
+ {"id":"Q4","mutant":4,"defect":"peek consumes item","calls":[["q_open",0],["q_push1",0],["q_peek",11],["q_size",1]]},
+ {"id":"Q5","mutant":5,"defect":"second pop retains count","calls":[["q_open",0],["q_push1",0],["q_push2",0],["q_pop",11],["q_pop",22],["q_size",0]]},
+ {"id":"Q6","mutant":6,"defect":"close does not invalidate queue","calls":[["q_open",0],["q_close",0],["q_push1",-1]]}
+]
