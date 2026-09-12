@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(wise_combine_test VERSION 0.1.0 LANGUAGES CXX)
+find_package(OpenSSL REQUIRED)
 
 include(CTest)
 
@@ -19,6 +20,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(wise-combine-compile-options INTERFACE)
+add_library(wise-combine-integrity src/integrity/sha256.cpp)
+target_include_directories(wise-combine-integrity PUBLIC src)
+target_link_libraries(wise-combine-integrity PUBLIC OpenSSL::Crypto wise-combine-compile-options)
+add_executable(wise-combine-sha256-test tests/sha256_test.cpp)
+target_link_libraries(wise-combine-sha256-test PRIVATE wise-combine-integrity)
+add_test(NAME sha256 COMMAND wise-combine-sha256-test)
 if(MSVC)
   target_compile_options(wise-combine-compile-options INTERFACE /W4)
 else()
