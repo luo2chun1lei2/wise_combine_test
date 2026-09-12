@@ -30,6 +30,9 @@ cmake --build build --parallel
 测试覆盖模型、解析器、生成器、适配器、协议、超时、崩溃、输出上限和 CLI 集成
 场景。构建目录和测试二进制文件已被 git 忽略。
 
+可通过 `-DWISE_COMBINE_ENABLE_COVERAGE=ON` 启用可选覆盖率插桩，运行 CTest 后使用
+`gcov` 或 `llvm-cov` 读取编译器生成的覆盖率文件。
+
 冻结的 Q1–Q6 队列 oracle 也注册为 `evaluation_q1` 至 `evaluation_q6`；每项测试
 分别运行 clean 适配器和对应单缺陷 mutant，要求退出码分别为 0 和 4。这些是预先
 给定触发序列的回归测试，不代表自动穷举覆盖率。

@@ -12,6 +12,7 @@ enable_testing()
 option(WISE_COMBINE_ENABLE_SANITIZERS
        "Enable AddressSanitizer, UndefinedBehaviorSanitizer, and LeakSanitizer"
        OFF)
+option(WISE_COMBINE_ENABLE_COVERAGE "Enable compiler coverage instrumentation" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -39,6 +40,13 @@ if(WISE_COMBINE_ENABLE_SANITIZERS)
   target_link_options(wise-combine-compile-options INTERFACE
     -fsanitize=address,undefined,leak
   )
+endif()
+if(WISE_COMBINE_ENABLE_COVERAGE)
+  if(MSVC)
+    message(FATAL_ERROR "WISE_COMBINE_ENABLE_COVERAGE requires GCC or Clang")
+  endif()
+  target_compile_options(wise-combine-compile-options INTERFACE --coverage -fno-inline)
+  target_link_options(wise-combine-compile-options INTERFACE --coverage)
 endif()
 
 add_executable(wise-combine-smoke src/smoke.cpp)
