@@ -29,5 +29,6 @@ int main(int argc, char** argv) {
   if (mode == "duplicate-status") { std::cout << "{\"protocol\":1,\"status\":\"ok\",\"status\":\"mismatch\",\"observed_state\":\"done\",\"returns\":{},\"stderr\":\"\"}\n"; return 0; }
   if (mode == "formatted") { std::cout << "{ \"stderr\": \"\", \"returns\": { }, \"observed_state\": \"done\", \"status\": \"ok\", \"protocol\": 1 }\n"; return 0; }
   if (mode == "unicode") { std::cout << "{\"protocol\":1,\"status\":\"ok\",\"observed_state\":\"\\u4f60\\u597d\\/\\uD83D\\uDE00\",\"returns\":{},\"stderr\":\"line\\ntext\"}\n"; return 0; }
+  if (mode == "escaped") { std::cout << "{\"protocol\":1,\"status\":\"ok\",\"observed_state\":\"done\",\"returns\":{\"value\":\"quote \\\" slash \\\\ tab \\t\"},\"stderr\":\"line\\r\\n\"}\n"; return 0; }
   std::cout << "{\"protocol\":1,\"status\":\"ok\",\"observed_state\":\"done\",\"returns\":{},\"stderr\":\"\"}\n"; return 0;
 }
