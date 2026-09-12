@@ -1,6 +1,12 @@
 if(NOT DEFINED CLI OR NOT DEFINED CASE_DIR)
   message(FATAL_ERROR "missing test configuration")
 endif()
+file(WRITE "${CASE_DIR}/missing-expected.json" [=[{"schema_version":1,"flow_id":"x","status":"passed","steps":[{"index":0,"transition":"t","function":"f","status":"passed","args":{},"observed_state":"done","stderr":"","exit_status":0,"detail":""}]}]=])
+execute_process(COMMAND "${CLI}" verify-report "${CASE_DIR}/missing-expected.json"
+  RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+if(NOT result STREQUAL "2" OR NOT output STREQUAL "" OR NOT error MATCHES "/steps/0/expected_state: missing required field")
+  message(FATAL_ERROR "expected missing expected_state rejection, got ${result}: ${output} ${error}")
+endif()
 file(MAKE_DIRECTORY "${CASE_DIR}")
 file(WRITE "${CASE_DIR}/bad.json" "{\"schema_version\":1,\"flow_id\":\"x\",\"status\":\"passed\",\"steps\":[{\"index\":2}]}\n")
 execute_process(COMMAND "${CLI}" verify-report "${CASE_DIR}/bad.json"

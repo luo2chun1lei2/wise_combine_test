@@ -127,7 +127,7 @@ void validate_report(const std::string& json) {
     if (!index || *index < 0 || static_cast<std::uint64_t>(*index) != i) invalid(path + "/index", "expected sequential step index");
     for (const char* key : {"transition", "function", "observed_state", "stderr", "detail"}) string_field(step, key, path);
     status_field(step, path);
-    if (step.find("expected_state") != step.end()) string_field(step, "expected_state", path);
+    string_field(step, "expected_state", path);
     if (!std::holds_alternative<std::int64_t>(required(step, "exit_status", path).data)) invalid(path + "/exit_status", "expected integer");
     for (const auto& entry : obj(required(step, "args", path), path + "/args")) {
       if (std::holds_alternative<Value::Object>(entry.second.data) || std::holds_alternative<Value::Array>(entry.second.data))

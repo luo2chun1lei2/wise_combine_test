@@ -33,6 +33,7 @@
 - 空流程语义：当前增量。无 transition 且 `max_cases > 0` 的合法模型生成一条空流程；零 case 预算仍为空结果，并有生成器回归测试。
 - run-id 路径边界：当前增量。CLI 拒绝路径分隔符和特殊组件，防止报告文件写出指定目录。
 - 报告期望状态：当前增量。每个 step 记录 `expected_state`，`verify-report` 校验该字段类型，便于独立解释 mismatch。
+- 报告期望状态必需性：`verify-report` 拒绝缺少 `expected_state` 的旧格式 step，确保可复现报告包含状态 oracle。
 - summary seed 元数据：当前增量。运行摘要记录输入 `seed`，便于定位同一规范下的生成结果。
 - 摘要一致性校验：`verify-report` 检查摘要字段、状态、非负整数与计数守恒，不等同于哈希篡改检测。
 - 报告完整性边界：`docs/adr/0005-report-integrity-boundary.md` 明确结构校验、可追溯元数据与真正 replay/哈希校验的差异及进入条件。
