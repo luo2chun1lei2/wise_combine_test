@@ -38,6 +38,9 @@
   - `connection.dsl`：状态机示例。
   - `guard.dsl`：带 guard 的状态机示例。
   - `slow.dsl`：用于验证 harness 超时隔离的函数示例。
+  - `nested.dsl`、`nested-history.dsl`、`deep-history.dsl`、`concurrent.dsl`：嵌套/历史/并发状态机示例。
+  - `cpp-class.dsl`、`sm-actions.dsl`：C++ 类和状态机动作映射示例。
+  - `setup.dsl`：资源预创建示例。
 
 ## `src/`
 
