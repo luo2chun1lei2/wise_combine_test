@@ -32,6 +32,7 @@
 - 无效报告回归：`1a11ddd`。非连续 step index 报告返回退出码 `2`，stdout 为空，stderr 给出具体字段诊断；与正常报告验证共同纳入 CTest。
 - 空流程语义：当前增量。无 transition 且 `max_cases > 0` 的合法模型生成一条空流程；零 case 预算仍为空结果，并有生成器回归测试。
 - run-id 路径边界：当前增量。CLI 拒绝路径分隔符和特殊组件，防止报告文件写出指定目录。
+- 报告期望状态：当前增量。每个 step 记录 `expected_state`，`verify-report` 校验该字段类型，便于独立解释 mismatch。
 - 架构与追踪资料：`ee665d6`。新增 `docs/architecture.md`、`docs/requirements-matrix.md` 和 `docs/test-matrix.md`。
 - 高级约束边界决策：`docs/adr/0004-advanced-constraints-boundary.md`。冻结当前仅支持状态/函数/argument/before，避免未定义约束被隐式实现。
 

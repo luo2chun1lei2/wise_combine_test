@@ -50,6 +50,8 @@ cmake --build build --parallel
 `run` 会为每条流程写出一对 `<run-id>-N.json` 与 `<run-id>-N.txt` 文件，另外
 写出包含 `case_count`、`passed`、`failed` 以及相同测量字段的
 `<run-id>-summary.json`。`report` 命令只打印之前生成的报告，不会修改报告文件。
+每个报告 step 都会在 `observed_state` 旁记录 `expected_state`，因此不匹配报告会
+包含该步骤使用的状态 oracle。
 
 退出码保持稳定：`0` 表示成功，`2` 表示规范格式错误或内容无效，`3` 表示有界
 生成耗尽（达到 `case_limit` 或 `step_limit`），`4` 表示适配器观察到不匹配，
