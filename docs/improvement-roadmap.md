@@ -46,6 +46,7 @@
 - 外部摘要门禁：当前增量。`hash-report REPORT EXPECTED_SHA256` 对已保存摘要执行比较，匹配返回 0、不匹配返回 4；这是完整性比对，不是来源认证。
 - v2 envelope CLI：当前增量。`verify-report-v2` 校验 payload SHA-256 并输出 `integrity_verified:true`，篡改输入返回码 2；完整 payload schema 与 replay 仍待实现。
 - v2 envelope 严格解析：`86f6282`。envelope 现在复用项目 JSON parser，校验版本、字段集合、算法和 digest 格式，并支持 payload 转义。
+- v2 envelope 状态：基础完成。`wrap_v2`/`verify_v2` 与 `verify-report-v2` 已覆盖转义 payload、摘要匹配和篡改拒绝；真实运行 payload 与 replay 仍待实现。
 - 架构与追踪资料：`ee665d6`。新增 `docs/architecture.md`、`docs/requirements-matrix.md` 和 `docs/test-matrix.md`。
 - 高级约束边界决策：`docs/adr/0004-advanced-constraints-boundary.md`。冻结当前仅支持状态/函数/argument/before，避免未定义约束被隐式实现。
 

@@ -1,6 +1,6 @@
 # ADR 0003：报告 v2 与重放格式
 
-状态：设计已确定，尚未实现。本文不改变当前 v1 命令行为。
+状态：v2 envelope 基础已实现；完整 payload schema 与 replay 尚未实现。本文不改变当前 v1 命令行为。
 
 ## 数据契约
 
@@ -26,8 +26,8 @@ payload 解码后包含以下字段，缺失、类型错误及额外字段均拒
 
 ## 命令契约
 
-`verify-report REPORT` 同时支持现有 v1 和 v2；v1 只验证结构，v2 在解析 payload
-前验证 SHA-256，再验证模型、流程及结果的相互对应关系。成功输出必须明确区分
+`verify-report-v2 REPORT` 验证 v2 envelope；v1 只验证结构，v2 在解析 payload
+前验证 SHA-256，再验证模型、流程及结果的相互对应关系（后续 payload schema 阶段）。成功输出必须明确区分
 `integrity_verified`，不得将 v1 返回结果描述为哈希校验通过。
 
 `replay REPORT --adapter EXEC --reports NEW_DIR --run-id ID` 只接受完整 v2。
