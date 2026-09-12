@@ -70,6 +70,8 @@ summary 还会记录 `schema_version: 1` 和本次规范使用的 `seed`，便�
 不匹配返回 `4`；它不负责验证来源身份。
 `verify-report-v2` 会校验 SHA-256 envelope 并输出 `integrity_verified:true`；v2
 payload 完整 schema 与 replay 命令仍是后续工作。
+保存的流程序列可在执行未来的 replay 前通过库 API
+`generate::validate_flow` 做结构校验。
 `wrap-report-v2` 读取 payload 文件，要求其为合法 JSON，然后输出带 SHA-256 的
 envelope 供之后校验；非法 payload 返回退出码 `2`。
 `verify-report` 也支持运行摘要：计数、seed 与测量字段必须为非负整数，且

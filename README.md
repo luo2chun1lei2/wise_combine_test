@@ -80,6 +80,8 @@ authenticate the source.
 `verify-report-v2` validates the SHA-256 envelope and reports
 `integrity_verified:true`; the v2 payload schema and replay command remain
 separate follow-up work.
+Saved flow sequences can be structurally checked by the library's
+`generate::validate_flow` API before a future replay implementation executes them.
 `wrap-report-v2` reads a payload file, requires it to be valid JSON, and emits a
 SHA-256 envelope for later verification. Invalid payloads fail with exit code `2`.
 `verify-report` also validates run summaries: counters, seed and measurements
