@@ -48,6 +48,7 @@
 - v2 envelope 严格解析：`86f6282`。envelope 现在复用项目 JSON parser，校验版本、字段集合、算法和 digest 格式，并支持 payload 转义。
 - v2 envelope 状态：基础完成。`wrap_v2`/`verify_v2` 与 `verify-report-v2` 已覆盖转义 payload、摘要匹配和篡改拒绝；真实运行 payload 与 replay 仍待实现。
 - v2 payload 包装 CLI：`224c69c`。`wrap-report-v2` 可将 payload 文件封装为 SHA-256 envelope，并通过 `verify-report-v2` 复核。
+- v2 envelope 攻击矩阵：`9c06232`。覆盖未知算法、额外/重复字段、错误版本、短 digest 与尾随数据，均返回校验失败。
 - 架构与追踪资料：`ee665d6`。新增 `docs/architecture.md`、`docs/requirements-matrix.md` 和 `docs/test-matrix.md`。
 - 高级约束边界决策：`docs/adr/0004-advanced-constraints-boundary.md`。冻结当前仅支持状态/函数/argument/before，避免未定义约束被隐式实现。
 
