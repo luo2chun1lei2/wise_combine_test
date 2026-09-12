@@ -29,6 +29,7 @@
 - 重复 adapter 字段：`b859c59`。重复 `status` 字段会被拒绝为 protocol error，并有独立回归测试。
 - 严格 adapter JSON：`ddc4f56`。新增公共 response parser，支持字段重排/空白并拒绝错误类型、重复键、未知 status 和额外字段。
 - 报告 schema 校验：`d7a012c`。新增 `verify-report`，严格解析 schema、flow、status、steps、args 和状态字段。
+- 无效报告回归：`1a11ddd`。非连续 step index 报告返回退出码 `2`，stdout 为空，stderr 给出具体字段诊断；与正常报告验证共同纳入 CTest。
 - 架构与追踪资料：`ee665d6`。新增 `docs/architecture.md`、`docs/requirements-matrix.md` 和 `docs/test-matrix.md`。
 
 ## P0：发布阻断
