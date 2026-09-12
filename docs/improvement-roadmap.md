@@ -14,7 +14,7 @@
 | 有界确定性 DFS | 支持 | 受 `max_cases`、`max_steps` 限制，允许有界非自环重走 |
 | seed 驱动的随机策略 | 基础支持 | 多候选流程按 seed 稳定打乱；单候选流程结果不变 |
 | 完整 adapter JSON 解析 | 基础完成 | 运行器复用严格 RFC 8259 parser，校验类型、重复键和状态；仍需扩展更多恶意语法矩阵 |
-| 报告 replay、篡改校验 | 待增强 | 当前报告不足以独立重现复杂失败 |
+| 报告 replay、篡改校验 | 基础完成 | `verify-report` 严格校验 schema；重放和哈希篡改检测仍待增强 |
 | guard、mutex、parallel、count/value | 未支持 | 是否纳入产品需先冻结需求 |
 | 多对象交互、负向流程 | 未支持 | 不应在文档中暗示已实现 |
 
@@ -28,6 +28,7 @@
 - 报告实际参数：`04be12e`、`93dbd4e`。每个 step 的 effective args（含关系注入值）进入 JSON 报告，并保留字符串转义和浮点精度。
 - 重复 adapter 字段：`b859c59`。重复 `status` 字段会被拒绝为 protocol error，并有独立回归测试。
 - 严格 adapter JSON：`ddc4f56`。新增公共 response parser，支持字段重排/空白并拒绝错误类型、重复键、未知 status 和额外字段。
+- 报告 schema 校验：`d7a012c`。新增 `verify-report`，严格解析 schema、flow、status、steps、args 和状态字段。
 - 架构与追踪资料：`ee665d6`。新增 `docs/architecture.md`、`docs/requirements-matrix.md` 和 `docs/test-matrix.md`。
 
 ## P0：发布阻断

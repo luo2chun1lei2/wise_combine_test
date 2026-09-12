@@ -44,6 +44,7 @@ ignored by git.
   --adapter tests/fixtures/bin/adapter_ok \
   --reports reports --run-id relation
 ./build/wise-combine report reports/relation-0.txt
+./build/wise-combine verify-report reports/relation-0.json
 ```
 
 `validate` and `generate` print JSON containing wall time, CPU time, and peak

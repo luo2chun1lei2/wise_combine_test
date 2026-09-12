@@ -39,6 +39,7 @@ cmake --build build --parallel
   --adapter tests/fixtures/bin/adapter_ok \
   --reports reports --run-id relation
 ./build/wise-combine report reports/relation-0.txt
+./build/wise-combine verify-report reports/relation-0.json
 ```
 
 `validate` 和 `generate` 会输出包含墙钟时间、CPU 时间和峰值 RSS 的 JSON。
