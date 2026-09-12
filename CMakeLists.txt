@@ -122,6 +122,12 @@ set_tests_properties(cli_run_failure PROPERTIES WILL_FAIL TRUE)
 add_test(NAME cli_invalid COMMAND wise-combine validate
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/invalid.json)
 set_tests_properties(cli_invalid PROPERTIES WILL_FAIL TRUE)
+add_test(NAME cli_report_write_failure COMMAND ${CMAKE_COMMAND}
+  -DCLI=$<TARGET_FILE:wise-combine>
+  -DSPEC=${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/relation_workflow.json
+  -DADAPTER=${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/bin/adapter_ok
+  -DCASE_DIR=${CMAKE_CURRENT_BINARY_DIR}/report-write-faults
+  -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/report_write_failure.cmake)
 add_test(NAME cli_reports_error COMMAND bash
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_reports_error_test.sh
   $<TARGET_FILE:wise-combine>

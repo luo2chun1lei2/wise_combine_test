@@ -20,6 +20,8 @@ bool write(const runtime::RunResult&r,const std::string&d,const std::string&id,s
     if (!json_file || !text_file) throw std::runtime_error("cannot write report files");
     json_file << json(r);
     text_file << text(r);
+    json_file.flush();
+    text_file.flush();
     if (!json_file || !text_file) throw std::runtime_error("cannot finish writing report files");
     return true;
   } catch (const std::exception& e) {

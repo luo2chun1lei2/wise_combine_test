@@ -1,0 +1,20 @@
+if(NOT DEFINED CLI OR NOT DEFINED SPEC OR NOT DEFINED ADAPTER OR NOT DEFINED CASE_DIR)
+  message(FATAL_ERROR "missing test configuration")
+endif()
+file(MAKE_DIRECTORY "${CASE_DIR}")
+foreach(target IN ITEMS "run-0.json" "run-0.txt" "run-summary.json")
+  set(directory "${CASE_DIR}/${target}.d")
+  file(MAKE_DIRECTORY "${directory}")
+  execute_process(COMMAND "${CMAKE_COMMAND}" -E create_symlink /dev/full "${directory}/${target}"
+    RESULT_VARIABLE linked)
+  if(NOT linked EQUAL 0)
+    message(FATAL_ERROR "could not prepare /dev/full fault")
+  endif()
+  execute_process(COMMAND "${CLI}" run "${SPEC}" --adapter "${ADAPTER}"
+    --reports "${directory}" --run-id run
+    RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+  file(REMOVE "${directory}/${target}")
+  if(NOT result STREQUAL "5" OR NOT output STREQUAL "" OR NOT error MATCHES "unable to.*writ")
+    message(FATAL_ERROR "${target}: expected exit 5, empty stdout, write diagnostic; got ${result}: ${output} ${error}")
+  endif()
+endforeach()
