@@ -38,6 +38,8 @@ ignored by git.
 Optional coverage instrumentation is available with
 `-DWISE_COMBINE_ENABLE_COVERAGE=ON`; run CTest and consume compiler-generated
 coverage files with `gcov` or `llvm-cov`.
+The configured `coverage-check` target aggregates project source lines and
+fails below the required 80% threshold.
 
 The frozen Q1-Q6 queue oracle is also registered as `evaluation_q1` through
 `evaluation_q6`; each test runs a clean adapter and its matching single-mutant

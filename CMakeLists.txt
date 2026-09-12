@@ -47,6 +47,10 @@ if(WISE_COMBINE_ENABLE_COVERAGE)
   endif()
   target_compile_options(wise-combine-compile-options INTERFACE --coverage -fno-inline)
   target_link_options(wise-combine-compile-options INTERFACE --coverage)
+  add_custom_target(coverage-check
+    COMMAND ${CMAKE_COMMAND} -DBUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}
+      -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/coverage_gate.cmake)
 endif()
 
 add_executable(wise-combine-smoke src/smoke.cpp)

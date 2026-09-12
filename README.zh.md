@@ -32,6 +32,7 @@ cmake --build build --parallel
 
 可通过 `-DWISE_COMBINE_ENABLE_COVERAGE=ON` 启用可选覆盖率插桩，运行 CTest 后使用
 `gcov` 或 `llvm-cov` 读取编译器生成的覆盖率文件。
+配置后的 `coverage-check` 目标会聚合项目源码行覆盖率，低于要求的 80% 时失败。
 
 冻结的 Q1–Q6 队列 oracle 也注册为 `evaluation_q1` 至 `evaluation_q6`；每项测试
 分别运行 clean 适配器和对应单缺陷 mutant，要求退出码分别为 0 和 4。这些是预先
