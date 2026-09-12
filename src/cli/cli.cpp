@@ -204,6 +204,11 @@ int command_run(const std::vector<std::string>& args) {
           << ",\"failed\":" << failed << ",\"wall_time_ns\":" << measurement.wall_time_ns
           << ",\"cpu_time_ns\":" << measurement.cpu_time_ns
           << ",\"peak_rss_bytes\":" << measurement.peak_rss_bytes << "}\n";
+  summary.flush();
+  if (!summary) {
+    std::cerr << "unable to finish writing reports summary in '" << reports << "'\n";
+    return kRuntimeFailure;
+  }
   std::cout << "{\"generation_status\":\"" << generation_status(generated.status)
             << "\",\"case_count\":" << generated.flows.size() << ",\"passed\":" << passed
             << ",\"failed\":" << failed << ",\"wall_time_ns\":" << measurement.wall_time_ns
