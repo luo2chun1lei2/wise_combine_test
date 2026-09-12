@@ -19,6 +19,7 @@
 - `*-checklist.md`：提案、设计、任务各阶段的评审检查表。
 - `index.md`：AI 可延续资料索引，记录资料版本、来源和适用 commit。
 - `AI-USAGE.md`：AI 使用记录模板，用于留痕模型、输入、产出、人工批准和成本。
+- `AI-COST.md`：AI 成本基线与离线/替代流程。
 - `ai-security-checklist.md`：AI 生成物的安全与质量控制检查表。
 
 ## `doc/`
@@ -30,6 +31,7 @@
 - `state-machine-dsl.md`：状态机 DSL 语法定义。
 - `report-schema.md`：`--json` 和 `--harness-json` 输出字段说明。
 - `capabilities.md`：能力状态与边界矩阵。
+- `governance.md`：阶段门、缺陷严重度、责任与回滚流程。
 - `layout.md`：本文件，说明目录结构。
 - `examples/`：可运行的 DSL 示例模型。
   - `file-functions.dsl`：libc 文件函数组示例。
