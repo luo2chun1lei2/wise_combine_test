@@ -187,7 +187,7 @@ RunResult execute(const model::Model& model, const generate::Flow& flow, const O
       if (value == producer->second.end()) { result.status = Status::protocol_error; result.steps.push_back({Status::protocol_error, i, transition->id, transition->function, "", {}, "", -1, "producer return is missing", {}}); return result; }
       effective.args[relation.consumer_argument] = value->second;
     }
-    auto step = run_step(flow, i, effective, options); result.steps.push_back(step); if (step.status != Status::passed) { result.status = step.status; break; }
+    auto step = run_step(flow, i, effective, options); step.expected_state = transition->expect_present ? transition->expect : transition->to; result.steps.push_back(step); if (step.status != Status::passed) { result.status = step.status; break; }
     returned[transition->id] = step.returns;
   }
   return result;
