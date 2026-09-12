@@ -518,10 +518,13 @@ bool parse_adapter_response(const std::string& text, std::string& status,
 
 std::string make_adapter_request(
     const std::string& flow_id, std::size_t step, const std::string& function,
-    const std::map<std::string, std::string>& args) {
+    const std::map<std::string, std::string>& args,
+    const std::map<std::string, std::string>& arg_types,
+    const std::string& return_type) {
     std::ostringstream out;
     out << "{\"protocol\":1,\"flow_id\":\"" << json_escape(flow_id)
         << "\",\"step\":" << step << ",\"function\":\"" << json_escape(function)
+        << "\",\"return_type\":\"" << json_escape(return_type)
         << "\",\"args\":{";
     bool first = true;
     for (const auto& [name, value] : args) {
@@ -530,6 +533,15 @@ std::string make_adapter_request(
         }
         first = false;
         out << '"' << json_escape(name) << "\":\"" << json_escape(value) << '"';
+    }
+    out << "},\"arg_types\":{";
+    first = true;
+    for (const auto& [name, type] : arg_types) {
+        if (!first) {
+            out << ',';
+        }
+        first = false;
+        out << '"' << json_escape(name) << "\":\"" << json_escape(type) << '"';
     }
     out << "}}\n";
     return out.str();
@@ -1974,8 +1986,30 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
         close(out_pipe[1]);
         close(err_pipe[1]);
 
+        std::map<std::string, std::string> arg_types;
+        std::string return_type = "int";
+        if (options_.spec) {
+            const auto fn_it = std::find_if(
+                options_.spec->functions.begin(),
+                options_.spec->functions.end(),
+                [&function](const FunctionDecl& fn) {
+                    return fn.name == function;
+                });
+            if (fn_it != options_.spec->functions.end()) {
+                for (const auto& param : fn_it->params) {
+                    arg_types[param.name] =
+                        param.type.empty() ? "string" : param.type;
+                }
+                return_type = fn_it->return_type.empty()
+                                  ? (fn_it->return_param.empty()
+                                         ? "int"
+                                         : fn_it->return_param)
+                                  : fn_it->return_type;
+            }
+        }
         const std::string request =
-            make_adapter_request(result.id, i, function, args);
+            make_adapter_request(result.id, i, function, args, arg_types,
+                                 return_type);
         const ssize_t written =
             write(in_pipe[1], request.data(), request.size());
         (void)written;

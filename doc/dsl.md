@@ -72,5 +72,5 @@ constraint value(<函数名>.<参数名>) ==|!= <字面量>
 
 - `direct` 和 `standalone` 模式只支持无参 C ABI 函数；出现带参函数时会明确拒绝。
 - 需要参数传递、返回值传递或 `expect_output` 时，使用 `--adapter` 模式。
-- adapter 响应是版本为 1 的 JSON 对象，必须包含 `protocol`、`status`、`returns`、`stdout`，可选 `return`。
+- adapter 请求包含 `protocol`、`flow_id`、`step`、`function`、`return_type`、`args` 和 `arg_types`；响应是版本为 1 的 JSON 对象，必须包含 `protocol`、`status`、`returns`、`stdout`，可选 `return`。
 - 函数组合生成器默认生成空流程、子集、符合 `order` 的排列以及每个函数至多出现 2 次的有界重复调用；可用 `--max-function-repeats` 调整重复上限。

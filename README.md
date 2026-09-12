@@ -113,7 +113,7 @@ make -C doc/examples
   --adapter test/fixtures/adapter_ok.sh --report text
 ```
 
-adapter 从标准输入读取一行 JSON 调用请求，执行对应函数后向标准输出写回一行 JSON 响应。响应必须是一个版本为 1 的 JSON 对象，包含 `protocol`、`status`、`returns`、`stdout` 字段，可选 `return`；`returns` 中的前序函数返回值会按 `parameter` 关系传给后续函数。解析器接受合法空白、字段顺序和转义，拒绝尾随内容、未知版本和缺失字段。
+adapter 从标准输入读取一行 JSON 调用请求，执行对应函数后向标准输出写回一行 JSON 响应。请求包含 `protocol`、`flow_id`、`step`、`function`、`return_type`、`args` 和 `arg_types`；响应必须是一个版本为 1 的 JSON 对象，包含 `protocol`、`status`、`returns`、`stdout` 字段，可选 `return`；`returns` 中的前序函数返回值会按 `parameter` 关系传给后续函数。解析器接受合法空白、字段顺序和转义，拒绝尾随内容、未知版本和缺失字段。
 
 只生成组合流程、不执行时使用 `--dry-run`；生成独立被测程序时使用 `--mode standalone`。完整命令选项可用 `wise_combine_test --help` 查看，DSL 语法见 [doc/dsl.md](doc/dsl.md)。
 
