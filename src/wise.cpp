@@ -12,6 +12,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <iterator>
 #include <poll.h>
 #include <signal.h>
 #include <stdexcept>
@@ -2326,6 +2327,49 @@ std::string spec_digest(const Spec& spec) {
     return out.str();
 }
 
+std::vector<Flow> parse_trace_flows(const std::string& path) {
+    std::ifstream in(path);
+    if (!in) {
+        throw std::runtime_error("cannot open trace file: " + path);
+    }
+    const std::string text((std::istreambuf_iterator<char>(in)),
+                           std::istreambuf_iterator<char>());
+    JsonValue root;
+    JsonParser parser(text);
+    std::string err;
+    if (!parser.parse(root, err)) {
+        throw std::runtime_error("invalid trace file: " + err);
+    }
+    if (root.type != JsonValue::Type::Object) {
+        throw std::runtime_error("trace file root must be an object");
+    }
+    const auto flows_it = root.object.find("flows");
+    if (flows_it == root.object.end() ||
+        flows_it->second.type != JsonValue::Type::Array) {
+        throw std::runtime_error("trace file missing flows array");
+    }
+    std::vector<Flow> flows;
+    for (const auto& entry : flows_it->second.array) {
+        if (entry.type != JsonValue::Type::Object) {
+            throw std::runtime_error("trace flow entry must be an object");
+        }
+        const auto flow_it = entry.object.find("flow");
+        if (flow_it == entry.object.end() ||
+            flow_it->second.type != JsonValue::Type::Array) {
+            throw std::runtime_error("trace flow entry missing flow array");
+        }
+        Flow flow;
+        for (const auto& fn : flow_it->second.array) {
+            if (fn.type != JsonValue::Type::String) {
+                throw std::runtime_error("trace flow function must be a string");
+            }
+            flow.push_back(fn.string);
+        }
+        flows.push_back(std::move(flow));
+    }
+    return flows;
+}
+
 std::string render_report(const std::vector<FlowResult>& results,
                           const std::string& format,
                           const ReportMeta& meta) {
@@ -2393,7 +2437,15 @@ std::string render_report(const std::vector<FlowResult>& results,
             const std::string id =
                 r.id.empty() ? flow_id(r.flow) : r.id;
             out << "    {\"id\": \"" << escape_json(id)
-                << "\", \"status\": \"" << escape_json(r.status)
+                << "\", \"flow\": [";
+            for (std::size_t j = 0; j < r.flow.size(); ++j) {
+                if (j) {
+                    out << ", ";
+                }
+                out << '"' << escape_json(r.flow[j]) << '"';
+            }
+            out << "]"
+                << ", \"status\": \"" << escape_json(r.status)
                 << "\", \"exit_code\": " << r.exit_code
                 << ", \"detail\": \"" << escape_json(r.detail)
                 << "\", \"expected\": \"" << escape_json(r.expected)

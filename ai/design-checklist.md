@@ -11,3 +11,4 @@
 - 2026-09-12：按评审结论确认 direct/standalone 零参边界、adapter 版本化 JSON 协议和失败非零退出语义。
 - 2026-09-12：补充函数组合生成器剪枝规则和 `--max-function-repeats` 配置。
 - 2026-09-12：补充报告中的版本、seed、模型摘要和输入文件元数据。
+- 2026-09-12：补充 `--no-function-flows`、`--trace`、`--replay` 和统一 oracle 执行路径。

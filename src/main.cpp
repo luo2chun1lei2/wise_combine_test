@@ -15,6 +15,8 @@ struct CliOptions {
     std::string lib_path;
     std::string adapter_path;
     std::vector<std::string> adapter_args;
+    std::string trace_path;
+    std::string replay_path;
     bool dry_run = false;
     std::string report = "text";
     wct::GenerationOptions gen;
@@ -31,11 +33,14 @@ void print_usage(std::ostream& out) {
     out << "  --max-depth <n>           最大路径步数（默认 32）\n";
     out << "  --max-flows <n>           最大调用流程数量（默认 1000）\n";
     out << "  --max-function-repeats <n> 每个函数在函数组合中的最大出现次数（默认 2）\n";
+    out << "  --no-function-flows        只生成状态图流程，不生成函数组合流程\n";
     out << "  --seed <n>                复现实验种子（默认 0）\n";
     out << "  --log-file <path>         日志文件（默认 build/wise_combine_test.log）\n";
     out << "  --log-max-size <bytes>    日志文件大小上限（默认 10485760）\n";
     out << "  --log-rotate-count <n>    保留日志文件数量（默认 5）\n";
     out << "  --report text|json        报告格式（默认 text）\n";
+    out << "  --trace <path>            将可重放 JSON trace 写入文件\n";
+    out << "  --replay <path>           从 trace 文件恢复流程后执行\n";
 }
 
 void ensure_dir(const std::string& path) {
@@ -125,6 +130,8 @@ CliOptions parse_args(int argc, char** argv) {
                 throw std::runtime_error("--max-function-repeats requires a value");
             }
             o.gen.max_function_repeats = parse_size(argv[++i], a);
+        } else if (a == "--no-function-flows") {
+            o.gen.no_function_flows = true;
         } else if (a == "--seed") {
             if (i + 1 >= argc) {
                 throw std::runtime_error("--seed requires a value");
@@ -151,6 +158,16 @@ CliOptions parse_args(int argc, char** argv) {
                 throw std::runtime_error("--report requires a value");
             }
             o.report = argv[++i];
+        } else if (a == "--trace") {
+            if (i + 1 >= argc) {
+                throw std::runtime_error("--trace requires a value");
+            }
+            o.trace_path = argv[++i];
+        } else if (a == "--replay") {
+            if (i + 1 >= argc) {
+                throw std::runtime_error("--replay requires a value");
+            }
+            o.replay_path = argv[++i];
         } else if (a == "-h" || a == "--help") {
             print_usage(std::cout);
             std::exit(0);
@@ -227,10 +244,18 @@ int main(int argc, char** argv) {
         runner_options.adapter_args = o.adapter_args;
 
         wct::Generator generator(model, o.gen);
-        std::vector<wct::Flow> flows = generator.generate_state_flows();
-        const std::vector<wct::Flow> function_flows =
-            generator.generate_function_flows();
-        flows.insert(flows.end(), function_flows.begin(), function_flows.end());
+        std::vector<wct::Flow> flows;
+        if (!o.replay_path.empty()) {
+            flows = wct::parse_trace_flows(o.replay_path);
+        } else {
+            flows = generator.generate_state_flows();
+            if (!o.gen.no_function_flows) {
+                const std::vector<wct::Flow> function_flows =
+                    generator.generate_function_flows();
+                flows.insert(flows.end(), function_flows.begin(),
+                             function_flows.end());
+            }
+        }
 
         wct::Logger logger(o.log);
         logger.log("info", "main", "ALL", "generated " +
@@ -295,8 +320,24 @@ int main(int argc, char** argv) {
         }
         const wct::ReportMeta meta{o.gen.seed, o.gen.seed_set,
                                   "plan_goal-1.0.0", model_digest, o.files};
-        std::cout << wct::render_report(results, o.report, meta);
-        const bool truncated = generator.truncated();
+        const std::string report = wct::render_report(results, o.report, meta);
+        std::cout << report;
+        if (!o.trace_path.empty()) {
+            const std::string trace =
+                wct::render_report(results, "json", meta);
+            std::ofstream trace_out(o.trace_path);
+            if (!trace_out) {
+                throw std::runtime_error("cannot write trace file: " +
+                                         o.trace_path);
+            }
+            trace_out << trace;
+            trace_out.close();
+            if (!trace_out) {
+                throw std::runtime_error("failed while writing trace file: " +
+                                         o.trace_path);
+            }
+        }
+        const bool truncated = o.replay_path.empty() && generator.truncated();
         if (truncated) {
             std::cout << "# warning: generation was truncated by --max-flows\n";
         }

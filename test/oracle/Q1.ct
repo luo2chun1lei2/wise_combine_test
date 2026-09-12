@@ -1,0 +1,10 @@
+object q1 {
+ state S0 initial
+ state S1
+ state S2 final
+ transition S0 -> S1 by q_open() expect 0
+ transition S1 -> S2 by q_pop_empty() expect -2
+}
+function q_open()
+function q_pop_empty()
+order q_open before q_pop_empty

@@ -1,4 +1,4 @@
-.PHONY: all check standalone standalone-asan asan clean
+.PHONY: all check standalone standalone-asan asan oracle coverage clean
 
 all:
 	$(MAKE) -C src all
@@ -17,6 +17,15 @@ check: all
 	g++ -std=c++17 build/wise_standalone.cpp -Ltest/out -ltest \
 		-Wl,-rpath,'$$ORIGIN/../test/out' -o build/wise_standalone
 	./build/wise_standalone
+	$(MAKE) oracle
+
+oracle: all
+	./test/oracle/run_oracle.sh
+
+coverage: all
+	$(MAKE) -C test coverage
+	./test/out/test_wise_cov
+	cd test && gcov -b -c out/wise_cov.gcno
 
 standalone: all
 	./src/out/wise_combine_test test/fixtures/valid.ct \
@@ -42,3 +51,4 @@ clean:
 	$(MAKE) -C test clean
 	$(MAKE) -C doc/examples clean
 	rm -rf build
+	rm -rf test/oracle/bin test/oracle/results

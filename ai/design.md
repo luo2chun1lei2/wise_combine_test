@@ -267,6 +267,9 @@ wise_combine_test <描述文件> [选项]
 - `--max-depth <n>`：限制最大路径步数。
 - `--max-flows <n>`：限制最大调用流程数量。
 - `--max-function-repeats <n>`：限制单个函数在函数组合流程中的最大出现次数。
+- `--no-function-flows`：只生成状态图流程，不生成函数组合流程。
+- `--trace <path>`：写出可重放 JSON trace。
+- `--replay <path>`：从 trace 文件恢复流程后执行。
 - `--log-file <path>`：指定日志输出文件。
 - `--log-max-size <bytes>`：设置单个日志文件大小上限。
 - `--log-rotate-count <n>`：设置保留的历史日志文件数量。

@@ -66,6 +66,8 @@ vcpkg_installed/
 # wise_combine_test generated artifacts
 src/out/
 test/out/
+test/oracle/bin/
+test/oracle/results/
 *.gcov
 *.gcno
 *.gcda

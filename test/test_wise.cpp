@@ -2,10 +2,13 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cerrno>
 #include <fstream>
 #include <iostream>
+#include <signal.h>
 #include <stdexcept>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 namespace {
@@ -212,6 +215,24 @@ int main() {
         assert(json.find("\"bindings\"") != std::string::npos);
         assert(json.find("\\\"v\\\"") != std::string::npos);
         assert(wct::flow_id(ok.flow) == "f->g");
+    }
+
+    {
+        wct::FlowResult ok;
+        ok.flow = {"f", "g"};
+        ok.status = "passed";
+        wct::ReportMeta meta;
+        meta.version = "test";
+        meta.model_digest = "abc";
+        const std::string trace =
+            wct::render_report({ok}, "json", meta);
+        const std::string path = "/tmp/wise_trace_roundtrip.json";
+        std::ofstream out(path);
+        out << trace;
+        out.close();
+        const auto flows = wct::parse_trace_flows(path);
+        assert(flows.size() == 1);
+        assert(flows[0] == (wct::Flow{"f", "g"}));
     }
 
     {
@@ -819,6 +840,33 @@ int main() {
         const auto results = runner.run({{"init"}});
         assert(results.size() == 1);
         assert(results[0].status == "timeout");
+    }
+
+    {
+        const std::string pidfile = "/tmp/wise_adapter_child_test.pid";
+        std::remove(pidfile.c_str());
+        wct::Parser parser("test/fixtures/adapter.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        wct::RunnerOptions opts;
+        opts.adapter_path = "test/fixtures/adapter_child.sh";
+        opts.adapter_args = {pidfile};
+        opts.spec = &model.spec();
+        opts.timeout_seconds = 1;
+        wct::Runner runner(opts);
+        const auto results = runner.run({{"init"}});
+        assert(results.size() == 1);
+        assert(results[0].status == "timeout");
+
+        std::ifstream in(pidfile);
+        long child_pid = -1;
+        if (in >> child_pid && child_pid > 0) {
+            errno = 0;
+            const int alive = kill(static_cast<pid_t>(child_pid), 0);
+            assert(alive != 0 || errno == ESRCH);
+        }
+        std::remove(pidfile.c_str());
     }
 
     {

@@ -130,6 +130,7 @@ struct GenerationOptions {
     std::size_t max_flows = 1000;
     std::size_t max_state_visits = 8;
     std::size_t max_function_repeats = 2;
+    bool no_function_flows = false;
     std::size_t seed = 0;
     bool seed_set = false;
     bool truncated = false;
@@ -293,6 +294,7 @@ std::string render_report(const std::vector<FlowResult>& results,
 std::string flow_id(const Flow& flow);
 std::string flow_id_indexed(const Flow& flow, std::size_t index);
 std::string spec_digest(const Spec& spec);
+std::vector<Flow> parse_trace_flows(const std::string& path);
 
 bool parse_guard(const std::string& text, GuardExpr& out, std::string& err);
 bool guard_satisfied(const GuardExpr& guard, int return_value);

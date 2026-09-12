@@ -5,18 +5,20 @@
 使用 GCC `--coverage` 编译单元测试并运行，再用 `gcov` 统计 `src/wise.cpp` 的覆盖率：
 
 ```text
-make -C test coverage
-./test/out/test_wise_cov
-cd test && gcov -b -c out/wise_cov.gcno out/test_wise_cov.gcno
+make coverage
 ```
 
 ## 结果
 
 | 指标 | 数值 |
 | --- | ---: |
-| 行覆盖率 | 80.17% |
-| 分支覆盖率 | 81.47% |
-| 分支至少执行一次 | 50.81% |
-| 调用覆盖率 | 73.56% |
+| 行覆盖率 | 75.88% |
+| 分支覆盖率 | 73.85% |
+| 分支至少执行一次 | 45.92% |
+| 调用覆盖率 | 64.79% |
 
-行覆盖率与分支覆盖率均达到 80% 的可选目标。
+当前数值未达到 80% 的可选目标。新增严格 JSON parser、trace/replay 和组合生成器后，代码量和分支增加，单测尚未补齐全部负例路径。
+
+## 子进程覆盖口径
+
+单元测试中的 direct 执行和 adapter 执行会 `fork` 子进程。子进程覆盖数据不会自动、无冲突地并入父进程 `.gcda`；当前 `make coverage` 统计的是父进程测试路径，不声明已完整覆盖 fork/exec 隔离路径。后续应通过 `GCOV_PREFIX`、子进程退出前显式 dump 或单独运行 adapter harness 的方式，分别归集父子进程覆盖数据。
