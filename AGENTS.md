@@ -45,27 +45,34 @@
 
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-09-05  **Commit:** 81daf6f  **Branch:** layzcodex
+**Updated:** 2026-09-12  **Commit:** 2871ce6  **Branch:** layzcodex
 
 ## OVERVIEW
 
-`wise_combine_test` is currently a requirements-only repository for a Linux
-combination-testing tool. The intended product models object state graphs and
-relationships among functions (argument flow and call order), then generates
-and executes combination call-flow tests. No implementation exists in this
-checkout yet.
+`wise_combine_test` is a C++20/CMake Linux combination-testing tool. It models
+object state graphs, typed functions, producer-consumer argument flow and
+global call ordering, then generates bounded flows and executes them through
+an allowlisted external adapter process. Reports are available in JSON and
+text form with CLI measurements and stable failure exit codes.
 
 ## STRUCTURE
 
 ```text
 wise_combine_test.lazycodex/
 ├── AGENTS.md       # project specification and repository guidance
+├── CMakeLists.txt  # C++20 build, sanitizer option, and CTest registration
+├── README.md       # English usage instructions
+├── README.zh.md    # Chinese usage instructions
+├── docs/           # improvement roadmap and future design records
+├── src/            # model, spec, generator, runtime, report, and CLI
+├── tests/          # unit, runtime, CLI, and integration fixtures
+├── .omo/           # plans, ledgers, and verification evidence
 ├── LICENSE         # project license
 └── .gitignore      # C/C++/CMake and test-artifact exclusions
 ```
 
-`.codegraph/` and `.pytest_cache/` are local generated state, not modules.
-There are no source, test, build, CI, or documentation subdirectories yet.
+`.codegraph/`, `.pytest_cache/`, and build directories are generated state or
+ignored artifacts, not source modules.
 
 ## WHERE TO LOOK
 
@@ -74,14 +81,19 @@ There are no source, test, build, CI, or documentation subdirectories yet.
 | Requirements | `AGENTS.md` | Authoritative functional and delivery specification |
 | Artifact conventions | `.gitignore` | C/C++/CMake outputs and test caches are ignored |
 | License | `LICENSE` | Applies to future source and documentation |
-| State-graph implementation | `src/` (planned) | Create when implementation begins |
-| Combination-flow tests | `tests/` (planned) | Cover state transitions and function relations |
-| Usage documentation | `README.md` (planned) | Add installation and user instructions |
+| State/function model | `src/model/` | States, transitions, functions, typed relations, and validation |
+| Versioned specification | `src/spec/` | Strict JSON parsing, normalization, and diagnostics |
+| Combination generation | `src/generate/` | Seeded bounded deterministic flow generation |
+| Safe execution | `src/runtime/` | Adapter protocol, process isolation, timeouts, and limits |
+| Reports and CLI | `src/report/`, `src/cli/` | JSON/text reports, measurements, and exit codes |
+| Tests and fixtures | `tests/` | Unit, failure matrix, CLI, and integration coverage |
+| Usage and improvements | `README*.md`, `docs/` | Synchronized instructions and enhancement roadmap |
 
 ## CODE MAP
 
-No symbols, exports, entry points, or call graph are present. CodeGraph reports
-zero indexed files, so centrality and reference counts are not measurable.
+The CLI entry point is `src/main.cpp`; product layers are separated by the
+directories listed above. Use CMake/CTest as the authoritative build and test
+surface; CodeGraph state remains generated metadata.
 
 ## CONVENTIONS
 
@@ -91,6 +103,8 @@ zero indexed files, so centrality and reference counts are not measurable.
 - New implementation must provide reproducible tests and measurements,
   including leak and out-of-bounds checks.
 - Preserve `[必须]` versus `[可选]` when mapping requirements to evidence.
+- Keep `README.md` and `README.zh.md` synchronized for usage and behavior.
+- Treat `docs/improvement-roadmap.md` as the backlog for reviewed enhancements.
 
 ## ANTI-PATTERNS (THIS PROJECT)
 
@@ -103,13 +117,28 @@ zero indexed files, so centrality and reference counts are not measurable.
 
 ## COMMANDS
 
-No build, test, lint, coverage, sanitizer, Valgrind, install, or run command
-exists at this revision. Add and document these with the first executable
-implementation; the eventual workflow must expose build, functional test, and
-memory-safety commands.
+Debug build and tests:
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build --parallel
+(cd build && ctest --output-on-failure)
+```
+
+Sanitizer build and tests:
+
+```sh
+cmake -S . -B build-asan -DCMAKE_BUILD_TYPE=Debug \
+  -DWISE_COMBINE_ENABLE_SANITIZERS=ON
+cmake --build build-asan --parallel
+(cd build-asan && ctest --output-on-failure)
+```
+
+CLI usage, Valgrind, coverage, adapter safety, and report commands are
+maintained in `README.md` and `README.zh.md`.
 
 ## NOTES
 
-This root file is the only guidance needed: one directory and three tracked
-files. Re-score locations after adding `src/`, `tests/`, or other substantial
-modules, and create child guidance only for domains with distinct conventions.
+This root file is the project-wide guidance. Re-score locations after adding
+substantial modules, and create child guidance only for domains with distinct
+conventions.
