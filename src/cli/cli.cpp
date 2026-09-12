@@ -83,12 +83,13 @@ const char* generation_status(generate::GenerationStatus status) {
 }
 
 void usage(std::ostream& out) {
-  out << "usage: wise-combine <validate|generate|run|report|verify-report|hash-report> ...\n"
+  out << "usage: wise-combine <validate|generate|run|report|verify-report|verify-report-v2|hash-report> ...\n"
       << "  validate SPEC\n"
       << "  generate SPEC\n"
       << "  run SPEC --adapter EXEC [--arg ARG]... [--reports DIR] [--run-id ID]\n"
       << "  report REPORT.json|REPORT.txt\n"
       << "  verify-report REPORT.json\n"
+      << "  verify-report-v2 REPORT.json\n"
       << "  hash-report REPORT [EXPECTED_SHA256]\n";
 }
 
@@ -245,6 +246,10 @@ int command_hash_report(const std::string& path, const std::string& expected = {
   try { const auto digest = wise::integrity::sha256_hex(read_file(path)); std::cout << digest << '\n'; return expected.empty() || digest == expected ? 0 : kObservedFailure; }
   catch (const std::exception& error) { std::cerr << error.what() << '\n'; return kParseError; }
 }
+int command_verify_report_v2(const std::string& path) {
+  try { if (!wise::integrity::verify_v2(read_file(path))) throw std::runtime_error("report integrity verification failed"); std::cout << "{\"valid\":true,\"integrity_verified\":true,\"schema_version\":2}\n"; return 0; }
+  catch (const std::exception& error) { std::cerr << error.what() << '\n'; return kParseError; }
+}
 
 }  // namespace
 
@@ -255,6 +260,7 @@ int run(int argc, char** argv) {
   if (command == "generate" && argc == 3) return command_generate(argv[2]);
   if (command == "report" && argc == 3) return command_report(argv[2]);
   if (command == "verify-report" && argc == 3) return command_verify_report(argv[2]);
+  if (command == "verify-report-v2" && argc == 3) return command_verify_report_v2(argv[2]);
   if (command == "hash-report" && (argc == 3 || argc == 4)) return command_hash_report(argv[2], argc == 4 ? argv[3] : "");
   if (command == "run") {
     std::vector<std::string> args;
