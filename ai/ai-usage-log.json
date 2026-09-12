@@ -96,6 +96,30 @@
       "model_known": false,
       "cost_known": false,
       "notes": "Added return_type and arg_types; full scalar conversion remains future."
+    },
+    {
+      "date": "2026-09-12",
+      "objective": "Add AI and project management mechanisms",
+      "inputs": [
+        "evaluation gaps in AI provenance and project governance"
+      ],
+      "stages": [
+        "process-tooling",
+        "documentation",
+        "validation"
+      ],
+      "human_control": "Confirmed project-gate should include make check and optional make asan",
+      "validation": [
+        "python3 -m json.tool ai/ai-usage-log.json",
+        "python3 -m json.tool ai/defects.json",
+        "./ai/project-gate.sh"
+      ],
+      "commits": [
+        "ef0d257"
+      ],
+      "model_known": false,
+      "cost_known": false,
+      "notes": "Gate script and structured defect ledger are now in-repo."
     }
   ]
 }
