@@ -25,6 +25,7 @@
 - 项目知识库同步：`f2b7ff1`。`AGENTS.md` 已更新为当前实现目录、命令和维护边界。
 - Adapter 状态分类：`8e79eb5`。合法 `error`、`mismatch` 和未知状态已有独立回归；完整 JSON 语法解析仍待增强。
 - 非自环重复：`acc1c4d`。合法状态循环可在 `max_steps` 内重走，并有 `A→B→A` 回归测试。
+- 架构与追踪资料：`ee665d6`。新增 `docs/architecture.md`、`docs/requirements-matrix.md` 和 `docs/test-matrix.md`。
 
 ## P0：发布阻断
 
@@ -77,6 +78,8 @@
 将评审目录中的模型、adapter、fixture 和 oracle 转为项目内的 `tests/evaluation/` 或等价入口。长期回归必须区分模型表达、生成覆盖、执行判错和报告复现，并记录发现率、误报率、无法表达数和未执行数。
 
 ### 需求、设计和测试矩阵
+
+状态：基础资料已完成；随着 replay、评估资产和高级约束落地，需要持续补充矩阵。
 
 建议新增：
 
