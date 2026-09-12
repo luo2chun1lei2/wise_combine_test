@@ -163,6 +163,19 @@ void Model::validate() const {
     }
   }
 
+  for (const auto& transition : transitions_) {
+    const auto& function = function_for(functions_, transition.function);
+    for (const auto& parameter : function.parameters) {
+      const auto key = transition.id + "\x1f" + parameter.name;
+      if (transition.args.find(parameter.name) == transition.args.end() &&
+          bound_arguments.find(key) == bound_arguments.end()) {
+        throw ModelError(ModelError::Code::invalid_argument,
+                         "transition is missing a value for parameter: " +
+                             transition.id + "." + parameter.name);
+      }
+    }
+  }
+
   std::unordered_map<std::string, std::vector<std::string>> edges;
   for (const auto& relation : ordering_relations_) {
     static_cast<void>(transition_for(transitions_, relation.before));

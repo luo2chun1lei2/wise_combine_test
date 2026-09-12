@@ -37,9 +37,11 @@ Model valid_model() {
                               {ReturnValue{"token", "text"}}});
   model.add_function(Function{"stop", {}, {}});
   model.add_function(Function{"consume", {Parameter{"input", "text"}}, {}});
-  model.add_transition(Transition{"start-step", "idle", "ready", "start"});
+  model.add_transition(Transition{"start-step", "idle", "ready", "start",
+                                  {{"input", wise::model::Scalar{wise::model::Scalar::Kind::string, false, 0, 0.0, "seed"}}}});
   model.add_transition(Transition{"stop-step", "ready", "idle", "stop"});
-  model.add_transition(Transition{"consume-step", "ready", "ready", "consume"});
+  model.add_transition(Transition{"consume-step", "ready", "ready", "consume",
+                                  {{"input", wise::model::Scalar{wise::model::Scalar::Kind::string, false, 0, 0.0, "fallback"}}}});
   model.validate();
   return model;
 }
@@ -106,6 +108,16 @@ void rejects_type_mismatch_and_order_cycle() {
   expect_error([&] { ordered.validate(); }, ModelError::Code::contradictory_ordering);
 }
 
+void rejects_missing_parameter() {
+  Model model;
+  model.add_state(State{"idle"});
+  model.add_function(Function{"consume", {Parameter{"input", "text"}}, {}});
+  model.add_transition(Transition{"consume-step", "idle", "idle", "consume"});
+  model.set_initial_state("idle");
+  model.set_limits({1, 1, 1});
+  expect_error([&] { model.validate(); }, ModelError::Code::invalid_argument);
+}
+
 }  // namespace
 
 int main() {
@@ -115,6 +127,7 @@ int main() {
     rejects_duplicate_and_unknown_references();
     rejects_invalid_relations();
     rejects_type_mismatch_and_order_cycle();
+    rejects_missing_parameter();
   } catch (const std::exception& error) {
     std::cerr << "model test failure: " << error.what() << '\n';
     return 1;

@@ -5,7 +5,7 @@
 using wise::spec::parse;
 using wise::spec::SpecError;
 
-const std::string valid = R"({"seed":7,"limits":{"max_steps":3,"max_cases":2,"max_subprocesses":1},"relations":[{"kind":"argument","producer":{"output":"token","transition":"start-step"},"consumer":{"arg":"input","transition":"consume-step"}},{"kind":"before","before":"start-step","after":"consume-step"}],"functions":[{"returns":[{"type":"text","name":"token"}],"params":[{"type":"text","name":"input"}],"id":"start"},{"id":"consume","params":[{"name":"input","type":"text"}],"returns":[]}],"transitions":[{"function":"start","to":"ready","from":"idle","id":"start-step"},{"id":"consume-step","from":"ready","to":"ready","function":"consume","args":{"input":"x"},"expect":{"state":"ready"}}],"initial_state":"idle","states":[{"id":"ready"},{"id":"idle"}],"version":1})";
+const std::string valid = R"({"seed":7,"limits":{"max_steps":3,"max_cases":2,"max_subprocesses":1},"relations":[{"kind":"argument","producer":{"output":"token","transition":"start-step"},"consumer":{"arg":"input","transition":"consume-step"}},{"kind":"before","before":"start-step","after":"consume-step"}],"functions":[{"returns":[{"type":"text","name":"token"}],"params":[{"type":"text","name":"input"}],"id":"start"},{"id":"consume","params":[{"name":"input","type":"text"}],"returns":[]}],"transitions":[{"function":"start","to":"ready","from":"idle","id":"start-step","args":{"input":"seed"}},{"id":"consume-step","from":"ready","to":"ready","function":"consume","args":{"input":"x"},"expect":{"state":"ready"}}],"initial_state":"idle","states":[{"id":"ready"},{"id":"idle"}],"version":1})";
 
 void rejects(const std::string& input, const std::string& pointer) {
   try { static_cast<void>(parse(input)); }
