@@ -198,6 +198,10 @@ int main() {
         wct::FlowResult ok;
         ok.flow = {"f", "g"};
         ok.status = "passed";
+        ok.steps.push_back(
+            {"f", "passed", "", "", "", {{"x", "a\"b"}, {"y", "c"}}});
+        ok.steps.push_back(
+            {"g", "passed", "", "", "", {}});
         wct::FlowResult bad;
         bad.flow = {"h"};
         bad.status = "failed";
