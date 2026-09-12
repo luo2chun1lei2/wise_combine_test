@@ -205,7 +205,7 @@ int command_run(const std::vector<std::string>& args) {
     std::cerr << "unable to write reports summary in '" << reports << "'\n";
     return kRuntimeFailure;
   }
-  summary << "{\"generation_status\":\"" << generation_status(generated.status)
+  summary << "{\"schema_version\":1,\"generation_status\":\"" << generation_status(generated.status)
           << "\",\"case_count\":" << generated.flows.size() << ",\"passed\":" << passed
           << ",\"failed\":" << failed << ",\"wall_time_ns\":" << measurement.wall_time_ns
           << ",\"cpu_time_ns\":" << measurement.cpu_time_ns
@@ -216,7 +216,7 @@ int command_run(const std::vector<std::string>& args) {
     std::cerr << "unable to finish writing reports summary in '" << reports << "'\n";
     return kRuntimeFailure;
   }
-  std::cout << "{\"generation_status\":\"" << generation_status(generated.status)
+  std::cout << "{\"schema_version\":1,\"generation_status\":\"" << generation_status(generated.status)
             << "\",\"case_count\":" << generated.flows.size() << ",\"passed\":" << passed
             << ",\"failed\":" << failed << ",\"wall_time_ns\":" << measurement.wall_time_ns
             << ",\"cpu_time_ns\":" << measurement.cpu_time_ns

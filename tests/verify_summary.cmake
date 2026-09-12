@@ -2,7 +2,7 @@ if(NOT DEFINED CLI OR NOT DEFINED CASE_DIR)
   message(FATAL_ERROR "missing test configuration")
 endif()
 file(MAKE_DIRECTORY "${CASE_DIR}")
-set(valid [=[{"generation_status":"dead_end","case_count":3,"passed":2,"failed":1,"seed":9,"wall_time_ns":1,"cpu_time_ns":1,"peak_rss_bytes":1}]=])
+set(valid [=[{"schema_version":1,"generation_status":"dead_end","case_count":3,"passed":2,"failed":1,"seed":9,"wall_time_ns":1,"cpu_time_ns":1,"peak_rss_bytes":1}]=])
 file(WRITE "${CASE_DIR}/summary.json" "${valid}")
 execute_process(COMMAND "${CLI}" verify-report "${CASE_DIR}/summary.json"
   RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
