@@ -55,6 +55,9 @@ cmake --build build --parallel
 
 ## 规范
 
+每个 transition 调用的函数参数都必须有常量参数或传入的 argument 关系作为来源。
+缺少来源会在模型校验阶段被拒绝；此前被接受的不完整模型需要补齐参数。
+
 顶层 JSON 对象包含 `version: 1`、`states`、`initial_state`、`transitions`、
 `functions`、`relations`、`limits` 和 `seed` 字段。对象和数组在适用时会按稳定的
 字典序规范化。

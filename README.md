@@ -62,6 +62,10 @@ If `--reports` cannot be created as a directory (including a regular-file path),
 
 ## Specification
 
+Every declared function parameter used by a transition must have a literal
+argument or an incoming argument relation. Missing sources are rejected during
+model validation. This tightens validation of previously accepted incomplete models.
+
 The top-level JSON object has `version: 1`, `states`, `initial_state`,
 `transitions`, `functions`, `relations`, `limits`, and `seed`. Objects and
 arrays are normalized into stable lexicographic order where applicable.
