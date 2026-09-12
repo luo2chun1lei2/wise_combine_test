@@ -171,7 +171,13 @@ int command_run(const std::vector<std::string>& args) {
     else return kUsageError;
   }
   const auto generated = generate::generate(document.model, document.seed);
-  std::filesystem::create_directories(reports);
+  std::error_code report_directory_error;
+  std::filesystem::create_directories(reports, report_directory_error);
+  if (report_directory_error) {
+    std::cerr << "unable to create reports directory '" << reports
+              << "': " << report_directory_error.message() << '\n';
+    return kRuntimeFailure;
+  }
   std::size_t passed = 0;
   std::size_t failed = 0;
   int exit_status = generated.status == generate::GenerationStatus::dead_end ? 0 : kGenerationExhausted;

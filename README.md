@@ -57,6 +57,8 @@ Exit codes are stable: `0` success, `2` malformed or invalid specification,
 adapter-observed mismatch, `5` timeout/crash/protocol/launch failure, and `6`
 invalid CLI usage. A flow produced before an exhaustion status is still
 reported and executed; code 3 records that the configured bound was reached.
+If `--reports` cannot be created as a directory (including a regular-file path),
+`run` prints a diagnostic to stderr and exits with code `5` before executing flows.
 
 ## Specification
 
