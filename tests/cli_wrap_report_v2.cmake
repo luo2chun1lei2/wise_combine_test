@@ -14,3 +14,9 @@ execute_process(COMMAND "${CLI}" verify-report-v2 "${CASE_DIR}/envelope.json"
 if(NOT verify_result EQUAL 0 OR NOT verify_output MATCHES "integrity_verified.*true")
   message(FATAL_ERROR "wrapped payload rejected: ${verify_result}: ${verify_output} ${verify_error}")
 endif()
+file(WRITE "${CASE_DIR}/invalid.json" "not-json")
+execute_process(COMMAND "${CLI}" wrap-report-v2 "${CASE_DIR}/invalid.json"
+  RESULT_VARIABLE invalid_result OUTPUT_VARIABLE invalid_output ERROR_VARIABLE invalid_error)
+if(NOT invalid_result EQUAL 2 OR NOT invalid_output STREQUAL "" OR NOT invalid_error MATCHES "invalid RFC8259 JSON")
+  message(FATAL_ERROR "invalid payload accepted: ${invalid_result}: ${invalid_output} ${invalid_error}")
+endif()

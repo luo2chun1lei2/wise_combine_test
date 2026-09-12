@@ -252,7 +252,7 @@ int command_verify_report_v2(const std::string& path) {
   catch (const std::exception& error) { std::cerr << error.what() << '\n'; return kParseError; }
 }
 int command_wrap_report_v2(const std::string& path) {
-  try { std::cout << wise::integrity::wrap_v2(read_file(path)) << '\n'; return 0; }
+  try { const auto payload = read_file(path); spec::validate_json(payload); std::cout << wise::integrity::wrap_v2(payload) << '\n'; return 0; }
   catch (const std::exception& error) { std::cerr << error.what() << '\n'; return kParseError; }
 }
 
