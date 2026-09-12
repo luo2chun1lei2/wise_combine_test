@@ -29,7 +29,7 @@
       "owner": "AI",
       "deadline": "2026-09-26",
       "evidence": "src/wise.cpp render_report steps array",
-      "commit": "pending"
+      "commit": "54b1c1d"
     },
     {
       "id": "D-004",

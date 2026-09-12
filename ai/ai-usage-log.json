@@ -137,10 +137,12 @@
         "make check",
         "python3 -m json.tool /tmp/step_report.json"
       ],
-      "commits": [],
+      "commits": [
+        "54b1c1d"
+      ],
       "model_known": false,
       "cost_known": false,
-      "notes": "Commit hash will be recorded in defects.json after commit."
+      "notes": "Step-level trace is now recorded in JSON report and trace output."
     }
   ]
 }
