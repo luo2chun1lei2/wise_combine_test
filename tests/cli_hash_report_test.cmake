@@ -1,0 +1,16 @@
+if(NOT DEFINED CLI OR NOT DEFINED CASE_DIR)
+  message(FATAL_ERROR "missing test configuration")
+endif()
+file(MAKE_DIRECTORY "${CASE_DIR}")
+file(WRITE "${CASE_DIR}/report.txt" "abc")
+execute_process(COMMAND "${CLI}" hash-report "${CASE_DIR}/report.txt"
+  RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+if(NOT result EQUAL 0 OR NOT output MATCHES "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" OR NOT error STREQUAL "")
+  message(FATAL_ERROR "unexpected report hash: ${result}: ${output} ${error}")
+endif()
+file(WRITE "${CASE_DIR}/report.txt" "abd")
+execute_process(COMMAND "${CLI}" hash-report "${CASE_DIR}/report.txt"
+  RESULT_VARIABLE changed_result OUTPUT_VARIABLE changed_output)
+if(NOT changed_result EQUAL 0 OR changed_output STREQUAL "${output}")
+  message(FATAL_ERROR "report mutation did not change digest")
+endif()

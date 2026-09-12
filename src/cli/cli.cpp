@@ -4,6 +4,7 @@
 #include "report/report.hpp"
 #include "runtime/runtime.hpp"
 #include "spec/spec.hpp"
+#include "integrity/sha256.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -82,12 +83,13 @@ const char* generation_status(generate::GenerationStatus status) {
 }
 
 void usage(std::ostream& out) {
-  out << "usage: wise-combine <validate|generate|run|report|verify-report> ...\n"
+  out << "usage: wise-combine <validate|generate|run|report|verify-report|hash-report> ...\n"
       << "  validate SPEC\n"
       << "  generate SPEC\n"
       << "  run SPEC --adapter EXEC [--arg ARG]... [--reports DIR] [--run-id ID]\n"
       << "  report REPORT.json|REPORT.txt\n"
-      << "  verify-report REPORT.json\n";
+      << "  verify-report REPORT.json\n"
+      << "  hash-report REPORT\n";
 }
 
 int parse_spec(const std::string& path, spec::Document& document) {
@@ -239,6 +241,11 @@ int command_verify_report(const std::string& path) {
   } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return kParseError; }
 }
 
+int command_hash_report(const std::string& path) {
+  try { std::cout << wise::integrity::sha256_hex(read_file(path)) << '\n'; return 0; }
+  catch (const std::exception& error) { std::cerr << error.what() << '\n'; return kParseError; }
+}
+
 }  // namespace
 
 int run(int argc, char** argv) {
@@ -248,6 +255,7 @@ int run(int argc, char** argv) {
   if (command == "generate" && argc == 3) return command_generate(argv[2]);
   if (command == "report" && argc == 3) return command_report(argv[2]);
   if (command == "verify-report" && argc == 3) return command_verify_report(argv[2]);
+  if (command == "hash-report" && argc == 3) return command_hash_report(argv[2]);
   if (command == "run") {
     std::vector<std::string> args;
     for (int i = 2; i < argc; ++i) args.emplace_back(argv[i]);

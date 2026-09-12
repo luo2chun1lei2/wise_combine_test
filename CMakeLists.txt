@@ -67,7 +67,7 @@ add_executable(wise-combine src/main.cpp src/cli/cli.cpp)
 target_include_directories(wise-combine PRIVATE src)
 target_link_libraries(wise-combine PRIVATE wise-combine-report wise-combine-runtime
   wise-combine-generate wise-combine-spec wise-combine-model
-  wise-combine-compile-options)
+  wise-combine-integrity wise-combine-compile-options)
 
 add_executable(wise-combine-smoke-test tests/smoke_test.cpp)
 target_link_libraries(wise-combine-smoke-test PRIVATE wise-combine-compile-options)
@@ -172,6 +172,10 @@ add_test(NAME cli_verify_summary COMMAND ${CMAKE_COMMAND}
   -DCLI=$<TARGET_FILE:wise-combine>
   -DCASE_DIR=${CMAKE_CURRENT_BINARY_DIR}/verify-summary
   -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/verify_summary.cmake)
+add_test(NAME cli_hash_report COMMAND ${CMAKE_COMMAND}
+  -DCLI=$<TARGET_FILE:wise-combine>
+  -DCASE_DIR=${CMAKE_CURRENT_BINARY_DIR}/hash-report
+  -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_hash_report_test.cmake)
 foreach(evaluation_mutant RANGE 0 6)
   add_executable(adapter_eval_${evaluation_mutant} tests/evaluation/queue_adapter.cpp)
   target_compile_definitions(adapter_eval_${evaluation_mutant} PRIVATE MUTANT=${evaluation_mutant})
