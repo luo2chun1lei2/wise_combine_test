@@ -40,5 +40,6 @@ struct AdapterResponse {
 Document parse(const std::string& json);
 std::string normalize(const std::string& json);
 AdapterResponse parse_adapter_response(const std::string& json);
+void validate_report(const std::string& json);
 
 }  // namespace wise::spec

@@ -85,4 +85,39 @@ AdapterResponse parse_adapter_response(const std::string& json) {
   if (response.status != "ok" && response.status != "mismatch" && response.status != "error") invalid("/status", "unsupported adapter status");
   return response;
 }
+
+void validate_report(const std::string& json) {
+  const auto root = Parser(json).parse();
+  const auto& report = obj(root, "");
+  strict_keys(report, {"schema_version", "flow_id", "status", "steps"}, "");
+  const auto* version = std::get_if<std::int64_t>(&required(report, "schema_version", "").data);
+  if (!version || *version != 1) invalid("/schema_version", "expected integer 1");
+  auto string_field = [&](const Object& object, const char* key, const std::string& path) {
+    if (!std::holds_alternative<std::string>(required(object, key, path).data))
+      invalid(path + "/" + key, "expected string");
+  };
+  auto status_field = [&](const Object& object, const std::string& path) {
+    const auto status = text(object, "status", path);
+    if (status != "passed" && status != "mismatch" && status != "adapter_error" &&
+        status != "protocol_error" && status != "timeout" && status != "crashed" && status != "launch_error")
+      invalid(path + "/status", "unknown report status");
+  };
+  string_field(report, "flow_id", "");
+  status_field(report, "");
+  const auto& steps = arr(required(report, "steps", ""), "/steps");
+  for (std::size_t i = 0; i < steps.size(); ++i) {
+    const auto path = "/steps/" + std::to_string(i);
+    const auto& step = obj(steps[i], path);
+    strict_keys(step, {"index", "transition", "function", "status", "args", "observed_state", "stderr", "exit_status", "detail"}, path);
+    const auto* index = std::get_if<std::int64_t>(&required(step, "index", path).data);
+    if (!index || *index < 0 || static_cast<std::uint64_t>(*index) != i) invalid(path + "/index", "expected sequential step index");
+    for (const char* key : {"transition", "function", "observed_state", "stderr", "detail"}) string_field(step, key, path);
+    status_field(step, path);
+    if (!std::holds_alternative<std::int64_t>(required(step, "exit_status", path).data)) invalid(path + "/exit_status", "expected integer");
+    for (const auto& entry : obj(required(step, "args", path), path + "/args")) {
+      if (std::holds_alternative<Value::Object>(entry.second.data) || std::holds_alternative<Value::Array>(entry.second.data))
+        invalid(path + "/args", "expected scalar argument values");
+    }
+  }
+}
 }
