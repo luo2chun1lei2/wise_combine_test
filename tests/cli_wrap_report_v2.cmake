@@ -1,0 +1,16 @@
+if(NOT DEFINED CLI OR NOT DEFINED CASE_DIR)
+  message(FATAL_ERROR "missing test configuration")
+endif()
+file(MAKE_DIRECTORY "${CASE_DIR}")
+file(WRITE "${CASE_DIR}/payload.json" "{\"flow\":\"x\",\"note\":\"quote \\\" slash \\\\ newline\\n\"}")
+execute_process(COMMAND "${CLI}" wrap-report-v2 "${CASE_DIR}/payload.json"
+  RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+if(NOT result EQUAL 0 OR NOT error STREQUAL "")
+  message(FATAL_ERROR "v2 wrapping failed: ${result}: ${error}")
+endif()
+file(WRITE "${CASE_DIR}/envelope.json" "${output}")
+execute_process(COMMAND "${CLI}" verify-report-v2 "${CASE_DIR}/envelope.json"
+  RESULT_VARIABLE verify_result OUTPUT_VARIABLE verify_output ERROR_VARIABLE verify_error)
+if(NOT verify_result EQUAL 0 OR NOT verify_output MATCHES "integrity_verified.*true")
+  message(FATAL_ERROR "wrapped payload rejected: ${verify_result}: ${verify_output} ${verify_error}")
+endif()

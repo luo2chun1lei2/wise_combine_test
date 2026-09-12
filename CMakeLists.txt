@@ -183,6 +183,10 @@ add_test(NAME cli_verify_report_v2 COMMAND ${CMAKE_COMMAND}
   -DCLI=$<TARGET_FILE:wise-combine>
   -DCASE_DIR=${CMAKE_CURRENT_BINARY_DIR}/verify-report-v2
   -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_verify_report_v2.cmake)
+add_test(NAME cli_wrap_report_v2 COMMAND ${CMAKE_COMMAND}
+  -DCLI=$<TARGET_FILE:wise-combine>
+  -DCASE_DIR=${CMAKE_CURRENT_BINARY_DIR}/wrap-report-v2
+  -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_wrap_report_v2.cmake)
 foreach(evaluation_mutant RANGE 0 6)
   add_executable(adapter_eval_${evaluation_mutant} tests/evaluation/queue_adapter.cpp)
   target_compile_definitions(adapter_eval_${evaluation_mutant} PRIVATE MUTANT=${evaluation_mutant})
