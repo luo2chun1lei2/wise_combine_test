@@ -347,6 +347,13 @@ int runFunction(const std::string &text, int maxLength, unsigned seed, bool json
     std::cout << ",\"functions\":" << m.functions.size();
     std::cout << ",\"sequences\":";
     printJsonStrings(seqTexts);
+    std::vector<std::string> caseIds;
+    caseIds.reserve(seqTexts.size());
+    for (const auto &seqText : seqTexts) {
+      caseIds.push_back("fn-" + modelHash(seqText).substr(0, 8));
+    }
+    std::cout << ",\"case_ids\":";
+    printJsonStrings(caseIds);
     std::cout << ",\"negative_sequences\":";
     printJsonStrings(negTexts);
     if (coverage) {
@@ -767,6 +774,13 @@ int runStateMachine(const std::string &text, int maxLength, bool json, bool cove
     std::cout << ",\"transitions\":" << m.transitions.size();
     std::cout << ",\"paths\":";
     printJsonStrings(pathTexts);
+    std::vector<std::string> pathIds;
+    pathIds.reserve(pathTexts.size());
+    for (const auto &pathText : pathTexts) {
+      pathIds.push_back("sm-" + modelHash(pathText).substr(0, 8));
+    }
+    std::cout << ",\"case_ids\":";
+    printJsonStrings(pathIds);
     if (coverage) {
       std::cout << ",\"coverage\":{";
       std::cout << "\"states\":" << coveredStates.size() << "/" << m.states.size();
