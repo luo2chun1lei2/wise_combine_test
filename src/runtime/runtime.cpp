@@ -109,7 +109,7 @@ bool allowed_executable(const std::string& executable) {
 
 StepResult run_step(const generate::Flow& flow, std::size_t index, const model::Transition& transition,
                     const Options& options) {
-  StepResult result; result.index = index; result.transition = transition.id; result.function = transition.function;
+  StepResult result; result.index = index; result.transition = transition.id; result.function = transition.function; result.arguments = transition.args;
   int in_pipe[2], out_pipe[2], err_pipe[2];
   if (pipe(in_pipe) != 0 || pipe(out_pipe) != 0 || pipe(err_pipe) != 0) { result.detail = std::strerror(errno); return result; }
   const pid_t pid = fork();
@@ -152,19 +152,19 @@ StepResult run_step(const generate::Flow& flow, std::size_t index, const model::
 
 RunResult execute(const model::Model& model, const generate::Flow& flow, const Options& options) {
   RunResult result; result.flow_id = flow.flow_id; const auto started = Clock::now();
-  if (!allowed_executable(options.executable)) { result.status = Status::launch_error; result.steps.push_back({Status::launch_error, 0, "", "", "", {}, "", -1, "executable is not on the allowlist"}); return result; }
+  if (!allowed_executable(options.executable)) { result.status = Status::launch_error; result.steps.push_back({Status::launch_error, 0, "", "", "", {}, "", -1, "executable is not on the allowlist", {}}); return result; }
   std::map<std::string, std::map<std::string, model::Scalar>> returned;
   for (std::size_t i = 0; i < flow.transition_ids.size(); ++i) {
     if (Clock::now() - started > std::chrono::milliseconds(options.total_timeout_ms)) { result.status = Status::timeout; break; }
     const auto* transition = find_transition(model, flow.transition_ids[i]);
-    if (transition == nullptr) { result.status = Status::protocol_error; result.steps.push_back({Status::protocol_error, i, flow.transition_ids[i], "", "", {}, "", -1, "unknown transition"}); break; }
+    if (transition == nullptr) { result.status = Status::protocol_error; result.steps.push_back({Status::protocol_error, i, flow.transition_ids[i], "", "", {}, "", -1, "unknown transition", {}}); break; }
     model::Transition effective = *transition;
     for (const auto& relation : model.argument_relations()) {
       if (relation.consumer_transition != transition->id) continue;
       const auto producer = returned.find(relation.producer_transition);
-      if (producer == returned.end()) { result.status = Status::protocol_error; result.steps.push_back({Status::protocol_error, i, transition->id, transition->function, "", {}, "", -1, "producer return is unavailable"}); return result; }
+      if (producer == returned.end()) { result.status = Status::protocol_error; result.steps.push_back({Status::protocol_error, i, transition->id, transition->function, "", {}, "", -1, "producer return is unavailable", {}}); return result; }
       const auto value = producer->second.find(relation.producer_output);
-      if (value == producer->second.end()) { result.status = Status::protocol_error; result.steps.push_back({Status::protocol_error, i, transition->id, transition->function, "", {}, "", -1, "producer return is missing"}); return result; }
+      if (value == producer->second.end()) { result.status = Status::protocol_error; result.steps.push_back({Status::protocol_error, i, transition->id, transition->function, "", {}, "", -1, "producer return is missing", {}}); return result; }
       effective.args[relation.consumer_argument] = value->second;
     }
     auto step = run_step(flow, i, effective, options); result.steps.push_back(step); if (step.status != Status::passed) { result.status = step.status; break; }

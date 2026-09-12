@@ -44,5 +44,6 @@ int main(int argc, char** argv) {
   else if (mode == "crash" || mode == "cap") assert(r.status == wise::runtime::Status::crashed);
   else if (mode == "relation") assert(r.status == wise::runtime::Status::passed);
   const auto dir = std::filesystem::temp_directory_path() / ("wise-runtime-report-" + mode); wise::report::write(r, dir.string(), "run");
+  if (mode == "relation" && wise::report::json(r).find("\"args\":{\"input\":\"from-producer\"}") == std::string::npos) return 1;
   std::cout << wise::report::text(r); return 0;
 }

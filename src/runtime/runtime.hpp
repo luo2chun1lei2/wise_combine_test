@@ -22,6 +22,7 @@ struct StepResult {
   std::string stderr_text;
   int exit_status{-1};
   std::string detail;
+  std::map<std::string, model::Scalar> arguments;
 };
 
 struct RunResult {
