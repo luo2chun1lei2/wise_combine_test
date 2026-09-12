@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <functional>
 #include <map>
+#include <random>
 #include <set>
 #include <string>
 #include <utility>
@@ -16,6 +17,7 @@ struct Search {
   std::vector<const model::Transition*> transitions;
   std::map<std::string, std::vector<std::string>> prerequisites;
   std::set<std::vector<std::string>> emitted;
+  std::mt19937_64 rng;
   GenerationResult result;
 
   void visit(const std::string& state, std::vector<std::string>& sequence) {
@@ -43,6 +45,7 @@ struct Search {
     std::sort(choices.begin(), choices.end(), [](const auto* lhs, const auto* rhs) {
       return lhs->id < rhs->id;
     });
+    std::shuffle(choices.begin(), choices.end(), rng);
 
     if (choices.empty()) {
       if (!sequence.empty() && emitted.insert(sequence).second) {
@@ -74,10 +77,9 @@ struct Search {
 }  // namespace
 
 GenerationResult generate(const model::Model& model, std::uint64_t seed) {
-  static_cast<void>(seed);
   model.validate();
 
-  Search search{model, {}, {}, {}, GenerationResult{}};
+  Search search{model, {}, {}, {}, std::mt19937_64(seed), GenerationResult{}};
   for (const auto& transition : model.transitions()) {
     search.transitions.push_back(&transition);
   }

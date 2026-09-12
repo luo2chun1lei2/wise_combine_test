@@ -45,9 +45,23 @@ void branch_respects_case_limit() {
   model.set_limits({2, 8, 1});
   const auto result = generate(model, 7);
   if (result.status != GenerationStatus::case_limit || result.flows.size() != 2U ||
-      result.flows[0].flow_id != "a-branch" || result.flows[1].flow_id != "z-branch") {
+      result.flows[0].flow_id == result.flows[1].flow_id ||
+      (result.flows[0].flow_id != "a-branch" && result.flows[0].flow_id != "z-branch") ||
+      (result.flows[1].flow_id != "a-branch" && result.flows[1].flow_id != "z-branch")) {
     throw std::runtime_error("branch fixture mismatch");
   }
+  if (generate(model, 7).flows != result.flows)
+    throw std::runtime_error("seeded branches are not reproducible");
+  bool varied = false;
+  for (std::uint64_t seed = 0; seed < 32; ++seed)
+    varied = varied || generate(model, seed).flows != result.flows;
+  if (!varied) throw std::runtime_error("seed did not affect choices");
+  Model reversed = base_model();
+  reversed.add_transition(Transition{"a-branch", "start", "end", "f"});
+  reversed.add_transition(Transition{"z-branch", "start", "end", "f"});
+  reversed.set_limits({2, 8, 1});
+  if (generate(reversed, 7).flows != result.flows)
+    throw std::runtime_error("declaration order affected seeded flows");
 }
 
 void self_loop_is_one_bounded_flow() {

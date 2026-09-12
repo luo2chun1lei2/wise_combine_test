@@ -66,6 +66,10 @@ Every declared function parameter used by a transition must have a literal
 argument or an incoming argument relation. Missing sources are rejected during
 model validation. This tightens validation of previously accepted incomplete models.
 
+The generator uses `seed` to deterministically shuffle multiple legal choices:
+the same specification and seed produce the same flows, while different seeds
+may choose a different order when alternatives exist.
+
 The top-level JSON object has `version: 1`, `states`, `initial_state`,
 `transitions`, `functions`, `relations`, `limits`, and `seed`. Objects and
 arrays are normalized into stable lexicographic order where applicable.
