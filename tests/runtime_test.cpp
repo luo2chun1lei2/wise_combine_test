@@ -26,7 +26,8 @@ int main(int argc, char** argv) {
     m.add_argument_relation({"produce-step", "token", "consume-step", "input"});
     m.add_ordering_relation({"produce-step", "consume-step"});
   } else {
-    m.add_transition({"t1", "idle", "done", "finish", {}, true, "done"});
+    m.add_transition({"t1", "idle", "done", "finish", {}, true,
+                      argc > 2 && std::string(argv[2]) == "unicode" ? "你好/😀" : "done"});
   }
   m.set_initial_state("idle"); m.set_limits({1,2,1});
   const wise::generate::Flow flow = (argc > 2 && std::string(argv[2]) == "relation")
@@ -37,7 +38,8 @@ int main(int argc, char** argv) {
   const auto r = wise::runtime::execute(m, flow, o);
   if (wise::report::json(r).find("\"expected_state\":\"") == std::string::npos) return 1;
   const std::string mode = argc > 2 ? argv[2] : "ok";
-  if (mode == "ok" || mode == "formatted") assert(r.status == wise::runtime::Status::passed);
+  if (mode == "ok" || mode == "formatted" || mode == "unicode") assert(r.status == wise::runtime::Status::passed);
+  if (mode == "unicode") { assert(r.steps.front().observed_state == "你好/😀"); assert(r.steps.front().stderr_text == "line\ntext"); }
   else if (mode == "mismatch") assert(r.status == wise::runtime::Status::mismatch);
   else if (mode == "error") assert(r.status == wise::runtime::Status::adapter_error);
   else if (mode == "malformed" || mode == "extra" || mode == "unknown-status" || mode == "duplicate-status") assert(r.status == wise::runtime::Status::protocol_error);
