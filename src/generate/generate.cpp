@@ -125,6 +125,9 @@ void validate_flow(const model::Model& model, const Flow& flow) {
     for (const auto& relation : model.ordering_relations())
       if (relation.after == id && seen.count(relation.before) == 0U)
         throw std::invalid_argument("flow violates ordering relation: " + relation.before + " before " + id);
+    for (const auto& relation : model.argument_relations())
+      if (relation.consumer_transition == id && seen.count(relation.producer_transition) == 0U)
+        throw std::invalid_argument("flow violates argument relation: " + relation.producer_transition + " before " + id);
     state = it->to;
     seen.insert(id);
   }
