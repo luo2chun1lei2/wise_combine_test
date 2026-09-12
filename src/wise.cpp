@@ -965,7 +965,7 @@ void Parser::parse_constraint(const std::string& text, int line, Spec& spec) {
     if (expr.empty()) {
         fail(line, "constraint expression is empty");
     }
-    if (starts_with(expr, "state ")) {
+    if (starts_with(expr, "state ") || expr == "state") {
         const std::string state = trim(expr.substr(std::string("state").size()));
         if (state.empty()) {
             fail(line, "constraint state is empty");

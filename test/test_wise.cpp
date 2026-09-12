@@ -286,6 +286,25 @@ int main() {
     assert(expect_parse_error("}"));
     assert(expect_parse_error("object x {\n state S initial\n transition A -> B by f()\n"));
     assert(expect_parse_error("function f(a b c)"));
+    assert(expect_parse_error("object { state A initial }"));
+    assert(expect_parse_error("object x state S"));
+    assert(expect_parse_error("object x {\n state\n}"));
+    assert(expect_parse_error("object x {\n state A bad\n}"));
+    assert(expect_parse_error("object x {\n state A initial\n transition\n}"));
+    assert(expect_parse_error("object x {\n state A initial\n transition A B by f()\n}"));
+    assert(expect_parse_error("object x {\n state A initial\n transition A -> by f()\n}"));
+    assert(expect_parse_error("object x {\n state A initial\n transition A -> B f()\n}"));
+    assert(expect_parse_error("object x {\n state A initial\n transition A -> B by\n}"));
+    assert(expect_parse_error("object x {\n state A initial\n bogus\n}"));
+    assert(expect_parse_error("function (a x)"));
+    assert(expect_parse_error("parameter .x = a.y"));
+    assert(expect_parse_error("parameter a. = b.y"));
+    assert(expect_parse_error("parameter a.x = .y"));
+    assert(expect_parse_error("parameter a.x = b."));
+    assert(expect_parse_error("order a x b"));
+    assert(expect_parse_error("order a before b if c d"));
+    assert(expect_parse_error("constraint state"));
+    assert(expect_parse_error("constraint value(a.x"));
 
     assert(expect_model_error("function f()\nfunction f()"));
     assert(expect_parse_error("object x {\n state A initial\n state A\n}"));
@@ -825,6 +844,38 @@ int main() {
         assert(results[0].status == "failed");
         assert(results[0].detail.find("protocol must be 1") !=
                std::string::npos);
+    }
+
+    {
+        wct::Parser parser("test/fixtures/adapter.ct");
+        wct::Spec spec = parser.parse();
+        wct::Model model(std::move(spec));
+        model.validate();
+        const std::vector<std::string> invalid = {
+            "trailing", "missing_status", "bad_return_type", "bad_returns",
+            "bad_stdout", "non_integer", "invalid_literal", "unexpected_char",
+            "object_key", "missing_colon", "duplicate_key",
+            "unterminated_object"};
+        for (const auto& case_name : invalid) {
+            wct::RunnerOptions opts;
+            opts.adapter_path = "test/fixtures/adapter_json_cases.sh";
+            opts.adapter_args = {case_name};
+            opts.spec = &model.spec();
+            wct::Runner runner(opts);
+            const auto results = runner.run({{"init"}});
+            assert(results.size() == 1);
+            assert(results[0].status == "failed");
+        }
+        for (const auto& case_name : {"escape", "unicode"}) {
+            wct::RunnerOptions opts;
+            opts.adapter_path = "test/fixtures/adapter_json_cases.sh";
+            opts.adapter_args = {case_name};
+            opts.spec = &model.spec();
+            wct::Runner runner(opts);
+            const auto results = runner.run({{"init"}});
+            assert(results.size() == 1);
+            assert(results[0].status == "passed");
+        }
     }
 
     {
