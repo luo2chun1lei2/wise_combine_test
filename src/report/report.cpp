@@ -1,7 +1,8 @@
 #include "report/report.hpp"
+#include <filesystem>
 #include <fstream>
 #include <sstream>
-#include <sys/stat.h>
+#include <stdexcept>
 namespace wise::report {
 namespace { const char* name(runtime::Status s) { switch (s) { case runtime::Status::passed:return "passed"; case runtime::Status::mismatch:return "mismatch"; case runtime::Status::protocol_error:return "protocol_error"; case runtime::Status::timeout:return "timeout"; case runtime::Status::crashed:return "crashed"; default:return "launch_error"; } } }
 std::string json(const runtime::RunResult& r) {
@@ -11,5 +12,19 @@ std::string json(const runtime::RunResult& r) {
   o << "]}"; return o.str();
 }
 std::string text(const runtime::RunResult& r) { std::ostringstream o; o << "flow " << r.flow_id << ": " << name(r.status) << '\n'; for (const auto&s:r.steps) o << "step " << s.index << " " << s.function << ": " << name(s.status) << " state=" << s.observed_state << " exit=" << s.exit_status << " " << s.detail << '\n'; return o.str(); }
-void write(const runtime::RunResult&r,const std::string&d,const std::string&id){mkdir(d.c_str(),0755);std::ofstream(d+"/"+id+".json")<<json(r);std::ofstream(d+"/"+id+".txt")<<text(r);}
+bool write(const runtime::RunResult&r,const std::string&d,const std::string&id,std::string* error){
+  try {
+    std::filesystem::create_directories(d);
+    std::ofstream json_file(std::filesystem::path(d) / (id + ".json"));
+    std::ofstream text_file(std::filesystem::path(d) / (id + ".txt"));
+    if (!json_file || !text_file) throw std::runtime_error("cannot write report files");
+    json_file << json(r);
+    text_file << text(r);
+    if (!json_file || !text_file) throw std::runtime_error("cannot finish writing report files");
+    return true;
+  } catch (const std::exception& e) {
+    if (error != nullptr) *error = e.what();
+    return false;
+  }
+}
 }

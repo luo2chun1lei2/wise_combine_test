@@ -184,13 +184,21 @@ int command_run(const std::vector<std::string>& args) {
   std::size_t index = 0;
   for (const auto& flow : generated.flows) {
     const auto result = runtime::execute(document.model, flow, options);
-    wise::report::write(result, reports, run_id + "-" + std::to_string(index));
+    std::string report_error;
+    if (!wise::report::write(result, reports, run_id + "-" + std::to_string(index), &report_error)) {
+      std::cerr << "unable to write reports in '" << reports << "': " << report_error << '\n';
+      return kRuntimeFailure;
+    }
     if (result.status == runtime::Status::passed) ++passed;
     else { ++failed; exit_status = result.status == runtime::Status::mismatch ? kObservedFailure : kRuntimeFailure; }
     ++index;
   }
   const auto measurement = measure(wall, cpu);
   std::ofstream summary(std::filesystem::path(reports) / (run_id + "-summary.json"));
+  if (!summary) {
+    std::cerr << "unable to write reports summary in '" << reports << "'\n";
+    return kRuntimeFailure;
+  }
   summary << "{\"generation_status\":\"" << generation_status(generated.status)
           << "\",\"case_count\":" << generated.flows.size() << ",\"passed\":" << passed
           << ",\"failed\":" << failed << ",\"wall_time_ns\":" << measurement.wall_time_ns
