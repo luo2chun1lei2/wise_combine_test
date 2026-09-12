@@ -103,6 +103,7 @@ class ModelError final : public std::runtime_error {
 
   ModelError(Code code, const std::string& message);
   [[nodiscard]] Code code() const noexcept { return code_; }
+  [[nodiscard]] const char* code_name() const noexcept;
 
  private:
   Code code_;

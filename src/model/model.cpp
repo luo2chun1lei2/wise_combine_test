@@ -60,6 +60,20 @@ bool scalar_matches_type(const Scalar& value, const std::string& type) {
 ModelError::ModelError(Code code, const std::string& message)
     : std::runtime_error(message), code_(code) {}
 
+const char* ModelError::code_name() const noexcept {
+  switch (code_) {
+    case Code::duplicate_id: return "duplicate_id";
+    case Code::unknown_reference: return "unknown_reference";
+    case Code::relation_self_edge: return "relation_self_edge";
+    case Code::duplicate_binding: return "duplicate_binding";
+    case Code::type_mismatch: return "type_mismatch";
+    case Code::contradictory_ordering: return "contradictory_ordering";
+    case Code::invalid_argument: return "invalid_argument";
+    case Code::invalid_limits: return "invalid_limits";
+  }
+  return "unknown";
+}
+
 void Model::add_state(State state) {
   if (state.id.empty() || contains_id(states_, state.id)) {
     duplicate("state", state.id);
