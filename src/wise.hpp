@@ -231,6 +231,15 @@ private:
     bool constraint_violated(const Flow& flow) const;
 };
 
+struct StepTrace {
+    std::string function;
+    std::string status;
+    std::string detail;
+    std::string expected;
+    std::string actual;
+    std::map<std::string, std::string> args;
+};
+
 struct FlowResult {
     Flow flow;
     std::string id;
@@ -240,6 +249,7 @@ struct FlowResult {
     std::string bindings;
     std::string expected;
     std::string actual;
+    std::vector<StepTrace> steps;
 };
 
 struct RunnerOptions {

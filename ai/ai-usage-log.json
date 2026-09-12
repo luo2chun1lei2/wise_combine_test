@@ -120,6 +120,27 @@
       "model_known": false,
       "cost_known": false,
       "notes": "Gate script and structured defect ledger are now in-repo."
+    },
+    {
+      "date": "2026-09-12",
+      "objective": "Add step-level trace",
+      "inputs": [
+        "evaluation gap: trace/replay was flow-level only"
+      ],
+      "stages": [
+        "implementation",
+        "documentation",
+        "validation"
+      ],
+      "human_control": "Confirmed step fields should include function, status, detail, expected, actual and args",
+      "validation": [
+        "make check",
+        "python3 -m json.tool /tmp/step_report.json"
+      ],
+      "commits": [],
+      "model_known": false,
+      "cost_known": false,
+      "notes": "Commit hash will be recorded in defects.json after commit."
     }
   ]
 }

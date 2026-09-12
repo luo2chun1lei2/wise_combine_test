@@ -236,7 +236,7 @@
 ### T33 trace/replay 元数据（发布前）
 
 - 目标：保存可复现、可重放的流程执行证据。
-- 内容：`--trace` 输出包含模型摘要、seed、输入文件、flow ID、expected/actual 和 flow 数组的 JSON；`--replay` 读取并恢复 flows。
+- 内容：`--trace` 输出包含模型摘要、seed、输入文件、flow ID、expected/actual、flow 数组和 step 级 `function/status/detail/expected/actual/args` 的 JSON；`--replay` 读取并恢复 flows。
 - 验收标准：同一 trace 文件可重新执行，且报告元数据一致。
 
 ### T34 覆盖率口径（发布前）

@@ -129,7 +129,7 @@ adapter 从标准输入读取一行 JSON 调用请求，执行对应函数后向
 
 文本和 JSON 报告会包含工具版本、seed、模型摘要和输入文件列表，便于复现。
 
-可以用 `--trace <path>` 写出可重放 JSON trace，再用 `--replay <path>` 恢复相同流程执行。`--no-function-flows` 可只生成状态图流程，便于聚焦状态路径测试。
+可以用 `--trace <path>` 写出可重放 JSON trace，包含 flow 和 step 级信息，再用 `--replay <path>` 恢复相同流程执行。`--no-function-flows` 可只生成状态图流程，便于聚焦状态路径测试。
 
 ### 执行模式边界
 

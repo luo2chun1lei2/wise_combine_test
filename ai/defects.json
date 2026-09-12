@@ -23,13 +23,13 @@
     },
     {
       "id": "D-003",
-      "title": "Trace/replay is flow-level, not step-level",
+      "title": "Trace/replay step-level details",
       "severity": "medium",
-      "status": "open",
+      "status": "closed",
       "owner": "AI",
       "deadline": "2026-09-26",
-      "evidence": "src/wise.cpp parse_trace_flows",
-      "commit": null
+      "evidence": "src/wise.cpp render_report steps array",
+      "commit": "pending"
     },
     {
       "id": "D-004",

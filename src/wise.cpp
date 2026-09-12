@@ -1887,6 +1887,11 @@ FlowResult Runner::run_direct(const Flow& flow, std::size_t index) const {
     if (!detail.empty()) {
         result.detail = detail;
     }
+    for (const auto& name : flow) {
+        result.steps.push_back(
+            {name, result.status, result.detail, result.expected,
+             result.actual, {}});
+    }
     result.bindings = flow_bindings(flow);
     return result;
 }
@@ -1906,6 +1911,14 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
         const std::string& function = flow[i];
         std::map<std::string, std::string> args;
 
+        auto record_step = [&](const std::string& step_status,
+                               const std::string& step_detail,
+                               const std::string& step_expected,
+                               const std::string& step_actual) {
+            result.steps.push_back({function, step_status, step_detail,
+                                    step_expected, step_actual, args});
+        };
+
         for (const auto& rel : options_.spec->parameters) {
             if (rel.lhs_func != function) {
                 continue;
@@ -1919,6 +1932,7 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
                 result.status = "failed";
                 result.detail = "producer return unavailable for " + function +
                                 "." + rel.lhs_param;
+                record_step("failed", result.detail, "", "");
                 result.bindings = flow_bindings(flow);
                 return result;
             }
@@ -1927,6 +1941,7 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
                 result.status = "failed";
                 result.detail = "producer return missing: " + rel.rhs_func +
                                 "." + rel.rhs_param;
+                record_step("failed", result.detail, "", "");
                 result.bindings = flow_bindings(flow);
                 return result;
             }
@@ -1939,6 +1954,7 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
         if (pipe(in_pipe) != 0 || pipe(out_pipe) != 0 || pipe(err_pipe) != 0) {
             result.status = "failed";
             result.detail = "pipe failed";
+            record_step("failed", result.detail, "", "");
             result.bindings = flow_bindings(flow);
             return result;
         }
@@ -1953,6 +1969,7 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
             close(err_pipe[1]);
             result.status = "failed";
             result.detail = "fork failed";
+            record_step("failed", result.detail, "", "");
             result.bindings = flow_bindings(flow);
             return result;
         }
@@ -2081,12 +2098,14 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
         if (timed_out) {
             result.status = "timeout";
             result.detail = "adapter step timed out";
+            record_step("timeout", result.detail, "", "");
             result.bindings = flow_bindings(flow);
             return result;
         }
         if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
             result.status = "failed";
             result.detail = "adapter exited with error";
+            record_step("failed", result.detail, "", "");
             result.bindings = flow_bindings(flow);
             return result;
         }
@@ -2102,6 +2121,7 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
                                     protocol_err)) {
             result.status = "failed";
             result.detail = "malformed adapter response: " + protocol_err;
+            record_step("failed", result.detail, "", "");
             result.bindings = flow_bindings(flow);
             return result;
         }
@@ -2110,6 +2130,8 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
             result.detail = "adapter reported " + response_status;
             result.expected = "ok";
             result.actual = response_status;
+            record_step("failed", result.detail, result.expected,
+                        result.actual);
             result.bindings = flow_bindings(flow);
             return result;
         }
@@ -2123,6 +2145,8 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
             result.expected = "guard " + guard->second.op + " " +
                               std::to_string(guard->second.value);
             result.actual = std::to_string(return_value);
+            record_step("failed", result.detail, result.expected,
+                        result.actual);
             result.bindings = flow_bindings(flow);
             return result;
         }
@@ -2138,6 +2162,8 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
                                 ", got " + std::to_string(return_value);
                 result.expected = std::to_string(expected->second.value());
                 result.actual = std::to_string(return_value);
+                record_step("failed", result.detail, result.expected,
+                            result.actual);
                 result.bindings = flow_bindings(flow);
                 return result;
             }
@@ -2147,6 +2173,8 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
                             std::to_string(return_value) + ")";
             result.expected = "0";
             result.actual = std::to_string(return_value);
+            record_step("failed", result.detail, result.expected,
+                        result.actual);
             result.bindings = flow_bindings(flow);
             return result;
         }
@@ -2160,10 +2188,13 @@ FlowResult Runner::run_adapter(const Flow& flow, std::size_t index) const {
                             stdout_text + "\"";
             result.expected = expected_output->second;
             result.actual = stdout_text;
+            record_step("failed", result.detail, result.expected,
+                        result.actual);
             result.bindings = flow_bindings(flow);
             return result;
         }
 
+        record_step("passed", "", "", "");
         returned[function] = std::move(returns);
     }
 
@@ -2484,7 +2515,32 @@ std::string render_report(const std::vector<FlowResult>& results,
                 << ", \"detail\": \"" << escape_json(r.detail)
                 << "\", \"expected\": \"" << escape_json(r.expected)
                 << "\", \"actual\": \"" << escape_json(r.actual)
-                << "\", \"bindings\": \"" << escape_json(r.bindings) << "\"}";
+                << "\", \"bindings\": \"" << escape_json(r.bindings)
+                << "\", \"steps\": [";
+            for (std::size_t k = 0; k < r.steps.size(); ++k) {
+                const auto& step = r.steps[k];
+                if (k) {
+                    out << ", ";
+                }
+                out << "{\"function\":\""
+                    << escape_json(step.function)
+                    << "\",\"status\":\"" << escape_json(step.status)
+                    << "\",\"detail\":\"" << escape_json(step.detail)
+                    << "\",\"expected\":\"" << escape_json(step.expected)
+                    << "\",\"actual\":\"" << escape_json(step.actual)
+                    << "\",\"args\":{";
+                bool first_arg = true;
+                for (const auto& [arg_name, arg_value] : step.args) {
+                    if (!first_arg) {
+                        out << ',';
+                    }
+                    first_arg = false;
+                    out << '"' << escape_json(arg_name) << "\":\""
+                        << escape_json(arg_value) << '"';
+                }
+                out << "}}";
+            }
+            out << "]}";
             if (i + 1 < results.size()) {
                 out << ",";
             }

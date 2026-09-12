@@ -56,3 +56,12 @@
   - `python3 -m json.tool ai/defects.json`
   - `./ai/project-gate.sh`
 - 模型/提示版本：未采集。
+
+## 2026-09-12 逐步 trace
+
+- 输入资料：评价中“trace 仍是 flow 级，不是逐步 trace”的剩余项。
+- 处理阶段：`FlowResult` 增加 `steps`，adapter 和 direct 执行记录逐步信息，JSON 报告和 trace 输出 step 数组。
+- 验证命令：
+  - `make check`
+  - `python3 -m json.tool /tmp/step_report.json`
+- 模型/提示版本：未采集。
