@@ -25,6 +25,19 @@
 - 增加 supplied-trigger 入口：函数模型可用 `--sequence "f(...);..."` 直接生成指定序列 harness，避免先枚举庞大序列。
 - 报告增强：JSON 增加 `version`、`model_hash`、`seed`；harness JSON 失败记录增加 `actual`。
 
+## 本轮复评台账（截至 2026-09-12）
+
+| 提交 | 内容 | 证据 |
+|---|---|---|
+| `6bd117c` | guard/CLI/执行隔离/统一 oracle | `make test` PASS；`make oracle` 24/24 |
+| `85ccbaf` | 拒绝重复声明 + 模型校验测试 | `make test` PASS |
+| `37f97c2` | JSON 报告结构说明和资料索引 | 文档 |
+| `5307439` | CI 回归目标 + AI 续开发演练 | `make ci` PASS |
+| `c19ba9a` | 能力状态与边界矩阵 | 文档 |
+| `c3c0a3a` | JSON 报告增加稳定 case_id | `make test` PASS |
+| `b3e0250` | 函数状态变量 + 生成探测 | `make oracle` 执行 + generation probe 通过 |
+| `748ddb4` | AI 成本基线与项目治理流程 | 文档；`make ci` PASS |
+
 ## 阶段 1：基础设施
 
 - T1：建立 `src/`、`test/` 和 `Makefile` 骨架，采用 C/C++，使用 ANTLR 生成解析器（ADR-021）。
