@@ -49,6 +49,12 @@ make test
 make oracle
 ```
 
+一键干净构建并运行全部回归：
+
+```sh
+make ci
+```
+
 ## 使用
 
 ```sh

@@ -18,7 +18,7 @@ OBJFLAGS := -MMD -MP
 
 -include $(RUNTIME_OBJ:.o=.d)
 
-.PHONY: all test oracle install uninstall clean
+.PHONY: all test oracle ci install uninstall clean
 
 all: $(BIN)
 
@@ -39,6 +39,8 @@ test: $(BIN)
 
 oracle: $(BIN)
 	bash test/oracle/run_oracle.sh
+
+ci: clean all test oracle
 
 PREFIX ?= /usr/local
 
