@@ -1,0 +1,9 @@
+{
+  "total": 2,
+  "passed": 0,
+  "failed": 2,
+  "flows": [
+    {"id": "q_open->q_pop_empty", "status": "failed", "exit_code": 0, "detail": "return mismatch for q_pop_empty: expected -2, got 7", "bindings": ""},
+    {"id": "q_open->q_pop_empty", "status": "failed", "exit_code": 0, "detail": "return mismatch for q_pop_empty: expected -2, got 7", "bindings": ""}
+  ]
+}

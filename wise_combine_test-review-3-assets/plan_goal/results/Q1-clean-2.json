@@ -1,0 +1,9 @@
+{
+  "total": 2,
+  "passed": 2,
+  "failed": 0,
+  "flows": [
+    {"id": "q_open->q_pop_empty", "status": "passed", "exit_code": 0, "detail": "", "bindings": ""},
+    {"id": "q_open->q_pop_empty", "status": "passed", "exit_code": 0, "detail": "", "bindings": ""}
+  ]
+}

@@ -1,0 +1,1 @@
+{"flow_id":"t0","status":"mismatch","steps":[{"index":0,"transition":"t0","function":"q_open","status":"passed","observed_state":"r0","stderr":"","exit_status":0,"detail":""},{"index":1,"transition":"t1","function":"q_pop","status":"mismatch","observed_state":"r7","stderr":"","exit_status":0,"detail":"state mismatch: expected r-2, observed r7"}]}

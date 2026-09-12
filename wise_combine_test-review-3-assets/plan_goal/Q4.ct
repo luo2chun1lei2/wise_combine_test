@@ -1,0 +1,18 @@
+object q4 {
+ state S0 initial
+ state S1
+ state S2
+ state S3
+ state S4 final
+ transition S0 -> S1 by q_open() expect 0
+ transition S1 -> S2 by q_push1() expect 0
+ transition S2 -> S3 by q_peek_first() expect 11
+ transition S3 -> S4 by q_size_after() expect 1
+}
+function q_open()
+function q_push1()
+function q_peek_first()
+function q_size_after()
+order q_open before q_push1
+order q_push1 before q_peek_first
+order q_peek_first before q_size_after

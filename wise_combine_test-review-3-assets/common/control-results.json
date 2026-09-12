@@ -1,0 +1,938 @@
+[
+  {
+    "case": "Q1",
+    "mutant": 0,
+    "repeat": 1,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=0",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q1-0-1.so"
+    ],
+    "mismatch": false,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_pop",
+        "expected": -2,
+        "actual": -2
+      }
+    ]
+  },
+  {
+    "case": "Q1",
+    "mutant": 0,
+    "repeat": 2,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=0",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q1-0-2.so"
+    ],
+    "mismatch": false,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_pop",
+        "expected": -2,
+        "actual": -2
+      }
+    ]
+  },
+  {
+    "case": "Q1",
+    "mutant": 1,
+    "repeat": 1,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=1",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q1-1-1.so"
+    ],
+    "mismatch": true,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_pop",
+        "expected": -2,
+        "actual": 7
+      }
+    ]
+  },
+  {
+    "case": "Q1",
+    "mutant": 1,
+    "repeat": 2,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=1",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q1-1-2.so"
+    ],
+    "mismatch": true,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_pop",
+        "expected": -2,
+        "actual": 7
+      }
+    ]
+  },
+  {
+    "case": "Q2",
+    "mutant": 0,
+    "repeat": 1,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=0",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q2-0-1.so"
+    ],
+    "mismatch": false,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push2",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_pop",
+        "expected": 11,
+        "actual": 11
+      }
+    ]
+  },
+  {
+    "case": "Q2",
+    "mutant": 0,
+    "repeat": 2,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=0",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q2-0-2.so"
+    ],
+    "mismatch": false,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push2",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_pop",
+        "expected": 11,
+        "actual": 11
+      }
+    ]
+  },
+  {
+    "case": "Q2",
+    "mutant": 2,
+    "repeat": 1,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=2",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q2-2-1.so"
+    ],
+    "mismatch": true,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push2",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_pop",
+        "expected": 11,
+        "actual": 22
+      }
+    ]
+  },
+  {
+    "case": "Q2",
+    "mutant": 2,
+    "repeat": 2,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=2",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q2-2-2.so"
+    ],
+    "mismatch": true,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push2",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_pop",
+        "expected": 11,
+        "actual": 22
+      }
+    ]
+  },
+  {
+    "case": "Q3",
+    "mutant": 0,
+    "repeat": 1,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=0",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q3-0-1.so"
+    ],
+    "mismatch": false,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_close",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_size",
+        "expected": 0,
+        "actual": 0
+      }
+    ]
+  },
+  {
+    "case": "Q3",
+    "mutant": 0,
+    "repeat": 2,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=0",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q3-0-2.so"
+    ],
+    "mismatch": false,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_close",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_size",
+        "expected": 0,
+        "actual": 0
+      }
+    ]
+  },
+  {
+    "case": "Q3",
+    "mutant": 3,
+    "repeat": 1,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=3",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q3-3-1.so"
+    ],
+    "mismatch": true,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_close",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_size",
+        "expected": 0,
+        "actual": 1
+      }
+    ]
+  },
+  {
+    "case": "Q3",
+    "mutant": 3,
+    "repeat": 2,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=3",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q3-3-2.so"
+    ],
+    "mismatch": true,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_close",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_size",
+        "expected": 0,
+        "actual": 1
+      }
+    ]
+  },
+  {
+    "case": "Q4",
+    "mutant": 0,
+    "repeat": 1,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=0",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q4-0-1.so"
+    ],
+    "mismatch": false,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_peek",
+        "expected": 11,
+        "actual": 11
+      },
+      {
+        "function": "q_size",
+        "expected": 1,
+        "actual": 1
+      }
+    ]
+  },
+  {
+    "case": "Q4",
+    "mutant": 0,
+    "repeat": 2,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=0",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q4-0-2.so"
+    ],
+    "mismatch": false,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_peek",
+        "expected": 11,
+        "actual": 11
+      },
+      {
+        "function": "q_size",
+        "expected": 1,
+        "actual": 1
+      }
+    ]
+  },
+  {
+    "case": "Q4",
+    "mutant": 4,
+    "repeat": 1,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=4",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q4-4-1.so"
+    ],
+    "mismatch": true,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_peek",
+        "expected": 11,
+        "actual": 11
+      },
+      {
+        "function": "q_size",
+        "expected": 1,
+        "actual": 0
+      }
+    ]
+  },
+  {
+    "case": "Q4",
+    "mutant": 4,
+    "repeat": 2,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=4",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q4-4-2.so"
+    ],
+    "mismatch": true,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_peek",
+        "expected": 11,
+        "actual": 11
+      },
+      {
+        "function": "q_size",
+        "expected": 1,
+        "actual": 0
+      }
+    ]
+  },
+  {
+    "case": "Q5",
+    "mutant": 0,
+    "repeat": 1,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=0",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q5-0-1.so"
+    ],
+    "mismatch": false,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push2",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_pop",
+        "expected": 11,
+        "actual": 11
+      },
+      {
+        "function": "q_pop",
+        "expected": 22,
+        "actual": 22
+      },
+      {
+        "function": "q_size",
+        "expected": 0,
+        "actual": 0
+      }
+    ]
+  },
+  {
+    "case": "Q5",
+    "mutant": 0,
+    "repeat": 2,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=0",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q5-0-2.so"
+    ],
+    "mismatch": false,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push2",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_pop",
+        "expected": 11,
+        "actual": 11
+      },
+      {
+        "function": "q_pop",
+        "expected": 22,
+        "actual": 22
+      },
+      {
+        "function": "q_size",
+        "expected": 0,
+        "actual": 0
+      }
+    ]
+  },
+  {
+    "case": "Q5",
+    "mutant": 5,
+    "repeat": 1,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=5",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q5-5-1.so"
+    ],
+    "mismatch": true,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push2",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_pop",
+        "expected": 11,
+        "actual": 11
+      },
+      {
+        "function": "q_pop",
+        "expected": 22,
+        "actual": 22
+      },
+      {
+        "function": "q_size",
+        "expected": 0,
+        "actual": 1
+      }
+    ]
+  },
+  {
+    "case": "Q5",
+    "mutant": 5,
+    "repeat": 2,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=5",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q5-5-2.so"
+    ],
+    "mismatch": true,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push2",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_pop",
+        "expected": 11,
+        "actual": 11
+      },
+      {
+        "function": "q_pop",
+        "expected": 22,
+        "actual": 22
+      },
+      {
+        "function": "q_size",
+        "expected": 0,
+        "actual": 1
+      }
+    ]
+  },
+  {
+    "case": "Q6",
+    "mutant": 0,
+    "repeat": 1,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=0",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q6-0-1.so"
+    ],
+    "mismatch": false,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_close",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": -1,
+        "actual": -1
+      }
+    ]
+  },
+  {
+    "case": "Q6",
+    "mutant": 0,
+    "repeat": 2,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=0",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q6-0-2.so"
+    ],
+    "mismatch": false,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_close",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": -1,
+        "actual": -1
+      }
+    ]
+  },
+  {
+    "case": "Q6",
+    "mutant": 6,
+    "repeat": 1,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=6",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q6-6-1.so"
+    ],
+    "mismatch": true,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_close",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": -1,
+        "actual": 0
+      }
+    ]
+  },
+  {
+    "case": "Q6",
+    "mutant": 6,
+    "repeat": 2,
+    "compile": [
+      "g++",
+      "-x",
+      "c++",
+      "-shared",
+      "-fPIC",
+      "-DMUTANT=6",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/queue_sut.h",
+      "-o",
+      "/home/workspace_data/works/myprojects/wise_combine_test-review-2-assets/common/control-Q6-6-2.so"
+    ],
+    "mismatch": true,
+    "steps": [
+      {
+        "function": "q_open",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_close",
+        "expected": 0,
+        "actual": 0
+      },
+      {
+        "function": "q_push1",
+        "expected": -1,
+        "actual": 0
+      }
+    ]
+  }
+]

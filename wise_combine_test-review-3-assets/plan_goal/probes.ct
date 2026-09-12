@@ -1,0 +1,16 @@
+object cycle {
+ state A initial
+ state B
+ state C final
+ transition A -> B by a()
+ transition B -> B by b()
+ transition B -> C by c()
+}
+function a()
+function b()
+function c()
+
+function p() -> token
+function q(token x)
+parameter q.x = p.token
+order p before q

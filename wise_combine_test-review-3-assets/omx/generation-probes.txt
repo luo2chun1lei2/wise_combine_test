@@ -1,0 +1,6 @@
+cycle_rc=1
+subset_rc=0
+repeat_rc=0
+rc=-1 steps=0 failures=0 uncovered=0 error=relation cycle
+rc=0 steps=2 failures=0 uncovered=0 error=
+rc=0 steps=3 failures=0 uncovered=0 error=

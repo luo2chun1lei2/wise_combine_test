@@ -1,0 +1,85 @@
+mutant	case	repetition	exit	output
+0	Q1	1	0	rc=0 steps=2 failures=0 uncovered=0 error=
+0	Q1	2	0	rc=0 steps=2 failures=0 uncovered=0 error=
+0	Q2	1	0	rc=0 steps=4 failures=0 uncovered=0 error=
+0	Q2	2	0	rc=0 steps=4 failures=0 uncovered=0 error=
+0	Q3	1	0	rc=0 steps=5 failures=0 uncovered=0 error=
+0	Q3	2	0	rc=0 steps=5 failures=0 uncovered=0 error=
+0	Q4	1	0	rc=0 steps=4 failures=0 uncovered=0 error=
+0	Q4	2	0	rc=0 steps=4 failures=0 uncovered=0 error=
+0	Q5	1	0	rc=0 steps=6 failures=0 uncovered=0 error=
+0	Q5	2	0	rc=0 steps=6 failures=0 uncovered=0 error=
+0	Q6	1	0	rc=0 steps=3 failures=0 uncovered=0 error=
+0	Q6	2	0	rc=0 steps=3 failures=0 uncovered=0 error=
+1	Q1	1	1	rc=-1 steps=1 failures=1 uncovered=1 error=call result assertion failed
+1	Q1	2	1	rc=-1 steps=1 failures=1 uncovered=1 error=call result assertion failed
+1	Q2	1	0	rc=0 steps=4 failures=0 uncovered=0 error=
+1	Q2	2	0	rc=0 steps=4 failures=0 uncovered=0 error=
+1	Q3	1	0	rc=0 steps=5 failures=0 uncovered=0 error=
+1	Q3	2	0	rc=0 steps=5 failures=0 uncovered=0 error=
+1	Q4	1	0	rc=0 steps=4 failures=0 uncovered=0 error=
+1	Q4	2	0	rc=0 steps=4 failures=0 uncovered=0 error=
+1	Q5	1	0	rc=0 steps=6 failures=0 uncovered=0 error=
+1	Q5	2	0	rc=0 steps=6 failures=0 uncovered=0 error=
+1	Q6	1	0	rc=0 steps=3 failures=0 uncovered=0 error=
+1	Q6	2	0	rc=0 steps=3 failures=0 uncovered=0 error=
+2	Q1	1	0	rc=0 steps=2 failures=0 uncovered=0 error=
+2	Q1	2	0	rc=0 steps=2 failures=0 uncovered=0 error=
+2	Q2	1	1	rc=-1 steps=3 failures=1 uncovered=1 error=call result assertion failed
+2	Q2	2	1	rc=-1 steps=3 failures=1 uncovered=1 error=call result assertion failed
+2	Q3	1	0	rc=0 steps=5 failures=0 uncovered=0 error=
+2	Q3	2	0	rc=0 steps=5 failures=0 uncovered=0 error=
+2	Q4	1	0	rc=0 steps=4 failures=0 uncovered=0 error=
+2	Q4	2	0	rc=0 steps=4 failures=0 uncovered=0 error=
+2	Q5	1	1	rc=-1 steps=3 failures=1 uncovered=3 error=call result assertion failed
+2	Q5	2	1	rc=-1 steps=3 failures=1 uncovered=3 error=call result assertion failed
+2	Q6	1	0	rc=0 steps=3 failures=0 uncovered=0 error=
+2	Q6	2	0	rc=0 steps=3 failures=0 uncovered=0 error=
+3	Q1	1	0	rc=0 steps=2 failures=0 uncovered=0 error=
+3	Q1	2	0	rc=0 steps=2 failures=0 uncovered=0 error=
+3	Q2	1	0	rc=0 steps=4 failures=0 uncovered=0 error=
+3	Q2	2	0	rc=0 steps=4 failures=0 uncovered=0 error=
+3	Q3	1	1	rc=-1 steps=4 failures=1 uncovered=1 error=call result assertion failed
+3	Q3	2	1	rc=-1 steps=4 failures=1 uncovered=1 error=call result assertion failed
+3	Q4	1	0	rc=0 steps=4 failures=0 uncovered=0 error=
+3	Q4	2	0	rc=0 steps=4 failures=0 uncovered=0 error=
+3	Q5	1	0	rc=0 steps=6 failures=0 uncovered=0 error=
+3	Q5	2	0	rc=0 steps=6 failures=0 uncovered=0 error=
+3	Q6	1	0	rc=0 steps=3 failures=0 uncovered=0 error=
+3	Q6	2	0	rc=0 steps=3 failures=0 uncovered=0 error=
+4	Q1	1	0	rc=0 steps=2 failures=0 uncovered=0 error=
+4	Q1	2	0	rc=0 steps=2 failures=0 uncovered=0 error=
+4	Q2	1	0	rc=0 steps=4 failures=0 uncovered=0 error=
+4	Q2	2	0	rc=0 steps=4 failures=0 uncovered=0 error=
+4	Q3	1	0	rc=0 steps=5 failures=0 uncovered=0 error=
+4	Q3	2	0	rc=0 steps=5 failures=0 uncovered=0 error=
+4	Q4	1	1	rc=-1 steps=3 failures=1 uncovered=1 error=call result assertion failed
+4	Q4	2	1	rc=-1 steps=3 failures=1 uncovered=1 error=call result assertion failed
+4	Q5	1	0	rc=0 steps=6 failures=0 uncovered=0 error=
+4	Q5	2	0	rc=0 steps=6 failures=0 uncovered=0 error=
+4	Q6	1	0	rc=0 steps=3 failures=0 uncovered=0 error=
+4	Q6	2	0	rc=0 steps=3 failures=0 uncovered=0 error=
+5	Q1	1	0	rc=0 steps=2 failures=0 uncovered=0 error=
+5	Q1	2	0	rc=0 steps=2 failures=0 uncovered=0 error=
+5	Q2	1	0	rc=0 steps=4 failures=0 uncovered=0 error=
+5	Q2	2	0	rc=0 steps=4 failures=0 uncovered=0 error=
+5	Q3	1	0	rc=0 steps=5 failures=0 uncovered=0 error=
+5	Q3	2	0	rc=0 steps=5 failures=0 uncovered=0 error=
+5	Q4	1	0	rc=0 steps=4 failures=0 uncovered=0 error=
+5	Q4	2	0	rc=0 steps=4 failures=0 uncovered=0 error=
+5	Q5	1	1	rc=-1 steps=5 failures=1 uncovered=1 error=call result assertion failed
+5	Q5	2	1	rc=-1 steps=5 failures=1 uncovered=1 error=call result assertion failed
+5	Q6	1	0	rc=0 steps=3 failures=0 uncovered=0 error=
+5	Q6	2	0	rc=0 steps=3 failures=0 uncovered=0 error=
+6	Q1	1	0	rc=0 steps=2 failures=0 uncovered=0 error=
+6	Q1	2	0	rc=0 steps=2 failures=0 uncovered=0 error=
+6	Q2	1	0	rc=0 steps=4 failures=0 uncovered=0 error=
+6	Q2	2	0	rc=0 steps=4 failures=0 uncovered=0 error=
+6	Q3	1	0	rc=0 steps=5 failures=0 uncovered=0 error=
+6	Q3	2	0	rc=0 steps=5 failures=0 uncovered=0 error=
+6	Q4	1	0	rc=0 steps=4 failures=0 uncovered=0 error=
+6	Q4	2	0	rc=0 steps=4 failures=0 uncovered=0 error=
+6	Q5	1	0	rc=0 steps=6 failures=0 uncovered=0 error=
+6	Q5	2	0	rc=0 steps=6 failures=0 uncovered=0 error=
+6	Q6	1	1	rc=-1 steps=2 failures=1 uncovered=1 error=call result assertion failed
+6	Q6	2	1	rc=-1 steps=2 failures=1 uncovered=1 error=call result assertion failed

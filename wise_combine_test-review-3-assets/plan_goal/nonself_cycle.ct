@@ -1,0 +1,11 @@
+object cycle {
+ state A initial
+ state B
+ state C final
+ transition A -> B by to_b()
+ transition B -> A by to_a()
+ transition B -> C by finish()
+}
+function to_b()
+function to_a()
+function finish()

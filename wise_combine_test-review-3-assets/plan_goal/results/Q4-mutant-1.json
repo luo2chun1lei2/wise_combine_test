@@ -1,0 +1,9 @@
+{
+  "total": 2,
+  "passed": 0,
+  "failed": 2,
+  "flows": [
+    {"id": "q_open->q_push1->q_peek_first->q_size_after", "status": "failed", "exit_code": 0, "detail": "return mismatch for q_size_after: expected 1, got 0", "bindings": ""},
+    {"id": "q_open->q_push1->q_peek_first->q_size_after", "status": "failed", "exit_code": 0, "detail": "return mismatch for q_size_after: expected 1, got 0", "bindings": ""}
+  ]
+}

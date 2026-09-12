@@ -1,0 +1,8 @@
+schema 1
+relation_graph cycle
+call a
+contract a 0 result=int expect=0
+call b
+contract b 0 result=int expect=0
+relation a b
+relation b a

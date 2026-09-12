@@ -1,0 +1,101 @@
+[cycle max-depth=8 max-flows=100]
+total=67 passed=0 failed=0
+[not_executed] a->b->b->b->b->b->b->c (dry-run: no library loaded)
+[not_executed] a->b->b->b->b->b->c (dry-run: no library loaded)
+[not_executed] a->b->b->b->b->c (dry-run: no library loaded)
+[not_executed] a->b->b->b->c (dry-run: no library loaded)
+[not_executed] a->b->b->c (dry-run: no library loaded)
+[not_executed] a->b->c (dry-run: no library loaded)
+[not_executed] a->c (dry-run: no library loaded)
+[not_executed] a->b->c->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] a->b->p->c->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] a->b->p->q->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] a->c->b->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] a->c->p->b->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] a->c->p->q->b (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] a->p->b->c->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] a->p->b->q->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] a->p->c->b->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] a->p->c->q->b (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] a->p->q->b->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] a->p->q->c->b (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] b->a->c->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] b->a->p->c->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] b->a->p->q->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] b->c->a->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] b->c->p->a->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] b->c->p->q->a (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] b->p->a->c->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] b->p->a->q->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] b->p->c->a->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] b->p->c->q->a (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] b->p->q->a->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] b->p->q->c->a (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] c->a->b->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] c->a->p->b->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] c->a->p->q->b (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] c->b->a->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] c->b->p->a->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] c->b->p->q->a (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] c->p->a->b->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] c->p->a->q->b (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] c->p->b->a->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] c->p->b->q->a (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] c->p->q->a->b (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] c->p->q->b->a (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->a->b->c->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->a->b->q->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->a->c->b->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->a->c->q->b (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->a->q->b->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->a->q->c->b (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->b->a->c->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->b->a->q->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->b->c->a->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->b->c->q->a (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->b->q->a->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->b->q->c->a (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->c->a->b->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->c->a->q->b (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->c->b->a->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->c->b->q->a (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->c->q->a->b (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->c->q->b->a (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->q->a->b->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->q->a->c->b (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->q->b->a->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->q->b->c->a (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->q->c->a->b (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] p->q->c->b->a (dry-run: no library loaded) {q.x = p.token;}
+[cycle max-flows=1]
+total=2 passed=0 failed=0
+[not_executed] a->b->b->b->b->b->b->c (dry-run: no library loaded)
+[not_executed] a->b->c->p->q (dry-run: no library loaded) {q.x = p.token;}
+# warning: generation was truncated by --max-flows
+[constraints]
+total=0 passed=0 failed=0
+[missing required parameter binding]
+total=1 passed=0 failed=0
+[not_executed] consume (dry-run: no library loaded)
+[non-self cycle]
+total=10 passed=0 failed=0
+[not_executed] to_b->to_a->to_b->to_a->to_b->to_a->to_b->finish (dry-run: no library loaded)
+[not_executed] to_b->to_a->to_b->to_a->to_b->finish (dry-run: no library loaded)
+[not_executed] to_b->to_a->to_b->finish (dry-run: no library loaded)
+[not_executed] to_b->finish (dry-run: no library loaded)
+[not_executed] finish->to_a->to_b (dry-run: no library loaded)
+[not_executed] finish->to_b->to_a (dry-run: no library loaded)
+[not_executed] to_a->finish->to_b (dry-run: no library loaded)
+[not_executed] to_a->to_b->finish (dry-run: no library loaded)
+[not_executed] to_b->finish->to_a (dry-run: no library loaded)
+[not_executed] to_b->to_a->finish (dry-run: no library loaded)
+[missing adapter protocol whitespace]
+{
+  "total": 2,
+  "passed": 0,
+  "failed": 2,
+  "flows": [
+    {"id": "q_open->q_pop_empty", "status": "failed", "exit_code": 0, "detail": "malformed adapter response", "bindings": ""},
+    {"id": "q_open->q_pop_empty", "status": "failed", "exit_code": 0, "detail": "malformed adapter response", "bindings": ""}
+  ]
+}
