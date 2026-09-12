@@ -13,6 +13,6 @@
 | CT-007 | 报告写入失败稳定退出 | `src/cli`, `src/report` | `cli_reports_error`, 22/22 suites | 基础完成 |
 | CT-008 | 失败报告独立 replay 和篡改校验 | 待实现 | 待添加 | 待增强 |
 | CT-009 | 完整 JSON 响应语法解析 | 待实现/重构 | 当前为字符串兼容解析 | 待增强 |
-| CT-010 | Q1–Q6 长期回归入口 | `tests/evaluation` 待添加 | 外部评审资产 | 待增强 |
+| CT-010 | Q1–Q6 长期回归入口 | `tests/evaluation`, `evaluation_q1`…`evaluation_q6` | clean/matching-mutant exit-code 回归 | 基础完成 |
 | CT-011 | guard/mutex/parallel/count/value | 未冻结 | 未添加 | 明确非目标 |
 | CT-012 | GUI/网络/分布式/插件 | 不适用 | 范围扫描 | 明确非目标 |

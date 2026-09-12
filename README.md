@@ -35,6 +35,11 @@ The tests include model, parser, generator, adapter, protocol, timeout, crash,
 output-cap, and CLI integration cases. Build paths and test binaries are
 ignored by git.
 
+The frozen Q1-Q6 queue oracle is also registered as `evaluation_q1` through
+`evaluation_q6`; each test runs a clean adapter and its matching single-mutant
+adapter, requiring exit codes 0 and 4 respectively. These are supplied-trigger
+regressions, not proof of exhaustive automatic coverage.
+
 ## CLI
 
 ```sh

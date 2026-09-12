@@ -81,6 +81,10 @@
 
 ### 接入 Q1–Q6 回归资产
 
+状态：基础完成。`tests/evaluation` 已迁入冻结 Q1–Q6 模型、无断言适配器和 queue
+SUT；CMake 注册六项隔离测试，分别验证 clean 返回 0、matching mutant 返回 4。
+这些测试只证明 supplied-trigger 判错链，不宣称自动发现或穷举覆盖。
+
 将评审目录中的模型、adapter、fixture 和 oracle 转为项目内的 `tests/evaluation/` 或等价入口。长期回归必须区分模型表达、生成覆盖、执行判错和报告复现，并记录发现率、误报率、无法表达数和未执行数。
 
 ### 需求、设计和测试矩阵
