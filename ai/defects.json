@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "defects": [
+    {
+      "id": "D-001",
+      "title": "Branch coverage below 80%",
+      "severity": "medium",
+      "status": "open",
+      "owner": "AI",
+      "deadline": "2026-09-19",
+      "evidence": "doc/coverage-report.md",
+      "commit": "77cfbc5"
+    },
+    {
+      "id": "D-002",
+      "title": "Child-process coverage merge not automated",
+      "severity": "medium",
+      "status": "open",
+      "owner": "AI",
+      "deadline": "2026-09-26",
+      "evidence": "doc/coverage-report.md",
+      "commit": null
+    },
+    {
+      "id": "D-003",
+      "title": "Trace/replay is flow-level, not step-level",
+      "severity": "medium",
+      "status": "open",
+      "owner": "AI",
+      "deadline": "2026-09-26",
+      "evidence": "src/wise.cpp parse_trace_flows",
+      "commit": null
+    },
+    {
+      "id": "D-004",
+      "title": "Full strongly-typed adapter scalar conversion",
+      "severity": "low",
+      "status": "open",
+      "owner": "AI",
+      "deadline": "2026-10-10",
+      "evidence": "ai/task.md T30",
+      "commit": "b3cf442"
+    },
+    {
+      "id": "D-005",
+      "title": "Direct/standalone typed parameter execution",
+      "severity": "future",
+      "status": "open",
+      "owner": "AI",
+      "deadline": null,
+      "evidence": "ai/task.md current boundaries",
+      "commit": null
+    },
+    {
+      "id": "D-006",
+      "title": "AI model/prompt/cost provenance missing",
+      "severity": "low",
+      "status": "open",
+      "owner": "human",
+      "deadline": null,
+      "evidence": "ai/ai-usage-log.json",
+      "commit": null
+    },
+    {
+      "id": "D-007",
+      "title": "Model x strategy x mode x failure-type matrix",
+      "severity": "medium",
+      "status": "open",
+      "owner": "AI",
+      "deadline": "2026-09-26",
+      "evidence": "test/test_wise.cpp",
+      "commit": null
+    },
+    {
+      "id": "D-100",
+      "title": "Tool returned zero on failed flows",
+      "severity": "high",
+      "status": "closed",
+      "owner": "AI",
+      "deadline": "2026-09-12",
+      "evidence": "src/main.cpp:344",
+      "commit": "636ede2"
+    },
+    {
+      "id": "D-101",
+      "title": "Direct/standalone silently lost parameter semantics",
+      "severity": "high",
+      "status": "closed",
+      "owner": "AI",
+      "deadline": "2026-09-12",
+      "evidence": "src/wise.cpp:1699",
+      "commit": "636ede2"
+    },
+    {
+      "id": "D-102",
+      "title": "Adapter parser rejected legal JSON variants",
+      "severity": "high",
+      "status": "closed",
+      "owner": "AI",
+      "deadline": "2026-09-12",
+      "evidence": "src/wise.cpp:460",
+      "commit": "636ede2"
+    },
+    {
+      "id": "D-103",
+      "title": "Missing required parameter sources passed model",
+      "severity": "high",
+      "status": "closed",
+      "owner": "AI",
+      "deadline": "2026-09-12",
+      "evidence": "src/wise.cpp:1185",
+      "commit": "636ede2"
+    }
+  ]
+}

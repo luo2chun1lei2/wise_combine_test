@@ -59,6 +59,14 @@ make oracle
 make coverage
 ```
 
+运行提交前项目门禁：
+
+```text
+./ai/project-gate.sh
+```
+
+该门禁会校验 AI 台账与缺陷清单 JSON，并运行 `make check`。需要完整内存检查时使用 `./ai/project-gate.sh --asan`。
+
 清理所有生成物：
 
 ```text

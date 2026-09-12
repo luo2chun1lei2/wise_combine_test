@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "date": "2026-09-12",
+      "objective": "Fix plan_goal release blockers from review",
+      "inputs": [
+        "wise_combine_test.evaluate review-3 and plan_goal independent-review"
+      ],
+      "stages": [
+        "contract-freeze",
+        "implementation",
+        "test",
+        "documentation"
+      ],
+      "human_control": "Confirmed direct/standalone zero-parameter scope and adapter as parameter path",
+      "validation": [
+        "make check",
+        "make asan"
+      ],
+      "commits": [
+        "636ede2"
+      ],
+      "model_known": false,
+      "cost_known": false,
+      "notes": "No model/prompt/cost baseline collected."
+    },
+    {
+      "date": "2026-09-12",
+      "objective": "Add oracle regression, trace replay, and coverage notes",
+      "inputs": [
+        "unified Q1-Q6 oracle requirements",
+        "coverage gap analysis"
+      ],
+      "stages": [
+        "test",
+        "tooling",
+        "documentation"
+      ],
+      "human_control": "Confirmed oracle verdict and direct/standalone boundary",
+      "validation": [
+        "make check",
+        "make asan",
+        "make coverage"
+      ],
+      "commits": [
+        "d559ccf"
+      ],
+      "model_known": false,
+      "cost_known": false,
+      "notes": "Line coverage later improved in follow-up commit."
+    },
+    {
+      "date": "2026-09-12",
+      "objective": "Reach line coverage target",
+      "inputs": [
+        "coverage report gaps",
+        "adapter JSON parser negative cases"
+      ],
+      "stages": [
+        "test",
+        "coverage"
+      ],
+      "human_control": "Confirmed coverage metric definition uses parent-process scope",
+      "validation": [
+        "make check",
+        "make asan",
+        "make coverage"
+      ],
+      "commits": [
+        "4facccb",
+        "77cfbc5"
+      ],
+      "model_known": false,
+      "cost_known": false,
+      "notes": "Line coverage reached 82.04%; branch coverage 79.69%."
+    },
+    {
+      "date": "2026-09-12",
+      "objective": "Add adapter type metadata",
+      "inputs": [
+        "T30 typed adapter protocol gap"
+      ],
+      "stages": [
+        "implementation",
+        "documentation"
+      ],
+      "human_control": "Kept existing adapter compatibility",
+      "validation": [
+        "make check",
+        "make asan"
+      ],
+      "commits": [
+        "b3cf442"
+      ],
+      "model_known": false,
+      "cost_known": false,
+      "notes": "Added return_type and arg_types; full scalar conversion remains future."
+    }
+  ]
+}

@@ -46,3 +46,13 @@
   - `make check`
   - `make asan`
 - 模型/提示版本：未采集。
+
+## 2026-09-12 AI 与项目管理机制
+
+- 输入资料：评价中“缺 AI 过程证据、缺缺陷/owner/deadline/回归门禁”的结论。
+- 处理阶段：新增机器可读 AI 台账、缺陷清单、项目状态和提交前门禁脚本。
+- 验证命令：
+  - `python3 -m json.tool ai/ai-usage-log.json`
+  - `python3 -m json.tool ai/defects.json`
+  - `./ai/project-gate.sh`
+- 模型/提示版本：未采集。
