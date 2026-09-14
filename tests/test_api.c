@@ -776,6 +776,47 @@ static void test_parser_call_contract(void) {
     wct_state_graph_free(&st); wct_relation_graph_free(&g); remove(path);
 }
 
+static void test_parser_strict_and_duplicate_declarations(void)
+{
+    const char *path = "/tmp/wct-declaration-contract.model";
+    const char *invalid_models[] = {
+        "schema 1x\nrelation_graph r\ncall fetch\ncontract fetch 0x bool\n",
+        "schema 1\nrelation_graph r\ncall fetch\ncontract fetch 0x bool\n",
+        "schema 1\nschema 1\n",
+        "schema 1\nstate_graph a idle\nstate_graph b busy\n",
+        "schema 1\nrelation_graph r\nrelation_graph q\n",
+    };
+    const char *expected_fragments[] = {
+        "unsupported schema",
+        "invalid call contract",
+        "duplicate schema; first declared at line 1",
+        "duplicate state_graph; first declared at line 2",
+        "duplicate relation_graph; first declared at line 2",
+    };
+
+    for (size_t i = 0; i < sizeof invalid_models / sizeof invalid_models[0]; ++i) {
+        FILE *file = fopen(path, "w");
+        wct_state_graph state = {0};
+        wct_relation_graph relation = {0};
+        char error[160] = {0};
+
+        CHECK(file != NULL, "declaration fixture should be writable");
+        if (file == NULL)
+            return;
+        fputs(invalid_models[i], file);
+        fclose(file);
+        CHECK(wct_parse_file(path, &state, &relation, error, sizeof error) == -1,
+              "invalid declaration should be rejected");
+        CHECK(strstr(error, expected_fragments[i]) != NULL,
+              expected_fragments[i]);
+        CHECK(strstr(error, "line ") == error,
+              "declaration diagnostic should retain line-first style");
+        wct_state_graph_free(&state);
+        wct_relation_graph_free(&relation);
+        remove(path);
+    }
+}
+
 static void test_parser_result_contract(void) {
     const char *path = "/tmp/wct-result-contract.model"; FILE *f=fopen(path,"w"); wct_state_graph st={0}; wct_relation_graph g={0}; char e[128]={0};
     CHECK(f != NULL, "result contract fixture writable"); if (!f) return;
@@ -871,6 +912,7 @@ int main(void)
     test_relation_reference_dependency();
     test_relation_arity_and_types();
     test_parser_call_contract();
+    test_parser_strict_and_duplicate_declarations();
     test_parser_result_contract();
     test_parser_boundaries();
     test_parse_fixtures();
