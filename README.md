@@ -111,7 +111,7 @@ The last local coverage measurement used GCC/gcov 9.4.0 on Linux:
 
 | Source | Lines executed | Branches executed | Branches taken at least once |
 | --- | ---: | ---: | ---: |
-| `src/wct.c` | 78.52% (717 lines) | 81.55% (1138 branches) | 58.35% |
+| `src/wct.c` | 78.55% (718 lines) | 81.61% (1142 branches) | 58.41% |
 | `tools/wct_cli.c` | 92.01% (338 lines) | 96.45% (620 branches) | 67.10% |
 
 `make coverage` exports `WCT_COVERAGE_ROOT`. Every normal fork exit calls

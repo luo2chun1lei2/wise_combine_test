@@ -1,7 +1,7 @@
 # Capability matrix
 
 Last boundary review: 2026-09-14. Status is scoped to the implementation and
-tests at candidate `67188b186a1a3597a14bebb5c8cc020670ba5806`; independent
+tests at candidate `41669164a69033a5b51383c26c638f90b2a9e52a`; independent
 review is pending and this is not a release PASS. Runtime status is tracked in
 [`.omx/current-status.md`](.omx/current-status.md).
 

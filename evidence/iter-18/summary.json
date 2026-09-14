@@ -1,0 +1,56 @@
+{
+  "iteration": "I18",
+  "status": "AUTOMATED_GATES_PASS",
+  "scope": "fail-closed coverage merge, paired state hooks, stale status reconciliation, and post-review release candidate",
+  "head": "41669164a69033a5b51383c26c638f90b2a9e52a",
+  "tested_source_commit": "41669164a69033a5b51383c26c638f90b2a9e52a",
+  "prior_summary_sha256": "6caec4d0d21f3768b2daa0ffe8786ce4bc4e6eefb938702ad9b495aa6a0e3177",
+  "checks": {
+    "coverage": 0,
+    "relation-measure-1": 0,
+    "relation-measure-2": 0,
+    "relation-measure-3": 0,
+    "replay": 0,
+    "sanitize": 0,
+    "sentinels": 0,
+    "state-measure-1": 0,
+    "state-measure-2": 0,
+    "state-measure-3": 0,
+    "tampered-replay": 1,
+    "test": 0,
+    "trace": 0,
+    "valgrind": 0
+  },
+  "coverage": {
+    "src/wct.c": {
+      "lines": "78.55% (718)",
+      "branches": "81.61% (1142)",
+      "branch_taken": "58.41% (1142)"
+    },
+    "tools/wct_cli.c": {
+      "lines": "92.01% (338)",
+      "branches": "96.45% (620)",
+      "branch_taken": "67.10% (620)"
+    },
+    "fork_profiles_aggregated": 22
+  },
+  "measurement_repetitions": 3,
+  "measurement_modes": [
+    "state",
+    "relation"
+  ],
+  "queue_oracle": {
+    "matrix_rows": 84,
+    "generation_probe_rows": 3,
+    "clean_passes": 12,
+    "matching_mutants_detected": "6/6",
+    "generator_completeness_claim": false
+  },
+  "valid_replay": "PASS",
+  "tampered_replay": "REJECTED",
+  "tampered_case": "max_steps -1",
+  "blockers": [
+    "post-final-fix independent code review pending",
+    "post-final-fix independent architecture/product-boundary review pending"
+  ]
+}

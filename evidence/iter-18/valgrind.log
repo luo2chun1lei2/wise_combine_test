@@ -1,0 +1,156 @@
+rm -rf build bin
+make CFLAGS='-std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude' LDFLAGS='' all build/test_api
+make[1]: 进入目录“/home/workspace_data/works/myprojects/wise_combine_test.omx”
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude -g -c src/wct.c -o build/wct.o
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude -g -c tools/wct_cli.c -o build/wct_cli.o
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude build/wct.o build/wct_cli.o  -o bin/wise-combine-test
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude -g tests/test_api.c build/wct.o -o build/test_api 
+make[1]: 离开目录“/home/workspace_data/works/myprojects/wise_combine_test.omx”
+==3050496== Memcheck, a memory error detector
+==3050496== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==3050496== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==3050496== Command: ./build/test_api
+==3050496== 
+==3050497== 
+==3050497== HEAP SUMMARY:
+==3050497==     in use at exit: 197 bytes in 18 blocks
+==3050497==   total heap usage: 122 allocs, 104 frees, 1,478 bytes allocated
+==3050497== 
+==3050497== LEAK SUMMARY:
+==3050497==    definitely lost: 0 bytes in 0 blocks
+==3050497==    indirectly lost: 0 bytes in 0 blocks
+==3050497==      possibly lost: 0 bytes in 0 blocks
+==3050497==    still reachable: 197 bytes in 18 blocks
+==3050497==         suppressed: 0 bytes in 0 blocks
+==3050497== Reachable blocks (those to which a pointer was found) are not shown.
+==3050497== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==3050497== 
+==3050497== For lists of detected and suppressed errors, rerun with: -s
+==3050497== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==3050498== 
+==3050498== HEAP SUMMARY:
+==3050498==     in use at exit: 197 bytes in 18 blocks
+==3050498==   total heap usage: 143 allocs, 125 frees, 1,713 bytes allocated
+==3050498== 
+==3050498== LEAK SUMMARY:
+==3050498==    definitely lost: 0 bytes in 0 blocks
+==3050498==    indirectly lost: 0 bytes in 0 blocks
+==3050498==      possibly lost: 0 bytes in 0 blocks
+==3050498==    still reachable: 197 bytes in 18 blocks
+==3050498==         suppressed: 0 bytes in 0 blocks
+==3050498== Reachable blocks (those to which a pointer was found) are not shown.
+==3050498== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==3050498== 
+==3050498== For lists of detected and suppressed errors, rerun with: -s
+==3050498== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==3050499== 
+==3050499== HEAP SUMMARY:
+==3050499==     in use at exit: 197 bytes in 18 blocks
+==3050499==   total heap usage: 165 allocs, 147 frees, 1,958 bytes allocated
+==3050499== 
+==3050499== LEAK SUMMARY:
+==3050499==    definitely lost: 0 bytes in 0 blocks
+==3050499==    indirectly lost: 0 bytes in 0 blocks
+==3050499==      possibly lost: 0 bytes in 0 blocks
+==3050499==    still reachable: 197 bytes in 18 blocks
+==3050499==         suppressed: 0 bytes in 0 blocks
+==3050499== Reachable blocks (those to which a pointer was found) are not shown.
+==3050499== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==3050499== 
+==3050499== For lists of detected and suppressed errors, rerun with: -s
+==3050499== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==3050500== 
+==3050500== HEAP SUMMARY:
+==3050500==     in use at exit: 197 bytes in 18 blocks
+==3050500==   total heap usage: 186 allocs, 168 frees, 2,163 bytes allocated
+==3050500== 
+==3050500== LEAK SUMMARY:
+==3050500==    definitely lost: 0 bytes in 0 blocks
+==3050500==    indirectly lost: 0 bytes in 0 blocks
+==3050500==      possibly lost: 0 bytes in 0 blocks
+==3050500==    still reachable: 197 bytes in 18 blocks
+==3050500==         suppressed: 0 bytes in 0 blocks
+==3050500== Reachable blocks (those to which a pointer was found) are not shown.
+==3050500== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==3050500== 
+==3050500== For lists of detected and suppressed errors, rerun with: -s
+==3050500== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+API contract tests: PASS
+==3050496== 
+==3050496== HEAP SUMMARY:
+==3050496==     in use at exit: 0 bytes in 0 blocks
+==3050496==   total heap usage: 794 allocs, 794 frees, 110,737 bytes allocated
+==3050496== 
+==3050496== All heap blocks were freed -- no leaks are possible
+==3050496== 
+==3050496== For lists of detected and suppressed errors, rerun with: -s
+==3050496== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==3050502== Memcheck, a memory error detector
+==3050502== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==3050502== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==3050502== Command: bin/wise-combine-test --model fixtures/smoke.model --mode state
+==3050502== 
+==3050508== 
+==3050508== HEAP SUMMARY:
+==3050508==     in use at exit: 210 bytes in 16 blocks
+==3050508==   total heap usage: 24 allocs, 8 frees, 4,843 bytes allocated
+==3050508== 
+==3050508== LEAK SUMMARY:
+==3050508==    definitely lost: 0 bytes in 0 blocks
+==3050508==    indirectly lost: 0 bytes in 0 blocks
+==3050508==      possibly lost: 0 bytes in 0 blocks
+==3050508==    still reachable: 210 bytes in 16 blocks
+==3050508==         suppressed: 0 bytes in 0 blocks
+==3050508== Reachable blocks (those to which a pointer was found) are not shown.
+==3050508== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==3050508== 
+==3050508== For lists of detected and suppressed errors, rerun with: -s
+==3050508== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+steps=1 covered=1 failures=0 uncovered=0 edges=1/1 uncovered_edges=0 seed=0 process_exit=0 process_signal=0 timed_out=0
+==3050502== 
+==3050502== HEAP SUMMARY:
+==3050502==     in use at exit: 0 bytes in 0 blocks
+==3050502==   total heap usage: 20 allocs, 20 frees, 8,882 bytes allocated
+==3050502== 
+==3050502== All heap blocks were freed -- no leaks are possible
+==3050502== 
+==3050502== For lists of detected and suppressed errors, rerun with: -s
+==3050502== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==3050509== Memcheck, a memory error detector
+==3050509== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==3050509== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==3050509== Command: bin/wise-combine-test --model fixtures/relation.model --mode relation --isolate --timeout-ms 100
+==3050509== 
+call first alpha
+call second result
+==3050510== 
+==3050510== HEAP SUMMARY:
+==3050510==     in use at exit: 255 bytes in 15 blocks
+==3050510==   total heap usage: 28 allocs, 13 frees, 9,057 bytes allocated
+==3050510== 
+==3050510== LEAK SUMMARY:
+==3050510==    definitely lost: 0 bytes in 0 blocks
+==3050510==    indirectly lost: 0 bytes in 0 blocks
+==3050510==      possibly lost: 0 bytes in 0 blocks
+==3050510==    still reachable: 255 bytes in 15 blocks
+==3050510==         suppressed: 0 bytes in 0 blocks
+==3050510== Reachable blocks (those to which a pointer was found) are not shown.
+==3050510== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==3050510== 
+==3050510== For lists of detected and suppressed errors, rerun with: -s
+==3050510== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+steps=2 covered=2 failures=0 uncovered=0 edges=1/1 uncovered_edges=0 seed=0 process_exit=0 process_signal=0 timed_out=0
+==3050509== 
+==3050509== HEAP SUMMARY:
+==3050509==     in use at exit: 0 bytes in 0 blocks
+==3050509==   total heap usage: 19 allocs, 19 frees, 8,991 bytes allocated
+==3050509== 
+==3050509== All heap blocks were freed -- no leaks are possible
+==3050509== 
+==3050509== For lists of detected and suppressed errors, rerun with: -s
+==3050509== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+make[1]: 进入目录“/home/workspace_data/works/myprojects/wise_combine_test.omx”
+WCT_QUEUE_CFLAGS='-std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude' WCT_QUEUE_LDFLAGS='' \
+	./tests/test_queue_oracle.sh
+Queue oracle regression passed: 84 matrix runs, 12 clean passes, 6/6 matching mutants detected, 3 generation probes
+make[1]: 离开目录“/home/workspace_data/works/myprojects/wise_combine_test.omx”

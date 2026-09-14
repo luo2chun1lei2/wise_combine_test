@@ -9,9 +9,9 @@ iteration acceptance.
 
 Release status remains **BLOCKED** only for the final independent code and
 architecture/product-boundary reviews. Iteration 17 automated gates completed
-at source commit `67188b186a1a3597a14bebb5c8cc020670ba5806`; see
-[`evidence/iter-17/summary.json`](../evidence/iter-17/summary.json) and
-[`evidence/iter-17/manifest.json`](../evidence/iter-17/manifest.json). The
+at source commit `41669164a69033a5b51383c26c638f90b2a9e52a`; see
+[`evidence/iter-18/summary.json`](../evidence/iter-18/summary.json) and
+[`evidence/iter-18/manifest.json`](../evidence/iter-18/manifest.json). The
 current boundary and gates are indexed by
 [`.omx/current-status.md`](../.omx/current-status.md),
 [`.omx/capability-matrix.md`](../.omx/capability-matrix.md), and
@@ -20,26 +20,26 @@ map is [`docs/oracle-matrix.md`](oracle-matrix.md).
 
 Release candidates use paired commits: source changes are frozen first, then
 evidence and status artifacts are committed while retaining the tested source
-hash in `evidence/iter-16/{head.txt,summary.json,manifest.json}`. A candidate
+hash in `the current evidence iteration (I18)`. A candidate
 therefore refers to the source/evidence pair, not only the source commit.
 
 The I15 section below is historical evidence for commit
 `b8e5d68808ba573bb6e5c13b465ee214a2428043`. It is preserved unchanged and does
 not describe the current HEAD or release candidate.
 
-## I17 Automated Gates (2026-09-14)
+## I18 Automated Gates (2026-09-14)
 
-The I17 manifest binds clean tests, ASan/UBSan and sentinels, Valgrind,
+The I18 manifest binds clean tests, ASan/UBSan and sentinels, Valgrind,
 coverage, three state and relation measurements, valid/tampered replay, and the
 84-run queue mutant matrix plus three generation probes. Its status is
 `AUTOMATED_GATES_PASS`, not a release approval. Coverage remains a measured
-boundary: `src/wct.c` at 78.52% lines and 81.55% branches; `tools/wct_cli.c`
+boundary: `src/wct.c` at 78.55% lines and 81.61% branches; `tools/wct_cli.c`
 at 92.01% lines and 96.45% branches. Six supplied mutants were detected, but
 this does not establish generator completeness.
 
-I17 verifies the review fixes: canonical unsigned/fixed-width hex trace parsing,
+I18 verifies the review fixes and fail-closed coverage merging: canonical unsigned/fixed-width hex trace parsing,
 mandatory aggregation of at least the library and CLI fork profiles, parser
-partial-record cleanup, rollback after a failed successful-state commit, and the
+partial-record cleanup, unpaired state-hook rejection, rollback after a failed successful-state commit, and the
 documented relation rotation, isolation, and trace trust boundaries.
 
 ## Current Baseline
