@@ -1,11 +1,13 @@
 CC ?= cc
 CFLAGS ?= -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude
 LDFLAGS ?=
+GCOV ?= gcov
 BUILD := build
 BIN := bin/wise-combine-test
 API_TEST := $(BUILD)/test_api
+COVERAGE := coverage
 
-.PHONY: all clean test sanitize sanitizer-sentinels valgrind measure coverage
+.PHONY: all clean clean-profiles test sanitize sanitizer-sentinels valgrind measure coverage
 
 all: $(BIN)
 
@@ -18,8 +20,8 @@ $(BUILD)/wct.o: src/wct.c src/wct_internal.h include/wct.h | $(BUILD)
 $(BUILD)/wct_cli.o: tools/wct_cli.c src/wct_internal.h include/wct.h | $(BUILD)
 	$(CC) $(CFLAGS) -g -c $< -o $@
 
-$(API_TEST): tests/test_api.c src/wct.c src/wct_internal.h include/wct.h | $(BUILD)
-	$(CC) $(CFLAGS) -g tests/test_api.c src/wct.c -o $@ $(LDFLAGS)
+$(API_TEST): tests/test_api.c $(BUILD)/wct.o src/wct_internal.h include/wct.h | $(BUILD)
+	$(CC) $(CFLAGS) -g tests/test_api.c $(BUILD)/wct.o -o $@ $(LDFLAGS)
 
 $(BIN): $(BUILD)/wct.o $(BUILD)/wct_cli.o
 	@mkdir -p bin
@@ -63,13 +65,42 @@ measure: all
 	done; rm -f '$(OUT).tmp'; LC_ALL=C awk -f tools/summarize_measure.awk '$(OUT)' > '$(OUT).summary.tsv'
 
 coverage: clean
-	$(MAKE) CFLAGS='$(CFLAGS) --coverage' LDFLAGS='--coverage' all $(API_TEST)
+	$(MAKE) CFLAGS='$(CFLAGS) --coverage' \
+		LDFLAGS='--coverage -Wl,--undefined=__gcov_dump' all $(API_TEST)
 	./tests/test_cli.sh
 	./$(API_TEST)
 	./tests/test_fuzz.sh
-	@mkdir -p coverage
-	@gcov -b -c -o build src/wct.c > coverage/wct.gcov.txt
-	@printf 'coverage report: coverage/wct.gcov.txt\n'
+	@mkdir -p $(COVERAGE)
+	@set -e; \
+		count=0; \
+		for profile in $(BUILD)/*.gcda; do \
+			[ -f "$$profile" ] || continue; \
+			report='$(COVERAGE)/'$${profile##*/}'.gcov.txt'; \
+			$(GCOV) -b -t "$$profile" -o $(BUILD) > "$$report"; \
+			$(GCOV) -b -n "$$profile" -o $(BUILD) >> "$$report"; \
+			count=$$((count + 1)); \
+		done; \
+		[ "$$count" -ge 2 ] || { \
+			echo 'coverage failure: expected library and CLI profile data' >&2; \
+			exit 1; \
+		}; \
+		for source in src/wct.c tools/wct_cli.c; do \
+			grep -qF "File '$$source'" $(COVERAGE)/*.gcov.txt || { \
+				echo "coverage failure: missing report for $$source" >&2; \
+				exit 1; \
+			}; \
+		done; \
+		{ \
+			for report in $(COVERAGE)/*.gcov.txt; do \
+				printf '=== %s ===\n' "$${report##*/}"; \
+				grep -E '^(File|Lines executed|Branches executed|Taken at least once):' "$$report"; \
+			done; \
+		} > $(COVERAGE)/summary.txt; \
+		rm -f test_api.gcda test_api.gcno; \
+		printf 'coverage reports: %s\n' "$(COVERAGE)/summary.txt"
 
 clean:
+	@set -e; rm -rf $(COVERAGE); \
+		find . -type f \( -name '*.gcda' -o -name '*.gcno' -o -name '*.gcov' \) \
+			-exec rm -f -- {} +
 	rm -rf $(BUILD) bin

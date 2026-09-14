@@ -89,6 +89,32 @@ CPU and maximum RSS, and writes a companion median/min/max/range table. Use
 
 The iteration gates and verification evidence are tracked in
 [`docs/release-readiness.md`](docs/release-readiness.md). `make coverage`
-produces a gcov report when GCC's coverage tools are available. Valgrind is
-optional at runtime; `make valgrind` records an explicit skip when it is not
-installed.
+cleans stale `*.gcda`, `*.gcno`, and report files, instruments the shared
+library object used by both the CLI and API test harness, runs the CLI/API/fuzz
+suite, and writes one gcov report per discovered profile plus
+`coverage/summary.txt`. It fails if the expected `src/wct.c` and
+`tools/wct_cli.c` profiles are absent.
+
+The last local coverage measurement used GCC/gcov 9.4.0 on Linux:
+
+| Source | Lines executed | Branches executed | Branches taken at least once |
+| --- | ---: | ---: | ---: |
+| `src/wct.c` | 78.26% (667 lines) | 81.36% (1116 branches) | 58.24% |
+| `tools/wct_cli.c` | 91.89% (333 lines) | 96.37% (606 branches) | 66.50% |
+
+Those profiles aggregate normal parent execution of the CLI and library API
+tests with isolated fork children. Fork children call the weak
+`__gcov_dump` hook through `child_exit()` before every `_exit`; GCC exposes a
+strong implementation under `--coverage`, while ordinary builds retain the
+null weak symbol and skip the call. Because some GCC versions archive
+`__gcov_dump` where a weak reference alone does not extract the runtime,
+`make coverage` passes a link-time undefined-symbol request only in this
+instrumented configuration. This matters because `_exit` bypasses the
+normal profile dump registered at process exit. A child that calls `exec`
+would have to dump before replacement; this runner does not replace its fork
+children with `exec`.
+
+The measured numbers above are the current baseline, not an 80% coverage
+claim: the library line total remains below 80%, and both branch-taken totals
+remain below 80%. Valgrind is optional at runtime; `make valgrind` records an
+explicit skip when it is not installed.

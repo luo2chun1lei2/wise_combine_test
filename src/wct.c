@@ -12,6 +12,20 @@
 #include <unistd.h>
 #define WCT_MAX_RESULT (1024u * 1024u)
 
+/* Keep non-coverage links working when GCC's dump runtime is absent. */
+#if defined(__GNUC__)
+extern void __gcov_dump(void) __attribute__((weak));
+#define WCT_GCOV_DUMP() do { if (__gcov_dump) __gcov_dump(); } while (0)
+#else
+#define WCT_GCOV_DUMP() ((void)0)
+#endif
+
+/* Forked children use _exit, so flush GCC profile counters explicitly. */
+static void child_exit(int status) {
+    WCT_GCOV_DUMP();
+    _exit(status);
+}
+
 /* Execute one callback in a child process and transfer its result safely. */
 static long long now_ms(void) {
     struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -82,8 +96,8 @@ static int isolate_state_cb(wct_transition_fn fn, const char *input, char **actu
             write_all(p[1], &len, sizeof len) ||
             (len && write_all(p[1], out, (size_t)len)) ||
             write_all(p[1], &wire_state_size, sizeof wire_state_size) ||
-            (wire_state_size && write_all(p[1], state, state_size))) _exit(111);
-        free(state); free(out); close(p[1]); _exit(0);
+            (wire_state_size && write_all(p[1], state, state_size))) child_exit(111);
+        free(state); free(out); close(p[1]); child_exit(0);
     }
     close(p[1]); long long deadline = timeout_ms ? now_ms() + timeout_ms : -1;
     int rc = -1, present = 0; uint64_t len = 0, state_size = 0;
@@ -131,8 +145,8 @@ static int isolate_relation_cb(wct_call_fn fn, const char *id, const char *const
         if (write_all(p[1], &rc, sizeof rc) ||
             write_all(p[1], &present, sizeof present) ||
             write_all(p[1], &len, sizeof len) ||
-            (len && write_all(p[1], out, (size_t)len))) _exit(111);
-        free(out); close(p[1]); _exit(0);
+            (len && write_all(p[1], out, (size_t)len))) child_exit(111);
+        free(out); close(p[1]); child_exit(0);
     }
     close(p[1]); long long deadline = timeout_ms ? now_ms() + timeout_ms : -1;
     int rc = -1, present = 0; uint64_t len = 0;
@@ -650,8 +664,8 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
         uint64_t lens[5]={cr.scenario?strlen(cr.scenario):0,cr.expected?strlen(cr.expected):0,cr.actual?strlen(cr.actual):0,cr.error?strlen(cr.error):0,(uint64_t)final_state_size};
         if(write_all(p[1],&rc,sizeof rc)||write_all(p[1],&cr,offsetof(wct_report,scenario))||write_all(p[1],lens,sizeof lens)||
            (lens[0]&&write_all(p[1],cr.scenario,lens[0]))||(lens[1]&&write_all(p[1],cr.expected,lens[1]))||(lens[2]&&write_all(p[1],cr.actual,lens[2]))||(lens[3]&&write_all(p[1],cr.error,lens[3]))||
-           write_all(p[1],&state_present,sizeof state_present)||(state_present&&lens[4]&&write_all(p[1],final_state,(size_t)lens[4]))) _exit(111);
-        free(final_state); wct_report_free(&cr); close(p[1]); _exit(0);
+           write_all(p[1],&state_present,sizeof state_present)||(state_present&&lens[4]&&write_all(p[1],final_state,(size_t)lens[4]))) child_exit(111);
+        free(final_state); wct_report_free(&cr); close(p[1]); child_exit(0);
     }
     close(p[1]); long long deadline=lim.timeout_ms?now_ms()+lim.timeout_ms:-1; int rc=-1;
     int rr=read_exact_deadline(p[0],&rc,sizeof rc,deadline); if(!rr) rr=read_exact_deadline(p[0],r,offsetof(wct_report,scenario),deadline);
@@ -821,8 +835,8 @@ int wct_run_relation(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
         if (write_all(p[1], &rc, sizeof rc) || write_all(p[1], &cr, offsetof(wct_report, scenario)) ||
             write_all(p[1], lens, sizeof lens) ||
             (lens[0] && write_all(p[1], cr.scenario, lens[0])) || (lens[1] && write_all(p[1], cr.expected, lens[1])) ||
-            (lens[2] && write_all(p[1], cr.actual, lens[2])) || (lens[3] && write_all(p[1], cr.error, lens[3]))) _exit(111);
-        wct_report_free(&cr); close(p[1]); _exit(0);
+            (lens[2] && write_all(p[1], cr.actual, lens[2])) || (lens[3] && write_all(p[1], cr.error, lens[3]))) child_exit(111);
+        wct_report_free(&cr); close(p[1]); child_exit(0);
     }
     close(p[1]); long long deadline = lim.timeout_ms ? now_ms() + lim.timeout_ms : -1;
     int rc = -1; int rr = read_exact_deadline(p[0], &rc, sizeof rc, deadline);
