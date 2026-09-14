@@ -7,8 +7,12 @@ iteration acceptance.
 
 ## Current Release Status (2026-09-14)
 
-Release status is **BLOCKED** because fresh iteration 16 evidence and the final
-independent review are pending. The current boundary and gates are indexed by
+Release status remains **BLOCKED** only for the final independent code and
+architecture/product-boundary reviews. Iteration 16 automated gates completed
+at source commit `f890b768aca48e37299a9ba2403e10b7b590620f`; see
+[`evidence/iter-16/summary.json`](../evidence/iter-16/summary.json) and
+[`evidence/iter-16/manifest.json`](../evidence/iter-16/manifest.json). The
+current boundary and gates are indexed by
 [`.omx/current-status.md`](../.omx/current-status.md),
 [`.omx/capability-matrix.md`](../.omx/capability-matrix.md), and
 [`.omx/release-blockers.md`](../.omx/release-blockers.md). The regression-to-oracle
@@ -17,6 +21,16 @@ map is [`docs/oracle-matrix.md`](oracle-matrix.md).
 The I15 section below is historical evidence for commit
 `b8e5d68808ba573bb6e5c13b465ee214a2428043`. It is preserved unchanged and does
 not describe the current HEAD or release candidate.
+
+## I16 Automated Gates (2026-09-14)
+
+The I16 manifest binds clean tests, ASan/UBSan and sentinels, Valgrind,
+coverage, three state and relation measurements, valid/tampered replay, and the
+84-run queue mutant matrix plus three generation probes. Its status is
+`AUTOMATED_GATES_PASS`, not a release approval. Coverage remains a measured
+boundary: `src/wct.c` at 78.78% lines and 81.49% branches; `tools/wct_cli.c`
+at 91.89% lines and 96.37% branches. Six supplied mutants were detected, but
+this does not establish generator completeness.
 
 ## Current Baseline
 
@@ -80,7 +94,7 @@ callback/expectation failures.
 
 ## Historical I15 Final Verification (2026-09-11)
 
-`evidence/iter-15/` records the current release verification. Clean test,
+`evidence/iter-15/` records historical release verification. Clean test,
 ASan/UBSan (including intentional OOB/leak sentinels), Valgrind, coverage,
 trace/replay, and three repeated state and relation measurements all pass.
 Valid traces replay successfully and tampered traces are rejected. Earlier

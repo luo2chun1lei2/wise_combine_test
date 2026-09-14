@@ -1,0 +1,6 @@
+./tests/test_cli.sh
+CLI smoke tests passed
+./build/test_api
+API contract tests: PASS
+./tests/test_fuzz.sh
+DSL boundary fuzz tests passed

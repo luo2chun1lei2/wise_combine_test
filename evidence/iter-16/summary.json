@@ -1,0 +1,54 @@
+{
+  "iteration": "I16",
+  "status": "AUTOMATED_GATES_PASS",
+  "scope": "release readiness with controlled queue-oracle regression, fork coverage aggregation, state/relation repeated measurements",
+  "head": "f890b768aca48e37299a9ba2403e10b7b590620f",
+  "tested_source_commit": "f890b768aca48e37299a9ba2403e10b7b590620f",
+  "prior_summary_sha256": "0f38c84300993e5b9276c5fec82802bcb9fa4dab92a61a74fad4aa79c5ad00ae",
+  "checks": {
+    "coverage": 0,
+    "relation-measure-1": 0,
+    "relation-measure-2": 0,
+    "relation-measure-3": 0,
+    "replay": 0,
+    "sanitize": 0,
+    "sentinels": 0,
+    "state-measure-1": 0,
+    "state-measure-2": 0,
+    "state-measure-3": 0,
+    "tampered-replay": 1,
+    "test": 0,
+    "trace": 0,
+    "valgrind": 0
+  },
+  "coverage": {
+    "src/wct.c": {
+      "lines": "78.78% (674)",
+      "branches": "81.49% (1124)",
+      "branch_taken": "58.45% (1124)"
+    },
+    "tools/wct_cli.c": {
+      "lines": "91.89% (333)",
+      "branches": "96.37% (606)",
+      "branch_taken": "66.50% (606)"
+    }
+  },
+  "measurement_repetitions": 3,
+  "measurement_modes": [
+    "state",
+    "relation"
+  ],
+  "queue_oracle": {
+    "matrix_rows": 84,
+    "generation_probe_rows": 3,
+    "clean_passes": 12,
+    "matching_mutants_detected": "6/6",
+    "generator_completeness_claim": false
+  },
+  "valid_replay": "PASS",
+  "tampered_replay": "REJECTED",
+  "blockers": [
+    "independent code review for f890b768aca48e37299a9ba2403e10b7b590620f pending",
+    "independent architecture/product-boundary review for f890b768aca48e37299a9ba2403e10b7b590620f pending"
+  ]
+}
