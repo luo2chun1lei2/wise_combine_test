@@ -65,23 +65,41 @@ regressions, not proof of exhaustive automatic coverage.
 ./build/wise-combine verify-report-v2 reports/report-v2.json
 ./build/wise-combine wrap-report-v2 payload.json
 ./build/wise-combine hash-report reports/relation-0.json [EXPECTED_SHA256]
+./build/wise-combine replay reports/relation-0.v2.json \
+  --adapter tests/fixtures/bin/adapter_ok \
+  --reports replay-reports --run-id replay
 ```
 
 `validate` and `generate` print JSON containing wall time, CPU time, and peak
-RSS. `run` writes one `<run-id>-N.json` and `<run-id>-N.txt` pair per flow plus
-`<run-id>-summary.json` containing `case_count`, `passed`, `failed`, and the
-same measurement fields plus the input `seed` and `schema_version: 1`. The report command prints a previously generated
+RSS. `run` writes one `<run-id>-N.json` and `<run-id>-N.txt` pair per flow, an
+integrity-envelope `<run-id>-N.v2.json`, plus `<run-id>-summary.json` containing
+`case_count`, `passed`, `failed`, and the same measurement fields plus the input
+`seed` and `schema_version: 1`. The report command prints a previously generated
 report without changing it.
 Each report step includes `expected_state` alongside `observed_state`, so a
 mismatch report records the state oracle used for that step.
 `hash-report` prints a SHA-256 digest of the exact report bytes. With an optional
 expected digest it returns `0` on match or `4` on mismatch; it does not
 authenticate the source.
-`verify-report-v2` validates the SHA-256 envelope and reports
-`integrity_verified:true`; the v2 payload schema and replay command remain
-separate follow-up work.
-Saved flow sequences can be structurally checked by the library's
-`generate::validate_flow` API before a future replay implementation executes them.
+`verify-report-v2` first verifies the decoded payload digest, then strictly
+validates the complete ADR 0003 payload: exact keys and types, a version-1 model
+object, generator metadata, a flow that is valid for that model, adapter/runtime
+metadata, and result steps that agree with the saved plan prefix. A historical
+mismatch or failure prefix remains valid when its prefix is internally
+consistent.
+`replay REPORT --adapter EXEC --reports DIR --run-id ID` verifies that payload
+before spawning a child. It executes only the one saved flow, re-computes model
+argument bindings from new adapter responses, and rejects overrides or missing/
+extra command arguments. `EXEC` must pass the existing allowlist and have the
+recorded SHA-256; the recorded working directory must exist, and the output
+directory may not replace the input report. Replay writes v1, TXT, and v2
+reports and preserves the existing run exit statuses.
+SHA-256 detects accidental or independently uncoordinated changes but is not
+origin authentication: an attacker who changes both payload and digest can make
+them agree. Replay does not save, restore, or inspect external adapter state, and
+it does not collect host environment variables or credentials. The fixed child
+environment remains `PATH=/usr/bin:/bin` and `LC_ALL=C`; callers must restore any
+external pre-state and review reports for sensitive arguments or responses.
 `wrap-report-v2` reads a payload file, requires it to be valid JSON, and emits a
 SHA-256 envelope for later verification. Invalid payloads fail with exit code `2`.
 `verify-report` also validates run summaries: counters, seed and measurements

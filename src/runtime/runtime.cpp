@@ -170,6 +170,10 @@ StepResult run_step(const generate::Flow& flow, std::size_t index, const model::
 }
 }
 
+bool validate_executable(const std::string& executable) {
+  return allowed_executable(executable);
+}
+
 RunResult execute(const model::Model& model, const generate::Flow& flow, const Options& options) {
   RunResult result; result.flow_id = flow.flow_id; const auto started = Clock::now();
   if (!allowed_executable(options.executable)) { result.status = Status::launch_error; result.steps.push_back({Status::launch_error, 0, "", "", "", {}, "", -1, "executable is not on the allowlist", {}}); return result; }

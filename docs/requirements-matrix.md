@@ -11,7 +11,7 @@
 | CT-005 | adapter 隔离执行 | `src/runtime` | pass/mismatch/error/timeout/crash/cap tests | 已验证 |
 | CT-006 | 协议合法性和错误分类 | `src/runtime/runtime.cpp` | malformed/extra/unknown-status tests | 基础完成 |
 | CT-007 | 报告写入失败稳定退出 | `src/cli`, `src/report` | `cli_reports_error`, 22/22 suites | 基础完成 |
-| CT-008 | 失败报告独立 replay 和篡改校验 | `src/integrity`, `src/generate::validate_flow`, `verify-report-v2`（部分） | v2 envelope 篡改回归；持久化流程结构校验回归；adapter replay 待添加 | 基础完成 |
+| CT-008 | 失败报告独立 replay 和篡改校验 | `src/report`, `src/cli`, `src/integrity`, `src/runtime::validate_executable` | `cli_replay_v2`、`cli_verify_report_v2`、`cli_wrap_report_v2`：normal/mismatch replay、schema/model/flow 校验、篡改、摘要不一致、路径/输出拒绝 | 已验证 |
 | CT-009 | 完整 JSON 响应语法解析 | `src/spec/spec.cpp::parse_adapter_response` | runtime malformed/extra/duplicate/formatted/unicode/escaped 回归 | 基础完成 |
 | CT-010 | Q1–Q6 长期回归入口 | `tests/evaluation`, `evaluation_q1`…`evaluation_q6` | clean/matching-mutant exit-code 回归 | 基础完成 |
 | CT-011 | guard/mutex/parallel/count/value | 未冻结 | 未添加 | 明确非目标 |

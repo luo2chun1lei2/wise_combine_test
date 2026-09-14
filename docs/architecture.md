@@ -19,9 +19,12 @@ flow executor -- execve --> allowlisted adapter
         |
         v
 JSON/text reports + CLI measurements
+        |
+        v
+v2 integrity envelope -- verify/replay --> new JSON/TXT/v2 reports
 ```
 
-`src/spec` 负责 RFC 8259 JSON、版本和规范化；`src/model` 保存状态、函数、参数、返回值和关系，并执行语义校验；`src/generate` 按状态、关系、seed 和全局限制生成流程；`src/runtime` 每步启动隔离的 adapter，负责协议、超时、输出上限和 producer 返回值注入；`src/report` 生成 JSON/text 报告；`src/cli` 映射命令和退出码。
+`src/spec` 负责 RFC 8259 JSON、版本和规范化；`src/model` 保存状态、函数、参数、返回值和关系，并执行语义校验；`src/generate` 按状态、关系、seed 和全局限制生成流程；`src/runtime` 每步启动隔离的 adapter，负责协议、超时、输出上限和 producer 返回值注入；`src/report` 生成 v1/TXT 报告、ADR 0003 v2 payload 及其严格语义校验；`src/cli` 映射命令、replay 前置校验和退出码。
 
 ## 执行边界
 
@@ -31,6 +34,10 @@ JSON/text reports + CLI measurements
 - 每步和整个 flow 都有超时，输出有合计上限。
 - 超时会清理进程组；协议错误、崩溃和 mismatch 不会被当作成功。
 - 每个 transition 的必需参数必须来自常量或 argument relation。
+- v2 保存完整版本 1 model、generator 终止状态、完整 flow、adapter 摘要与工作目录、
+  固定 runtime 约束/环境以及完整结果前缀。replay 只使用显式传入且摘要一致的
+  adapter，只执行保存 flow，并用新响应重新计算参数绑定。
+- SHA-256 只提供篡改检测，不提供来源认证；adapter 外部状态不由 replay 恢复。
 
 ## 当前设计决策
 
@@ -41,6 +48,7 @@ JSON/text reports + CLI measurements
 | 执行方式 | 每步独立 adapter 进程 | 有状态 SUT 需外部状态桥或未来持久会话 |
 | 关系传值 | producer returns 注入 consumer args | 需要保持类型严格匹配 |
 | 失败分类 | parse/generation/mismatch/runtime/usage | 新错误必须更新 CLI 和双语 README |
+| 报告 v2 | integrity envelope + full run metadata | 扩展字段需要推进 schema 版本和迁移策略 |
 
 ## 明确非目标
 

@@ -2,6 +2,7 @@
 
 #include "generate/generate.hpp"
 #include "report/report.hpp"
+#include "replay/replay.hpp"
 #include "runtime/runtime.hpp"
 #include "spec/spec.hpp"
 #include "integrity/sha256.hpp"
@@ -83,7 +84,7 @@ const char* generation_status(generate::GenerationStatus status) {
 }
 
 void usage(std::ostream& out) {
-  out << "usage: wise-combine <validate|generate|run|report|verify-report|verify-report-v2|hash-report|wrap-report-v2> ...\n"
+  out << "usage: wise-combine <validate|generate|run|report|verify-report|verify-report-v2|hash-report|wrap-report-v2|replay> ...\n"
       << "  validate SPEC\n"
       << "  generate SPEC\n"
       << "  run SPEC --adapter EXEC [--arg ARG]... [--reports DIR] [--run-id ID]\n"
@@ -91,7 +92,8 @@ void usage(std::ostream& out) {
       << "  verify-report REPORT.json\n"
       << "  verify-report-v2 REPORT.json\n"
       << "  hash-report REPORT [EXPECTED_SHA256]\n"
-      << "  wrap-report-v2 PAYLOAD\n";
+      << "  wrap-report-v2 PAYLOAD\n"
+      << "  replay REPORT --adapter EXEC --reports DIR --run-id ID\n";
 }
 
 int parse_spec(const std::string& path, spec::Document& document) {
@@ -180,6 +182,17 @@ int command_run(const std::vector<std::string>& args) {
     std::cerr << "run-id must be a single file-name component\n";
     return kUsageError;
   }
+  std::error_code path_error;
+  options.executable = std::filesystem::absolute(options.executable, path_error);
+  if (!path_error) {
+    options.working_directory = options.working_directory.empty()
+        ? std::filesystem::current_path(path_error)
+        : std::filesystem::absolute(options.working_directory, path_error);
+  }
+  if (path_error) {
+    std::cerr << "unable to resolve adapter execution paths: " << path_error.message() << '\n';
+    return kRuntimeFailure;
+  }
   const auto generated = generate::generate(document.model, document.seed);
   std::error_code report_directory_error;
   std::filesystem::create_directories(reports, report_directory_error);
@@ -195,7 +208,14 @@ int command_run(const std::vector<std::string>& args) {
   for (const auto& flow : generated.flows) {
     const auto result = runtime::execute(document.model, flow, options);
     std::string report_error;
-    if (!wise::report::write(result, reports, run_id + "-" + std::to_string(index), &report_error)) {
+    wise::report::V2Metadata metadata;
+    metadata.model_json = document.canonical_json;
+    metadata.generation_status = generated.status;
+    metadata.flow = flow;
+    metadata.adapter = options;
+    metadata.result = result;
+    if (!wise::report::write(result, reports, run_id + "-" + std::to_string(index),
+                             metadata, &report_error)) {
       std::cerr << "unable to write reports in '" << reports << "': " << report_error << '\n';
       return kRuntimeFailure;
     }
@@ -248,8 +268,39 @@ int command_hash_report(const std::string& path, const std::string& expected = {
   catch (const std::exception& error) { std::cerr << error.what() << '\n'; return kParseError; }
 }
 int command_verify_report_v2(const std::string& path) {
-  try { if (!wise::integrity::verify_v2(read_file(path))) throw std::runtime_error("report integrity verification failed"); std::cout << "{\"valid\":true,\"integrity_verified\":true,\"schema_version\":2}\n"; return 0; }
-  catch (const std::exception& error) { std::cerr << error.what() << '\n'; return kParseError; }
+  try {
+    std::string payload;
+    if (!wise::integrity::verify_v2(read_file(path), &payload))
+      throw std::runtime_error("report integrity verification failed");
+    static_cast<void>(wise::report::verify_payload_v2(payload));
+    std::cout << "{\"valid\":true,\"integrity_verified\":true,\"payload_valid\":true,\"schema_version\":2}\n";
+    return 0;
+  } catch (const std::exception& error) {
+    std::cerr << error.what() << '\n';
+    return kParseError;
+  }
+}
+
+int command_replay(const std::vector<std::string>& args) {
+  if (args.size() != 7U || args[1] != "--adapter" || args[3] != "--reports" ||
+      args[5] != "--run-id")
+    return kUsageError;
+  const std::string run_id = args[6];
+  if (run_id.empty() || run_id == "." || run_id == ".." ||
+      run_id.find_first_of("/\\") != std::string::npos) {
+    std::cerr << "run-id must be a single file-name component\n";
+    return kUsageError;
+  }
+
+  replay::Request request{args[0], args[2], args[4], run_id};
+  const auto outcome = replay::run(request);
+  switch (outcome.code) {
+    case replay::Outcome::Code::success: return 0;
+    case replay::Outcome::Code::observed_mismatch: return kObservedFailure;
+    case replay::Outcome::Code::runtime_failure: return kRuntimeFailure;
+    case replay::Outcome::Code::invalid_report: return kParseError;
+  }
+  return kRuntimeFailure;
 }
 int command_wrap_report_v2(const std::string& path) {
   try { const auto payload = read_file(path); spec::validate_json(payload); std::cout << wise::integrity::wrap_v2(payload) << '\n'; return 0; }
@@ -276,6 +327,13 @@ int run(int argc, char** argv) {
     std::vector<std::string> args;
     for (int i = 2; i < argc; ++i) args.emplace_back(argv[i]);
     const int status = command_run(args);
+    if (status == kUsageError) usage(std::cerr);
+    return status;
+  }
+  if (command == "replay") {
+    std::vector<std::string> args;
+    for (int i = 2; i < argc; ++i) args.emplace_back(argv[i]);
+    const int status = command_replay(args);
     if (status == kUsageError) usage(std::cerr);
     return status;
   }

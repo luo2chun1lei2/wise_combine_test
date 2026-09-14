@@ -14,7 +14,7 @@
 
 namespace wise::spec {
 namespace {
-struct Value { using Object = std::map<std::string, Value>; using Array = std::vector<Value>; std::variant<std::nullptr_t, bool, std::int64_t, double, std::string, Object, Array> data; };
+using Value = JsonValue;
 
 class Parser {
  public:
@@ -58,6 +58,8 @@ Document parse(const std::string& json) {
 }
 std::string normalize(const std::string& json) { return parse(json).canonical_json; }
 void validate_json(const std::string& json) { static_cast<void>(Parser(json).parse()); }
+JsonValue parse_json_value(const std::string& json) { return Parser(json).parse(); }
+std::string canonical_json_value(const JsonValue& value) { return canonical(value); }
 
 std::string encode_json_string(const std::string& value) { return quote(value); }
 

@@ -68,9 +68,10 @@ target_link_libraries(wise-combine-smoke PRIVATE wise-combine-compile-options)
 
 add_executable(wise-combine src/main.cpp src/cli/cli.cpp)
 target_include_directories(wise-combine PRIVATE src)
-target_link_libraries(wise-combine PRIVATE wise-combine-report wise-combine-runtime
-  wise-combine-generate wise-combine-spec wise-combine-model
-  wise-combine-integrity wise-combine-compile-options)
+target_link_libraries(wise-combine PRIVATE wise-combine-replay
+  wise-combine-report wise-combine-runtime wise-combine-generate
+  wise-combine-spec wise-combine-model wise-combine-integrity
+  wise-combine-compile-options)
 
 add_executable(wise-combine-smoke-test tests/smoke_test.cpp)
 target_link_libraries(wise-combine-smoke-test PRIVATE wise-combine-compile-options)
@@ -110,6 +111,11 @@ target_link_libraries(wise-combine-runtime PUBLIC wise-combine-generate
 add_library(wise-combine-report src/report/report.cpp)
 target_include_directories(wise-combine-report PUBLIC src)
 target_link_libraries(wise-combine-report PUBLIC wise-combine-runtime
+  wise-combine-integrity wise-combine-compile-options)
+add_library(wise-combine-replay src/replay/replay.cpp)
+target_include_directories(wise-combine-replay PUBLIC src)
+target_link_libraries(wise-combine-replay PUBLIC wise-combine-report
+  wise-combine-runtime wise-combine-integrity wise-combine-spec
   wise-combine-compile-options)
 add_executable(wise-combine-runtime-fixture tests/fixture_adapter.cpp)
 target_link_libraries(wise-combine-runtime-fixture PRIVATE wise-combine-compile-options)
@@ -183,12 +189,36 @@ add_test(NAME cli_hash_report COMMAND ${CMAKE_COMMAND}
   -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_hash_report_test.cmake)
 add_test(NAME cli_verify_report_v2 COMMAND ${CMAKE_COMMAND}
   -DCLI=$<TARGET_FILE:wise-combine>
+  -DSPEC=${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/relation_workflow.json
+  -DADAPTER=${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/bin/adapter_ok
   -DCASE_DIR=${CMAKE_CURRENT_BINARY_DIR}/verify-report-v2
   -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_verify_report_v2.cmake)
 add_test(NAME cli_wrap_report_v2 COMMAND ${CMAKE_COMMAND}
   -DCLI=$<TARGET_FILE:wise-combine>
+  -DSPEC=${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/relation_workflow.json
+  -DADAPTER=${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/bin/adapter_ok
   -DCASE_DIR=${CMAKE_CURRENT_BINARY_DIR}/wrap-report-v2
   -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_wrap_report_v2.cmake)
+add_executable(adapter_marker tests/replay_marker_adapter.cpp)
+target_link_libraries(adapter_marker PRIVATE wise-combine-compile-options)
+set_target_properties(adapter_marker PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/tests/fixtures/bin")
+add_dependencies(wise-combine adapter_marker)
+add_executable(adapter_marker_mismatch tests/replay_marker_adapter.cpp)
+target_compile_definitions(adapter_marker_mismatch PRIVATE MARKER_TEXT="different")
+target_link_libraries(adapter_marker_mismatch PRIVATE wise-combine-compile-options)
+set_target_properties(adapter_marker_mismatch PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/tests/fixtures/bin")
+add_dependencies(wise-combine adapter_marker_mismatch)
+add_test(NAME cli_replay_v2 COMMAND ${CMAKE_COMMAND}
+  -DCLI=$<TARGET_FILE:wise-combine>
+  -DSPEC=${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/relation_workflow.json
+  -DADAPTER=${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/bin/adapter_ok
+  -DMARKER_ADAPTER=$<TARGET_FILE:adapter_marker>
+  -DDIGEST_MISMATCH_ADAPTER=$<TARGET_FILE:adapter_marker_mismatch>
+  -DMISMATCH_ADAPTER=${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/bin/adapter_mismatch
+  -DCASE_DIR=${CMAKE_CURRENT_BINARY_DIR}/cli-replay-v2
+  -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli_replay_v2.cmake)
 foreach(evaluation_mutant RANGE 0 6)
   add_executable(adapter_eval_${evaluation_mutant} tests/evaluation/queue_adapter.cpp)
   target_compile_definitions(adapter_eval_${evaluation_mutant} PRIVATE MUTANT=${evaluation_mutant})

@@ -1,6 +1,6 @@
 # LazyCodex 整改与增强记录
 
-本文件记录 `wise_combine_test.evaluate` 对 LazyCodex 的独立复评意见，作为后续开发的工作依据。本文只记录计划，不代表其中的增强已经实现。
+本文件记录 `wise_combine_test.evaluate` 对 LazyCodex 的独立复评意见，作为后续开发的工作依据。文中状态随增量实现同步更新。
 
 评审基线：分支 `layzcodex`，提交 `52a7fa5`。评审确认当前实现的基础状态图、typed function、argument/before 关系、外部 adapter 隔离、超时/崩溃/输出上限处理和 19/19 Debug、19/19 ASan/UBSan/LSan 测试均可用。
 
@@ -14,7 +14,7 @@
 | 有界确定性 DFS | 支持 | 受 `max_cases`、`max_steps` 限制，允许有界非自环重走 |
 | seed 驱动的随机策略 | 基础支持 | 多候选流程按 seed 稳定打乱；单候选流程结果不变 |
 | 完整 adapter JSON 解析 | 基础完成 | 运行器复用严格 RFC 8259 parser，校验类型、重复键和状态；仍可扩展更多恶意语法矩阵 |
-| 报告 replay、篡改校验 | 基础完成 | `verify-report` 严格校验 schema；重放和哈希篡改检测仍待增强 |
+| 报告 v2 replay、篡改校验 | 已支持 | `run` 写 ADR 0003 v2；`verify-report-v2` 校验完整 payload；`replay` 只执行保存 flow 并校验摘要/路径/输出边界 |
 | guard、mutex、parallel、count/value | 未支持 | 是否纳入产品需先冻结需求 |
 | 多对象交互、负向流程 | 未支持 | 不应在文档中暗示已实现 |
 
@@ -82,7 +82,14 @@
 
 ### 报告元数据与 replay
 
-报告应包含 schema/model 版本、规范哈希、seed、limits、生成策略、flow 序列、实际 args、expected/actual、adapter 信息、环境摘要、稳定 report ID、截断标记和退出信号。增加 `replay` 与报告校验入口，覆盖正常重放、输入篡改、版本不匹配和哈希不一致。
+状态：ADR 0003 基础契约已实现。`run` 记录完整版本 1 model、generator 终止状态、
+完整 flow、effective args、expected/observed state、returns、adapter 绝对路径/
+SHA-256/参数/工作目录以及固定 runtime 约束和环境。`replay` 覆盖正常、历史
+mismatch、payload schema 错误、模型/flow 矛盾、摘要不一致、缺失工作目录和输入
+输出冲突。
+
+仍未纳入当前契约的是稳定 report ID、截断标记和外部 adapter 状态恢复。SHA-256
+只提供篡改检测，不是来源认证。
 
 ### 同步项目知识库
 
@@ -125,7 +132,7 @@ SUT；CMake 注册六项隔离测试，分别验证 clean 返回 0、matching mu
 
 持久化流程前置校验已增加：`c822f00`、`1aff5b0`、`215c931`。
 `generate::validate_flow` 校验状态连续性、flow_id、步数、before 与 argument producer
-前置关系，为 replay 执行提供安全边界；完整 replay 仍未实现。
+前置关系；当前 v2 校验和 replay 复用这一边界。
 
 只有在需求冻结后实施，建议顺序为 guard/count/value、mutex、资源生命周期、parallel、多对象交互和负向流程。每项扩展必须同时更新 schema、model、generator、runtime、report、CLI、测试矩阵以及中英文 README，并提供正常、边界、非法和组合场景。
 

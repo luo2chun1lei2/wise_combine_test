@@ -44,4 +44,6 @@ struct Options {
 RunResult execute(const model::Model& model, const generate::Flow& flow,
                   const Options& options);
 
+bool validate_executable(const std::string& executable);
+
 }  // namespace wise::runtime
