@@ -1,42 +1,19 @@
-C001 clean replay QA
-tool: Bash + ./build/wise-combine (real CLI)
-started: 2026-09-14T20:51:12+08:00
-input_adapter: tests/fixtures/bin/adapter_ok (relative, as specified)
-
-$ ./build/wise-combine run tests/integration/relation_workflow.json --adapter tests/fixtures/bin/adapter_ok --reports '/tmp/wct-c1.YQUoqg/original' --run-id clean
-exit=0
-stdout:
-{"schema_version":1,"generation_status":"dead_end","case_count":1,"passed":1,"failed":0,"wall_time_ns":7666396,"cpu_time_ns":1952260,"peak_rss_bytes":5177344,"seed":9}
-stderr:
-
-$ ./build/wise-combine verify-report-v2 '/tmp/wct-c1.YQUoqg/original/clean-0.v2.json'
-exit=0
-stdout:
+C001 frozen-tree clean replay QA
+frozen_tree=7f26721 head=39cf4637ea1f8b110f0cd272fc273a0fcb134998
+started: 2026-09-14T20:58:58+08:00
+run_exit=0
+{"schema_version":1,"generation_status":"dead_end","case_count":1,"passed":1,"failed":0,"wall_time_ns":11042591,"cpu_time_ns":2942228,"peak_rss_bytes":5013504,"seed":9}
+verify_exit=0
 {"valid":true,"integrity_verified":true,"payload_valid":true,"schema_version":2}
-stderr:
-
-$ ./build/wise-combine replay '/tmp/wct-c1.YQUoqg/original/clean-0.v2.json' --adapter tests/fixtures/bin/adapter_ok --reports '/tmp/wct-c1.YQUoqg/replay-clean' --run-id clean-replay
-exit=0
-stdout:
-stderr:
-
-$ ./build/wise-combine verify-report-v2 '/tmp/wct-c1.YQUoqg/replay-clean/clean-replay-0.v2.json'
-exit=0
-stdout:
+replay_exit=0
+replay_verify_exit=0
 {"valid":true,"integrity_verified":true,"payload_valid":true,"schema_version":2}
-stderr:
-
-
-required output sizes:
-/tmp/wct-c1.YQUoqg/original/clean-0.json 437 bytes
-/tmp/wct-c1.YQUoqg/original/clean-0.v2.json 2175 bytes
-/tmp/wct-c1.YQUoqg/replay-clean/clean-replay-0.json 437 bytes
-/tmp/wct-c1.YQUoqg/replay-clean/clean-replay-0.txt 106 bytes
-/tmp/wct-c1.YQUoqg/replay-clean/clean-replay-0.v2.json 2175 bytes
-
-input_sha256_before=a4746f899e26d9e60d057172f4ba33d7233de6f5ba99febcf7fed909c71f4272
-input_sha256_after=a4746f899e26d9e60d057172f4ba33d7233de6f5ba99febcf7fed909c71f4272
-temp_file_count=7
-
+outputs:
+/tmp/wct-c1-final.KmaAD7/original/clean-0.json 437 bytes
+/tmp/wct-c1-final.KmaAD7/original/clean-0.v2.json 2175 bytes
+/tmp/wct-c1-final.KmaAD7/replay-clean/clean-replay-0.json 437 bytes
+/tmp/wct-c1-final.KmaAD7/replay-clean/clean-replay-0.txt 106 bytes
+/tmp/wct-c1-final.KmaAD7/replay-clean/clean-replay-0.v2.json 2175 bytes
+input_sha_before=a4746f899e26d9e60d057172f4ba33d7233de6f5ba99febcf7fed909c71f4272 input_sha_after=a4746f899e26d9e60d057172f4ba33d7233de6f5ba99febcf7fed909c71f4272 unchanged=true
 C001_RESULT=PASS
-cleanup: python shutil.rmtree '/tmp/wct-c1.YQUoqg'
+cleanup: python shutil.rmtree '/tmp/wct-c1-final.KmaAD7'; no child/port retained

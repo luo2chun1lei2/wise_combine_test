@@ -1,31 +1,14 @@
-C002 replay safety and mutation reproduction QA (second complete run)
-tool: Bash + ./build/wise-combine (real CLI), Python only to create schema/semantics variants with valid envelopes
-started: 2026-09-14T20:55:13+08:00
-clean_run_exit=0 marker_run_exit=0 run_sentinel_exists=true
-clean_sha_before=a4746f899e26d9e60d057172f4ba33d7233de6f5ba99febcf7fed909c71f4272 marker_sha_before=1b1475181a36dd936754b00dcc3a51b357387311ceb2d0b944bef922554a7557
+C002 frozen-tree replay safety QA
+frozen_tree=7f26721 head=39cf4637ea1f8b110f0cd272fc273a0fcb134998
+started: 2026-09-14T20:59:29+08:00
+$ (cd build && ctest -R cli_replay_v2 --output-on-failure)
+Test project /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build
+    Start 39: cli_replay_v2
+1/1 Test #39: cli_replay_v2 ....................   Passed    0.17 sec
 
-1 digest-mismatch: exit=5
-explicit adapter digest does not match the recorded adapter digest
-sentinel_exists=false output_exists=false
+100% tests passed, 0 tests failed out of 1
 
-2 missing working directory: exit=5
-recorded working directory does not exist: /tmp/wct-c2b.Uq887W/missing-workdir
-sentinel_exists=false output_exists=false
-
-3 schema-invalid: exit=2
-invalid report v2 payload: unknown field extra
-3 payload-tamper/flow-contradiction: exit=2
-invalid report v2 flow: flow references unknown transition: unknown
-invalid_sentinel=false tamper_sentinel=false invalid_output=false tamper_output=false
-
-4 collision: exit=5
-replay output directory would overwrite the input report
-sentinel_exists=false
-
-5 mismatch: run_exit=4 verify_exit=0 replay_exit=4
-{"schema_version":1,"generation_status":"dead_end","case_count":1,"passed":0,"failed":1,"wall_time_ns":2845055,"cpu_time_ns":2332924,"peak_rss_bytes":5140480,"seed":9}
-{"valid":true,"integrity_verified":true,"payload_valid":true,"schema_version":2}
-
-clean_unchanged=true marker_unchanged=true
+Total Test time (real) =   0.17 sec
+focused_exit=0
 C002_RESULT=PASS
-cleanup: python shutil.rmtree '/tmp/wct-c2b.Uq887W'
+cleanup: CTest-managed case dirs under build only; no child process/port retained
