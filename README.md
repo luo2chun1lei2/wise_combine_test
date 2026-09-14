@@ -99,20 +99,19 @@ The last local coverage measurement used GCC/gcov 9.4.0 on Linux:
 
 | Source | Lines executed | Branches executed | Branches taken at least once |
 | --- | ---: | ---: | ---: |
-| `src/wct.c` | 78.26% (667 lines) | 81.36% (1116 branches) | 58.24% |
+| `src/wct.c` | 78.49% (674 lines) | 81.49% (1124 branches) | 58.19% |
 | `tools/wct_cli.c` | 91.89% (333 lines) | 96.37% (606 branches) | 66.50% |
 
-Those profiles aggregate normal parent execution of the CLI and library API
-tests with isolated fork children. Fork children call the weak
-`__gcov_dump` hook through `child_exit()` before every `_exit`; GCC exposes a
-strong implementation under `--coverage`, while ordinary builds retain the
-null weak symbol and skip the call. Because some GCC versions archive
-`__gcov_dump` where a weak reference alone does not extract the runtime,
-`make coverage` passes a link-time undefined-symbol request only in this
-instrumented configuration. This matters because `_exit` bypasses the
-normal profile dump registered at process exit. A child that calls `exec`
-would have to dump before replacement; this runner does not replace its fork
-children with `exec`.
+`make coverage` exports `WCT_COVERAGE_ROOT`. Every normal fork exit calls
+`child_exit()`; when the coverage root is present it sets GCC's `GCOV_PREFIX`
+to a child-PID directory, then calls `__gcov_dump` before `_exit`. This avoids
+the usual fork-coverage loss where a parent's later profile write overwrites
+the child. `tools/merge-coverage.sh` filters profiles to object files present in
+`build/`, merges them with GCC's `gcov-tool`, and copies the merged product
+profiles back before `gcov` reports. The harness's own `test_api` profile is
+intentionally excluded because the release measurement targets `src/wct.c` and
+`tools/wct_cli.c`. A child that calls `exec` would have to dump before
+replacement; this runner does not replace its fork children with `exec`.
 
 The measured numbers above are the current baseline, not an 80% coverage
 claim: the library line total remains below 80%, and both branch-taken totals

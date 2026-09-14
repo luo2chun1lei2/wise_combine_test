@@ -20,8 +20,18 @@ extern void __gcov_dump(void) __attribute__((weak));
 #define WCT_GCOV_DUMP() ((void)0)
 #endif
 
-/* Forked children use _exit, so flush GCC profile counters explicitly. */
+/* Forked children use _exit; give GCC a unique profile when requested. */
 static void child_exit(int status) {
+    const char *coverage_root = getenv("WCT_COVERAGE_ROOT");
+    if (coverage_root && *coverage_root) {
+        char prefix[PATH_MAX];
+        int length = snprintf(prefix, sizeof prefix, "%s/child-%ld",
+                              coverage_root, (long)getpid());
+        if (length > 0 && (size_t)length < sizeof prefix) {
+            setenv("GCOV_PREFIX", prefix, 1);
+            setenv("GCOV_PREFIX_STRIP", "0", 1);
+        }
+    }
     WCT_GCOV_DUMP();
     _exit(status);
 }

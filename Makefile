@@ -6,6 +6,8 @@ BUILD := build
 BIN := bin/wise-combine-test
 API_TEST := $(BUILD)/test_api
 COVERAGE := coverage
+WCT_COVERAGE_ROOT := $(CURDIR)/$(BUILD)/gcov-forks
+export WCT_COVERAGE_ROOT
 
 .PHONY: all clean clean-profiles test sanitize sanitizer-sentinels valgrind measure coverage
 
@@ -67,9 +69,12 @@ measure: all
 coverage: clean
 	$(MAKE) CFLAGS='$(CFLAGS) --coverage' \
 		LDFLAGS='--coverage -Wl,--undefined=__gcov_dump' all $(API_TEST)
+	mkdir -p $(BUILD)/gcov-forks
 	./tests/test_cli.sh
 	./$(API_TEST)
 	./tests/test_fuzz.sh
+	rm -f $(BUILD)/test_api.gcda
+	tools/merge-coverage.sh $(BUILD) $(BUILD)/gcov-forks
 	@mkdir -p $(COVERAGE)
 	@set -e; \
 		count=0; \
@@ -96,7 +101,7 @@ coverage: clean
 				grep -E '^(File|Lines executed|Branches executed|Taken at least once):' "$$report"; \
 			done; \
 		} > $(COVERAGE)/summary.txt; \
-		rm -f test_api.gcda test_api.gcno; \
+		rm -f $(BUILD)/test_api.gcda $(BUILD)/test_api.gcno; \
 		printf 'coverage reports: %s\n' "$(COVERAGE)/summary.txt"
 
 clean:

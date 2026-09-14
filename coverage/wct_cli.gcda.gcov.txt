@@ -1,7 +1,7 @@
         -:    0:Source:tools/wct_cli.c
         -:    0:Graph:build/wct_cli.gcno
         -:    0:Data:build/wct_cli.gcda
-        -:    0:Runs:43
+        -:    0:Runs:1
         -:    1:#include "wct.h"
         -:    2:#include <inttypes.h>
         -:    3:#include <limits.h>
