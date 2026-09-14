@@ -1,0 +1,24 @@
+WCT_TRACE 1
+model fixtures/function_relations.model
+model_digest 3b3060f8fd41bb5f
+ir_digest 034dc35efed829e4
+mode relation
+seed 0
+max_steps 0
+max_flows 0
+selection lexical-id-order
+edge fetch->transform
+edge transform->store
+metadata_digest 23557419cf39da0b
+step 1 call fetch 1 url result fetch call_hash 8178b8ff020d05ed
+step 2 call transform 1 json result transform call_hash 7705df5a4725c3b5
+step 3 call store 1 db result store call_hash 2264796dbf81351c
+steps 3
+declared_edges 2
+covered_edges 2
+uncovered_edges 0
+exit 0
+process_exit 0
+process_signal 0
+timed_out 0
+digest 97135d47269d2afc

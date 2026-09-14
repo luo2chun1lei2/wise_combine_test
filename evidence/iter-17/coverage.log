@@ -1,0 +1,23 @@
+rm -rf build bin
+make CFLAGS='-std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude --coverage' \
+	LDFLAGS='--coverage -Wl,--undefined=__gcov_dump' all build/test_api
+make[1]: 进入目录“/home/workspace_data/works/myprojects/wise_combine_test.omx”
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude --coverage -g -c src/wct.c -o build/wct.o
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude --coverage -g -c tools/wct_cli.c -o build/wct_cli.o
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude --coverage build/wct.o build/wct_cli.o --coverage -Wl,--undefined=__gcov_dump -o bin/wise-combine-test
+cc -std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude --coverage -g tests/test_api.c build/wct.o -o build/test_api --coverage -Wl,--undefined=__gcov_dump
+make[1]: 离开目录“/home/workspace_data/works/myprojects/wise_combine_test.omx”
+mkdir -p build/gcov-forks
+./tests/test_cli.sh
+CLI smoke tests passed
+./build/test_api
+API contract tests: PASS
+./tests/test_fuzz.sh
+DSL boundary fuzz tests passed
+WCT_QUEUE_CFLAGS='-std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude -w' \
+	WCT_QUEUE_LDFLAGS='--coverage -Wl,--undefined=__gcov_dump' \
+	./tests/test_queue_oracle.sh
+14
+Queue oracle regression passed: 84 matrix runs, 12 clean passes, 6/6 matching mutants detected, 3 generation probes
+rm -f build/test_api.gcda
+coverage reports: coverage/summary.txt

@@ -4,20 +4,20 @@
 
 The remaining block is explicit: independent code and architecture/product
 boundary review is still pending for candidate
-`f890b768aca48e37299a9ba2403e10b7b590620f`. Iteration 16 automated gates exist
-in [`evidence/iter-16/summary.json`](../evidence/iter-16/summary.json) with
+`67188b186a1a3597a14bebb5c8cc020670ba5806`. Iteration 17 automated gates exist
+in [`evidence/iter-17/summary.json`](../evidence/iter-17/summary.json) with
 status `AUTOMATED_GATES_PASS`. This status does not inherit the PASS recorded by
 iteration 15.
 
 ## Auditable baseline
 
-- Current release candidate: [`f890b76`](https://github.com/luo2chun1lei2/wise_combine_test/commit/f890b768aca48e37299a9ba2403e10b7b590620f)
-  (`fix: clean coverage compiler side artifacts`); independent review pending.
+- Current release candidate: [`f890b76`](https://github.com/luo2chun1lei2/wise_combine_test/commit/67188b186a1a3597a14bebb5c8cc020670ba5806)
+  (`fix: retain measured coverage reports`); independent review pending.
 - Current capability boundary: [`capability-matrix.md`](capability-matrix.md).
 - Remaining release gates: [`release-blockers.md`](release-blockers.md).
 - Verification procedure: [`docs/release-readiness.md`](../docs/release-readiness.md).
-- Fresh automated evidence: [`evidence/iter-16/summary.json`](../evidence/iter-16/summary.json)
-  and [`evidence/iter-16/manifest.json`](../evidence/iter-16/manifest.json).
+- Fresh automated evidence: [`evidence/iter-17/summary.json`](../evidence/iter-17/summary.json)
+  and [`evidence/iter-17/manifest.json`](../evidence/iter-17/manifest.json).
 - Historical completed evidence: [`evidence/iter-15/summary.json`](../evidence/iter-15/summary.json).
 
 ## Why iteration 15 is historical only

@@ -8,10 +8,10 @@ iteration acceptance.
 ## Current Release Status (2026-09-14)
 
 Release status remains **BLOCKED** only for the final independent code and
-architecture/product-boundary reviews. Iteration 16 automated gates completed
-at source commit `f890b768aca48e37299a9ba2403e10b7b590620f`; see
-[`evidence/iter-16/summary.json`](../evidence/iter-16/summary.json) and
-[`evidence/iter-16/manifest.json`](../evidence/iter-16/manifest.json). The
+architecture/product-boundary reviews. Iteration 17 automated gates completed
+at source commit `67188b186a1a3597a14bebb5c8cc020670ba5806`; see
+[`evidence/iter-17/summary.json`](../evidence/iter-17/summary.json) and
+[`evidence/iter-17/manifest.json`](../evidence/iter-17/manifest.json). The
 current boundary and gates are indexed by
 [`.omx/current-status.md`](../.omx/current-status.md),
 [`.omx/capability-matrix.md`](../.omx/capability-matrix.md), and
@@ -27,15 +27,20 @@ The I15 section below is historical evidence for commit
 `b8e5d68808ba573bb6e5c13b465ee214a2428043`. It is preserved unchanged and does
 not describe the current HEAD or release candidate.
 
-## I16 Automated Gates (2026-09-14)
+## I17 Automated Gates (2026-09-14)
 
-The I16 manifest binds clean tests, ASan/UBSan and sentinels, Valgrind,
+The I17 manifest binds clean tests, ASan/UBSan and sentinels, Valgrind,
 coverage, three state and relation measurements, valid/tampered replay, and the
 84-run queue mutant matrix plus three generation probes. Its status is
 `AUTOMATED_GATES_PASS`, not a release approval. Coverage remains a measured
-boundary: `src/wct.c` at 78.78% lines and 81.49% branches; `tools/wct_cli.c`
-at 91.89% lines and 96.37% branches. Six supplied mutants were detected, but
+boundary: `src/wct.c` at 78.52% lines and 81.55% branches; `tools/wct_cli.c`
+at 92.01% lines and 96.45% branches. Six supplied mutants were detected, but
 this does not establish generator completeness.
+
+I17 verifies the review fixes: canonical unsigned/fixed-width hex trace parsing,
+mandatory aggregation of at least the library and CLI fork profiles, parser
+partial-record cleanup, rollback after a failed successful-state commit, and the
+documented relation rotation, isolation, and trace trust boundaries.
 
 ## Current Baseline
 

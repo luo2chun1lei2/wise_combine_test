@@ -1,0 +1,57 @@
+{
+  "iteration": "I17",
+  "status": "AUTOMATED_GATES_PASS",
+  "scope": "verification of independent-review fixes: canonical trace parsing, mandatory fork coverage, parser ownership, state commit rollback, and documented boundaries",
+  "head": "67188b186a1a3597a14bebb5c8cc020670ba5806",
+  "tested_source_commit": "67188b186a1a3597a14bebb5c8cc020670ba5806",
+  "prior_summary_sha256": "bcdc22a0327bfcde5d8fd08bd8d4a9690176b2a51552fec2cb8ad9aad08d5d94",
+  "prior_review": "REQUEST_CHANGES for f890b768aca48e37299a9ba2403e10b7b590620f; fixes tested by this iteration",
+  "checks": {
+    "coverage": 0,
+    "relation-measure-1": 0,
+    "relation-measure-2": 0,
+    "relation-measure-3": 0,
+    "replay": 0,
+    "sanitize": 0,
+    "sentinels": 0,
+    "state-measure-1": 0,
+    "state-measure-2": 0,
+    "state-measure-3": 0,
+    "tampered-replay": 1,
+    "test": 0,
+    "trace": 0,
+    "valgrind": 0
+  },
+  "coverage": {
+    "src/wct.c": {
+      "lines": "78.52% (717)",
+      "branches": "81.55% (1138)",
+      "branch_taken": "58.35% (1138)"
+    },
+    "tools/wct_cli.c": {
+      "lines": "92.01% (338)",
+      "branches": "96.45% (620)",
+      "branch_taken": "67.10% (620)"
+    },
+    "fork_profiles_aggregated": 22
+  },
+  "measurement_repetitions": 3,
+  "measurement_modes": [
+    "state",
+    "relation"
+  ],
+  "queue_oracle": {
+    "matrix_rows": 84,
+    "generation_probe_rows": 3,
+    "clean_passes": 12,
+    "matching_mutants_detected": "6/6",
+    "generator_completeness_claim": false
+  },
+  "valid_replay": "PASS",
+  "tampered_replay": "REJECTED",
+  "tampered_case": "max_steps -1",
+  "blockers": [
+    "post-fix independent code review pending",
+    "post-fix independent architecture/product-boundary review pending"
+  ]
+}
