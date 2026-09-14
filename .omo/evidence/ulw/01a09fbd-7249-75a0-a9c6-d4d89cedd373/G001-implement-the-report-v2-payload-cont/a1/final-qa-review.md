@@ -72,8 +72,8 @@ Replayed text report:
 
 ```text
 flow produce: passed
-step 0 produce: passed state=ready exit=0 
-step 1 consume: passed state=done exit=0 
+step 0 produce: passed state=ready exit=0
+step 1 consume: passed state=done exit=0
 
 ```
 

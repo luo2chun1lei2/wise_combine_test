@@ -4,9 +4,9 @@
 
 **BLOCK**
 
-Reviewed SHA: `2ec151c08df54c65155c21d3a73b6811ed7d92c6`  
-Comparison base: `e1d53a6`  
-Review date: 2026-09-14  
+Reviewed SHA: `2ec151c08df54c65155c21d3a73b6811ed7d92c6`
+Comparison base: `e1d53a6`
+Review date: 2026-09-14
 Report artifact: `.omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a1/final-code-review.md`
 
 The implementation is substantially complete and the required build/tests pass, but three success-criteria violations block approval. In particular, the current code can overwrite the input report through an output-path alias, and two integrity/semantic-validation requirements are not fully enforced.
