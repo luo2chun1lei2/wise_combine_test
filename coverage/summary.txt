@@ -1,0 +1,9 @@
+=== wct.gcda.gcov.txt ===
+Lines executed:78.52% of 717
+Branches executed:81.55% of 1138
+Taken at least once:58.35% of 1138
+=== wct_cli.gcda.gcov.txt ===
+Lines executed:92.01% of 338
+Branches executed:96.45% of 620
+Taken at least once:67.10% of 620
+Fork profiles aggregated: 22
