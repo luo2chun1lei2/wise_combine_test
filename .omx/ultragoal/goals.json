@@ -1,7 +1,7 @@
 {
   "version": 1,
   "createdAt": "2026-09-11T03:20:32.090Z",
-  "updatedAt": "2026-09-14T13:31:46.234Z",
+  "updatedAt": "2026-09-14T14:09:58.053Z",
   "briefPath": ".omx/ultragoal/brief.md",
   "goalsPath": ".omx/ultragoal/goals.json",
   "ledgerPath": ".omx/ultragoal/ledger.jsonl",
@@ -69,24 +69,26 @@
       "id": "G004-implement-review-improvement-plan-an",
       "title": "Implement review improvement plan and repair scheduled runner",
       "objective": "Execute docs/improvement-plan.md: strict parser/replay numeric validation, duplicate declarations, critical regression and coverage accounting, current release evidence and capability boundaries, queue oracle and AI provenance; repair the failed cron launcher with explicit runtime and isolated launch tests; preserve historical evidence and reconcile old blocker states through supported CLI; verify and independently review before completion.",
-      "status": "in_progress",
+      "status": "complete",
       "attempt": 1,
       "createdAt": "2026-09-14T02:14:34.013Z",
-      "updatedAt": "2026-09-14T02:14:45.774Z",
-      "evidence": "User requested continuing the recorded improvement plan; docs/improvement-plan.md; scheduled log ultragoal-20260913-100001.jsonl shows runtime startup failure; current plan has no runnable handoff.",
-      "startedAt": "2026-09-14T02:14:45.774Z"
+      "updatedAt": "2026-09-14T14:09:41.878Z",
+      "evidence": "Implemented improvement plan through review-fix commits 19c17f0, 911084b, 41098fb, f890b76, 5dc6263, 67188b1, and 4166916; repaired scheduled runner; added queue oracle, provenance, I16-I18 evidence, and reconciled historical state. Independent code and architecture reviews approved 4166916 plus I18 after metadata reconciliation.",
+      "startedAt": "2026-09-14T02:14:45.774Z",
+      "completedAt": "2026-09-14T14:09:41.878Z"
     },
     {
       "id": "G005-resolve-i16-review-blockers-and-rege",
       "title": "Resolve I16 review blockers and regenerate evidence",
       "objective": "Fix replay canonical numeric/hex parsing, mandatory fork-profile coverage aggregation, parser OOM ownership, and state commit rollback; align relation multi-flow, CLI isolation, trace trust, and paired evidence documentation; regenerate release evidence and obtain independent code and architecture approval.",
-      "status": "pending",
-      "attempt": 0,
+      "status": "complete",
+      "attempt": 1,
       "createdAt": "2026-09-14T13:31:46.234Z",
-      "updatedAt": "2026-09-14T13:31:46.234Z",
-      "evidence": "{\n  \"verdict\":\"REQUEST_CHANGES\",\n  \"source\":\"f890b768aca48e37299a9ba2403e10b7b590620f\",\n  \"evidence\":\"6b6ff4cfbe84cda93e61a790d7ccda8582a8c80b\",\n  \"required\":[\n    \"Reject signed and non-canonical unsigned trace numbers; require canonical fixed-width hex digests.\",\n    \"Fail coverage when fork profiles are absent; record and aggregate the fork-profile count.\",\n    \"Free partially constructed parser records on allocation failure.\",\n    \"Restore parent state when successful-child final commit restore fails; add public regression.\",\n    \"Make unseeded relation multi-flow order contract explicit or change behavior; align capability matrix.\",\n    \"Document CLI --isolate compatibility behavior, independent timeout, trace child boundary, unkeyed digest trust, replay model-path trust, and timeout exclusion.\",\n    \"Document paired source/evidence release candidate commits.\"\n  ]\n}"
+      "updatedAt": "2026-09-14T14:09:58.053Z",
+      "evidence": "I18 binds source 41669164a69033a5b51383c26c638f90b2a9e52a; all automated gates pass; fork profile count 22; queue oracle 87 rows; independent code review APPROVE and architecture/product-boundary review APPROVE after metadata reconciliation. See .omx/reviews/iter-18-final-review.md.",
+      "startedAt": "2026-09-14T14:09:42.096Z",
+      "completedAt": "2026-09-14T14:09:58.053Z"
     }
   ],
-  "codexObjective": "Complete the durable ultragoal plan in .omx/ultragoal/goals.json, including later accepted/appended stories, under the original brief constraints; use .omx/ultragoal/ledger.jsonl as the audit trail.",
-  "activeGoalId": "G004-implement-review-improvement-plan-an"
+  "codexObjective": "Complete the durable ultragoal plan in .omx/ultragoal/goals.json, including later accepted/appended stories, under the original brief constraints; use .omx/ultragoal/ledger.jsonl as the audit trail."
 }
