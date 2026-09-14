@@ -1,0 +1,19 @@
+C001 frozen-tree clean replay QA
+frozen_tree=7f26721 head=39cf4637ea1f8b110f0cd272fc273a0fcb134998
+started: 2026-09-14T20:58:58+08:00
+run_exit=0
+{"schema_version":1,"generation_status":"dead_end","case_count":1,"passed":1,"failed":0,"wall_time_ns":11042591,"cpu_time_ns":2942228,"peak_rss_bytes":5013504,"seed":9}
+verify_exit=0
+{"valid":true,"integrity_verified":true,"payload_valid":true,"schema_version":2}
+replay_exit=0
+replay_verify_exit=0
+{"valid":true,"integrity_verified":true,"payload_valid":true,"schema_version":2}
+outputs:
+/tmp/wct-c1-final.KmaAD7/original/clean-0.json 437 bytes
+/tmp/wct-c1-final.KmaAD7/original/clean-0.v2.json 2175 bytes
+/tmp/wct-c1-final.KmaAD7/replay-clean/clean-replay-0.json 437 bytes
+/tmp/wct-c1-final.KmaAD7/replay-clean/clean-replay-0.txt 106 bytes
+/tmp/wct-c1-final.KmaAD7/replay-clean/clean-replay-0.v2.json 2175 bytes
+input_sha_before=a4746f899e26d9e60d057172f4ba33d7233de6f5ba99febcf7fed909c71f4272 input_sha_after=a4746f899e26d9e60d057172f4ba33d7233de6f5ba99febcf7fed909c71f4272 unchanged=true
+C001_RESULT=PASS
+cleanup: python shutil.rmtree '/tmp/wct-c1-final.KmaAD7'; no child/port retained

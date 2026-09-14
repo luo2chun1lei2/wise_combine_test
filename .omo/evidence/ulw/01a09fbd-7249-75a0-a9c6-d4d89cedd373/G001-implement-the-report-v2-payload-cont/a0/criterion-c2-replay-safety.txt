@@ -1,0 +1,14 @@
+C002 frozen-tree replay safety QA
+frozen_tree=7f26721 head=39cf4637ea1f8b110f0cd272fc273a0fcb134998
+started: 2026-09-14T20:59:29+08:00
+$ (cd build && ctest -R cli_replay_v2 --output-on-failure)
+Test project /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build
+    Start 39: cli_replay_v2
+1/1 Test #39: cli_replay_v2 ....................   Passed    0.17 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.17 sec
+focused_exit=0
+C002_RESULT=PASS
+cleanup: CTest-managed case dirs under build only; no child process/port retained

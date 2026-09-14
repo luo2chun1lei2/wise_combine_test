@@ -1,0 +1,165 @@
+{
+  "codeReview": {
+    "by": "lazycodex-code-reviewer",
+    "recommendation": "APPROVE",
+    "codeQualityStatus": "CLEAR",
+    "reportPath": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a0/final-code-review-delta.md",
+    "evidence": "B1 integrity ordering, B2 semantic failure-state, and B3 replay output alias blockers resolved; delta approved at d04e650d8f425f29066c723d9e6656bf2e805d0b.",
+    "blockers": []
+  },
+  "manualQa": {
+    "by": "lazycodex-qa-executor",
+    "status": "passed",
+    "evidence": "Clean replay, digest/model/flow/output safety, hardlink/symlink rejection, Debug/ASan 45/45, coverage 84%, and cleanup verified.",
+    "surfaceEvidence": [
+      {
+        "id": "surface-clean-replay",
+        "criterionRef": "C001",
+        "surface": "cli",
+        "invocation": "./build/wise-combine replay reports/clean-0.v2.json --adapter tests/fixtures/bin/adapter_ok --reports new-dir --run-id replay",
+        "verdict": "passed",
+        "artifactRefs": [
+          "artifact-c1"
+        ]
+      },
+      {
+        "id": "surface-safety",
+        "criterionRef": "C002",
+        "surface": "cli",
+        "invocation": "(cd build && ctest -R cli_replay_v2 --output-on-failure)",
+        "verdict": "passed",
+        "artifactRefs": [
+          "artifact-c2",
+          "artifact-qa-delta"
+        ]
+      },
+      {
+        "id": "surface-regression",
+        "criterionRef": "C003",
+        "surface": "cli",
+        "invocation": "(cd build && ctest --output-on-failure); (cd build-asan && ctest --output-on-failure); cmake --build build-coverage --target coverage-check",
+        "verdict": "passed",
+        "artifactRefs": [
+          "artifact-c3",
+          "artifact-qa-delta"
+        ]
+      }
+    ],
+    "adversarialCases": [
+      {
+        "id": "adv-integrity-order",
+        "criterionRef": "C001",
+        "scenario": "malformed payload with correct SHA-256",
+        "expectedBehavior": "verify_v2 returns false and payload remains empty",
+        "verdict": "passed",
+        "artifactRefs": [
+          "artifact-blocker-red",
+          "artifact-blocker-debug"
+        ]
+      },
+      {
+        "id": "adv-empty-failure",
+        "criterionRef": "C002",
+        "scenario": "v2 result status mismatch with zero steps",
+        "expectedBehavior": "verify-report-v2 exits 2",
+        "verdict": "passed",
+        "artifactRefs": [
+          "artifact-blocker-red",
+          "artifact-blocker-debug"
+        ]
+      },
+      {
+        "id": "adv-alias-overwrite",
+        "criterionRef": "C002",
+        "scenario": "output .json symlink/hardlink aliases input v2 report",
+        "expectedBehavior": "replay exits 5 before spawn and input hash is unchanged",
+        "verdict": "passed",
+        "artifactRefs": [
+          "artifact-blocker-red",
+          "artifact-qa-delta"
+        ]
+      }
+    ],
+    "artifactRefs": [
+      {
+        "id": "artifact-c1",
+        "kind": "cli-transcript",
+        "description": "Frozen-tree clean replay QA.",
+        "path": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a0/criterion-c1-clean-replay.txt"
+      },
+      {
+        "id": "artifact-c2",
+        "kind": "cli-transcript",
+        "description": "Frozen-tree replay safety QA.",
+        "path": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a0/criterion-c2-replay-safety.txt"
+      },
+      {
+        "id": "artifact-c3",
+        "kind": "log",
+        "description": "Frozen-tree regression, sanitizer, coverage, and docs QA.",
+        "path": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a0/criterion-c3-regression-docs.txt"
+      },
+      {
+        "id": "artifact-blocker-red",
+        "kind": "log",
+        "description": "B2/B3 failing-first evidence.",
+        "path": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a0/blocker-red.log"
+      },
+      {
+        "id": "artifact-blocker-debug",
+        "kind": "log",
+        "description": "Post-fix Debug CTest evidence.",
+        "path": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a0/blocker-debug-ctest.log"
+      },
+      {
+        "id": "artifact-blocker-asan",
+        "kind": "log",
+        "description": "Post-fix sanitizer CTest evidence.",
+        "path": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a0/blocker-asan-ctest.log"
+      },
+      {
+        "id": "artifact-blocker-coverage",
+        "kind": "log",
+        "description": "Post-fix coverage gate evidence.",
+        "path": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a0/blocker-coverage.log"
+      },
+      {
+        "id": "artifact-qa-delta",
+        "kind": "log",
+        "description": "Final delta QA report.",
+        "path": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a0/final-qa-review-delta.md"
+      }
+    ]
+  },
+  "gateReview": {
+    "by": "lazycodex-gate-reviewer",
+    "recommendation": "APPROVE",
+    "reportPath": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a0/gate-review.md",
+    "evidence": "Gate approved at ecc1614361e950ee0777318cc3ddcebc9e890891 after lane review and full gates.",
+    "blockers": []
+  },
+  "iteration": {
+    "fullRerun": true,
+    "status": "passed",
+    "rerunCommands": [
+      "(cd build && ctest --output-on-failure)",
+      "(cd build-asan && ctest --output-on-failure)",
+      "cmake --build build-coverage --target coverage-check --verbose"
+    ],
+    "evidence": "Gate rerun Debug 45/45, ASan 45/45, coverage 84% (1169 executable lines)."
+  },
+  "criteriaCoverage": {
+    "totalCriteria": 3,
+    "passCount": 3,
+    "originalIntent": "Complete the report v2 payload and safe replay enhancement plan.",
+    "desiredOutcome": "ADR 0003 payload creation/validation and safe CLI replay ship with tests, sanitizer, coverage, docs, and review evidence.",
+    "userOutcomeReview": "The CLI can generate complete v2 reports, validate them, and safely replay saved flows with explicit adapter identity and output protection.",
+    "adversarialClassesCovered": [
+      "malformed_input",
+      "stale_state",
+      "misleading_success_output",
+      "hung_or_long_commands",
+      "flaky_test_isolation"
+    ]
+  }
+}

@@ -1,0 +1,341 @@
+C003 frozen-tree regression/sanitizer/coverage/docs QA
+frozen_tree=7f26721 head=39cf4637ea1f8b110f0cd272fc273a0fcb134998
+started: 2026-09-14T20:59:41+08:00
+$ (cd build && ctest --output-on-failure)
+Test project /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build
+      Start  1: sha256
+ 1/45 Test  #1: sha256 ...........................   Passed    0.00 sec
+      Start  2: integrity_v2
+ 2/45 Test  #2: integrity_v2 .....................   Passed    0.00 sec
+      Start  3: smoke
+ 3/45 Test  #3: smoke ............................   Passed    0.00 sec
+      Start  4: model
+ 4/45 Test  #4: model ............................   Passed    0.00 sec
+      Start  5: spec_valid
+ 5/45 Test  #5: spec_valid .......................   Passed    0.00 sec
+      Start  6: spec_invalid
+ 6/45 Test  #6: spec_invalid .....................   Passed    0.00 sec
+      Start  7: generator_determinism
+ 7/45 Test  #7: generator_determinism ............   Passed    0.00 sec
+      Start  8: generator_limits
+ 8/45 Test  #8: generator_limits .................   Passed    0.00 sec
+      Start  9: runtime_pass
+ 9/45 Test  #9: runtime_pass .....................   Passed    0.01 sec
+      Start 10: runtime_allowlist
+10/45 Test #10: runtime_allowlist ................   Passed    0.00 sec
+      Start 11: runtime_mismatch
+11/45 Test #11: runtime_mismatch .................   Passed    0.01 sec
+      Start 12: runtime_malformed
+12/45 Test #12: runtime_malformed ................   Passed    0.01 sec
+      Start 13: runtime_extra_json
+13/45 Test #13: runtime_extra_json ...............   Passed    0.01 sec
+      Start 14: runtime_unknown_status
+14/45 Test #14: runtime_unknown_status ...........   Passed    0.01 sec
+      Start 15: runtime_duplicate_status
+15/45 Test #15: runtime_duplicate_status .........   Passed    0.01 sec
+      Start 16: runtime_formatted
+16/45 Test #16: runtime_formatted ................   Passed    0.01 sec
+      Start 17: runtime_unicode
+17/45 Test #17: runtime_unicode ..................   Passed    0.00 sec
+      Start 18: runtime_escaped
+18/45 Test #18: runtime_escaped ..................   Passed    0.00 sec
+      Start 19: runtime_adapter_error
+19/45 Test #19: runtime_adapter_error ............   Passed    0.01 sec
+      Start 20: runtime_timeout
+20/45 Test #20: runtime_timeout ..................   Passed    0.15 sec
+      Start 21: runtime_crash
+21/45 Test #21: runtime_crash ....................   Passed    0.01 sec
+      Start 22: runtime_output_cap
+22/45 Test #22: runtime_output_cap ...............   Passed    0.05 sec
+      Start 23: runtime_argument_relation
+23/45 Test #23: runtime_argument_relation ........   Passed    0.01 sec
+      Start 24: cli_validate
+24/45 Test #24: cli_validate .....................   Passed    0.00 sec
+      Start 25: cli_generate
+25/45 Test #25: cli_generate .....................   Passed    0.00 sec
+      Start 26: cli_run
+26/45 Test #26: cli_run ..........................   Passed    0.01 sec
+      Start 27: cli_run_failure
+27/45 Test #27: cli_run_failure ..................   Passed    0.01 sec
+      Start 28: cli_invalid
+28/45 Test #28: cli_invalid ......................   Passed    0.00 sec
+      Start 29: cli_help
+29/45 Test #29: cli_help .........................   Passed    0.01 sec
+      Start 30: cli_report_write_failure
+30/45 Test #30: cli_report_write_failure .........   Passed    0.07 sec
+      Start 31: cli_reports_error
+31/45 Test #31: cli_reports_error ................   Passed    0.01 sec
+      Start 32: cli_run_id_error
+32/45 Test #32: cli_run_id_error .................   Passed    0.01 sec
+      Start 33: cli_verify_report
+33/45 Test #33: cli_verify_report ................   Passed    0.02 sec
+      Start 34: cli_verify_report_invalid
+34/45 Test #34: cli_verify_report_invalid ........   Passed    0.02 sec
+      Start 35: cli_verify_summary
+35/45 Test #35: cli_verify_summary ...............   Passed    0.03 sec
+      Start 36: cli_hash_report
+36/45 Test #36: cli_hash_report ..................   Passed    0.02 sec
+      Start 37: cli_verify_report_v2
+37/45 Test #37: cli_verify_report_v2 .............   Passed    0.05 sec
+      Start 38: cli_wrap_report_v2
+38/45 Test #38: cli_wrap_report_v2 ...............   Passed    0.02 sec
+      Start 39: cli_replay_v2
+39/45 Test #39: cli_replay_v2 ....................   Passed    0.15 sec
+      Start 40: evaluation_q1
+40/45 Test #40: evaluation_q1 ....................   Passed    0.11 sec
+      Start 41: evaluation_q2
+41/45 Test #41: evaluation_q2 ....................   Passed    0.13 sec
+      Start 42: evaluation_q3
+42/45 Test #42: evaluation_q3 ....................   Passed    0.13 sec
+      Start 43: evaluation_q4
+43/45 Test #43: evaluation_q4 ....................   Passed    0.13 sec
+      Start 44: evaluation_q5
+44/45 Test #44: evaluation_q5 ....................   Passed    0.16 sec
+      Start 45: evaluation_q6
+45/45 Test #45: evaluation_q6 ....................   Passed    0.11 sec
+
+100% tests passed, 0 tests failed out of 45
+
+Total Test time (real) =   1.52 sec
+$ (cd build-asan && ctest --output-on-failure)
+Test project /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-asan
+      Start  1: sha256
+ 1/45 Test  #1: sha256 ...........................   Passed    0.02 sec
+      Start  2: integrity_v2
+ 2/45 Test  #2: integrity_v2 .....................   Passed    0.02 sec
+      Start  3: smoke
+ 3/45 Test  #3: smoke ............................   Passed    0.02 sec
+      Start  4: model
+ 4/45 Test  #4: model ............................   Passed    0.02 sec
+      Start  5: spec_valid
+ 5/45 Test  #5: spec_valid .......................   Passed    0.02 sec
+      Start  6: spec_invalid
+ 6/45 Test  #6: spec_invalid .....................   Passed    0.02 sec
+      Start  7: generator_determinism
+ 7/45 Test  #7: generator_determinism ............   Passed    0.02 sec
+      Start  8: generator_limits
+ 8/45 Test  #8: generator_limits .................   Passed    0.02 sec
+      Start  9: runtime_pass
+ 9/45 Test  #9: runtime_pass .....................   Passed    0.04 sec
+      Start 10: runtime_allowlist
+10/45 Test #10: runtime_allowlist ................   Passed    0.02 sec
+      Start 11: runtime_mismatch
+11/45 Test #11: runtime_mismatch .................   Passed    0.04 sec
+      Start 12: runtime_malformed
+12/45 Test #12: runtime_malformed ................   Passed    0.04 sec
+      Start 13: runtime_extra_json
+13/45 Test #13: runtime_extra_json ...............   Passed    0.04 sec
+      Start 14: runtime_unknown_status
+14/45 Test #14: runtime_unknown_status ...........   Passed    0.04 sec
+      Start 15: runtime_duplicate_status
+15/45 Test #15: runtime_duplicate_status .........   Passed    0.04 sec
+      Start 16: runtime_formatted
+16/45 Test #16: runtime_formatted ................   Passed    0.04 sec
+      Start 17: runtime_unicode
+17/45 Test #17: runtime_unicode ..................   Passed    0.04 sec
+      Start 18: runtime_escaped
+18/45 Test #18: runtime_escaped ..................   Passed    0.04 sec
+      Start 19: runtime_adapter_error
+19/45 Test #19: runtime_adapter_error ............   Passed    0.04 sec
+      Start 20: runtime_timeout
+20/45 Test #20: runtime_timeout ..................   Passed    0.18 sec
+      Start 21: runtime_crash
+21/45 Test #21: runtime_crash ....................   Passed    0.03 sec
+      Start 22: runtime_output_cap
+22/45 Test #22: runtime_output_cap ...............   Passed    0.09 sec
+      Start 23: runtime_argument_relation
+23/45 Test #23: runtime_argument_relation ........   Passed    0.06 sec
+      Start 24: cli_validate
+24/45 Test #24: cli_validate .....................   Passed    0.03 sec
+      Start 25: cli_generate
+25/45 Test #25: cli_generate .....................   Passed    0.02 sec
+      Start 26: cli_run
+26/45 Test #26: cli_run ..........................   Passed    0.05 sec
+      Start 27: cli_run_failure
+27/45 Test #27: cli_run_failure ..................   Passed    0.04 sec
+      Start 28: cli_invalid
+28/45 Test #28: cli_invalid ......................   Passed    0.02 sec
+      Start 29: cli_help
+29/45 Test #29: cli_help .........................   Passed    0.07 sec
+      Start 30: cli_report_write_failure
+30/45 Test #30: cli_report_write_failure .........   Passed    0.17 sec
+      Start 31: cli_reports_error
+31/45 Test #31: cli_reports_error ................   Passed    0.03 sec
+      Start 32: cli_run_id_error
+32/45 Test #32: cli_run_id_error .................   Passed    0.03 sec
+      Start 33: cli_verify_report
+33/45 Test #33: cli_verify_report ................   Passed    0.06 sec
+      Start 34: cli_verify_report_invalid
+34/45 Test #34: cli_verify_report_invalid ........   Passed    0.05 sec
+      Start 35: cli_verify_summary
+35/45 Test #35: cli_verify_summary ...............   Passed    0.14 sec
+      Start 36: cli_hash_report
+36/45 Test #36: cli_hash_report ..................   Passed    0.10 sec
+      Start 37: cli_verify_report_v2
+37/45 Test #37: cli_verify_report_v2 .............   Passed    0.28 sec
+      Start 38: cli_wrap_report_v2
+38/45 Test #38: cli_wrap_report_v2 ...............   Passed    0.09 sec
+      Start 39: cli_replay_v2
+39/45 Test #39: cli_replay_v2 ....................   Passed    0.73 sec
+      Start 40: evaluation_q1
+40/45 Test #40: evaluation_q1 ....................   Passed    0.48 sec
+      Start 41: evaluation_q2
+41/45 Test #41: evaluation_q2 ....................   Passed    0.61 sec
+      Start 42: evaluation_q3
+42/45 Test #42: evaluation_q3 ....................   Passed    0.70 sec
+      Start 43: evaluation_q4
+43/45 Test #43: evaluation_q4 ....................   Passed    0.62 sec
+      Start 44: evaluation_q5
+44/45 Test #44: evaluation_q5 ....................   Passed    0.78 sec
+      Start 45: evaluation_q6
+45/45 Test #45: evaluation_q6 ....................   Passed    0.56 sec
+
+100% tests passed, 0 tests failed out of 45
+
+Total Test time (real) =   6.57 sec
+$ coverage check
+/usr/bin/cmake -S/home/workspace_data/works/myprojects/wise_combine_test.lazycodex -B/home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage --check-build-system CMakeFiles/Makefile.cmake 0
+/usr/bin/make -f CMakeFiles/Makefile2 coverage-check
+make[1]: 进入目录“/home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage”
+/usr/bin/cmake -S/home/workspace_data/works/myprojects/wise_combine_test.lazycodex -B/home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage --check-build-system CMakeFiles/Makefile.cmake 0
+/usr/bin/cmake -E cmake_progress_start /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage/CMakeFiles 0
+/usr/bin/make -f CMakeFiles/Makefile2 CMakeFiles/coverage-check.dir/all
+make[2]: 进入目录“/home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage”
+/usr/bin/make -f CMakeFiles/coverage-check.dir/build.make CMakeFiles/coverage-check.dir/depend
+make[3]: 进入目录“/home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage”
+cd /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage && /usr/bin/cmake -E cmake_depends "Unix Makefiles" /home/workspace_data/works/myprojects/wise_combine_test.lazycodex /home/workspace_data/works/myprojects/wise_combine_test.lazycodex /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage/CMakeFiles/coverage-check.dir/DependInfo.cmake --color=
+make[3]: 离开目录“/home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage”
+/usr/bin/make -f CMakeFiles/coverage-check.dir/build.make CMakeFiles/coverage-check.dir/build
+make[3]: 进入目录“/home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage”
+/usr/bin/cmake -DBUILD_DIR=/home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage -DSOURCE_DIR=/home/workspace_data/works/myprojects/wise_combine_test.lazycodex -P /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/tests/coverage_gate.cmake
+-- project source coverage: 84% (1148 executable lines)
+make[3]: 离开目录“/home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage”
+Built target coverage-check
+make[2]: 离开目录“/home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage”
+/usr/bin/cmake -E cmake_progress_start /home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage/CMakeFiles 0
+make[1]: 离开目录“/home/workspace_data/works/myprojects/wise_combine_test.lazycodex/build-coverage”
+$ documentation replay coverage inspection
+--- README.md
+25-lands.
+26:The implemented report v2/replay contract is recorded in
+27:[`docs/adr/0003-report-and-replay-format.md`](docs/adr/0003-report-and-replay-format.md).
+28-
+--
+67-./build/wise-combine hash-report reports/relation-0.json [EXPECTED_SHA256]
+68:./build/wise-combine replay reports/relation-0.v2.json \
+69-  --adapter tests/fixtures/bin/adapter_ok \
+70:  --reports replay-reports --run-id replay
+71-```
+--
+89-consistent.
+90:`replay REPORT --adapter EXEC --reports DIR --run-id ID` verifies that payload
+91-before spawning a child. It executes only the one saved flow, re-computes model
+--
+97-SHA-256 detects accidental or independently uncoordinated changes but is not
+98:origin authentication: an attacker who changes both payload and digest can make
+99-them agree. Replay does not save, restore, or inspect external adapter state, and
+--- README.zh.md
+21-更新其状态。
+22:已实现的报告 v2/replay 契约记录在
+23:[`docs/adr/0003-report-and-replay-format.md`](docs/adr/0003-report-and-replay-format.md)。
+24-
+--
+59-./build/wise-combine hash-report reports/relation-0.json [EXPECTED_SHA256]
+60:./build/wise-combine replay reports/relation-0.v2.json \
+61-  --adapter tests/fixtures/bin/adapter_ok \
+62:  --reports replay-reports --run-id replay
+63-```
+--
+78-前缀对应。历史上真实发生过的 mismatch 或失败前缀在前缀自身一致时仍然有效。
+79:`replay REPORT --adapter EXEC --reports DIR --run-id ID` 会在启动子进程前校验
+80-payload。它只执行保存的这一条完整 flow，并根据新的 adapter 响应重新计算模型参数
+--
+83-和 v2 报告，并保持既有 run 退出码。
+84:SHA-256 能检测意外修改或未同步修改 digest 的篡改，但不是来源认证：能同时修改
+85:payload 和 digest 的人可以生成一致报告。replay 不保存、恢复或检查 adapter 外部
+86-状态，也不收集宿主环境变量或凭证。子进程固定环境仍为
+87:`PATH=/usr/bin:/bin` 和 `LC_ALL=C`；调用方必须恢复外部前置状态，并在共享报告前
+88-审查其中可能敏感的参数和响应。
+--- docs/adr/0003-report-and-replay-format.md
+2-
+3:状态：v2 envelope、完整 payload schema 和 `replay` 已实现并纳入回归。本文与 `wise-combine replay` 的当前行为一致。
+4-
+--
+18-| model | 完整版本 1 规范对象，包含 seed、limits；按现有规范校验 |
+19:| generator | 固定策略版本 `seeded-dfs-v1` 和原始终止状态 |
+20-| flow | flow_id 与完整 transition_ids，包括首次失败后的计划步骤 |
+--
+32-
+33:`replay REPORT --adapter EXEC --reports NEW_DIR --run-id ID` 只接受完整 v2。
+34-调用方必须显式给出 EXEC；报告中的程序路径不能成为自动执行入口。
+--
+42-
+43:adapter 外部文件/服务状态不包含在报告中。调用方须恢复与原始执行一致的前置状态；
+44-无法恢复时不能保证复现。不得默认删除或覆盖 adapter 状态文件。
+--
+48-SHA-256 检测未同步修改摘要的内容变更，不证明来源可信：能同时修改 payload 与 digest
+49:的人仍能生成一致报告。来源认证需要另行设计签名或可信外部摘要，本轮不冒称具备该能力。
+50-
+--
+58-5. 副作用：拒绝时 adapter 标记文件不存在；输入报告保持字节不变；错误工作目录与输出路径
+59:   给出非零退出码；外部状态恢复由用户显式控制。
+60-6. 双语 README、Debug/sanitizer、实际 CLI 场景和覆盖率门禁同时更新并留存证据。
+--- docs/improvement-roadmap.md
+16-| 完整 adapter JSON 解析 | 基础完成 | 运行器复用严格 RFC 8259 parser，校验类型、重复键和状态；仍可扩展更多恶意语法矩阵 |
+17:| 报告 v2 replay、篡改校验 | 已支持 | `run` 写 ADR 0003 v2；`verify-report-v2` 校验完整 payload；`replay` 只执行保存 flow 并校验摘要/路径/输出边界 |
+18-| guard、mutex、parallel、count/value | 未支持 | 是否纳入产品需先冻结需求 |
+--
+42-- summary schema 版本：`bdf3eab`。运行摘要增加 `schema_version: 1`，校验器据此区分报告类型并拒绝未知版本。
+43:- 报告完整性边界：`docs/adr/0005-report-integrity-boundary.md` 明确结构校验、可追溯元数据与真正 replay/哈希校验的差异及进入条件。
+44-- SHA-256 基础模块：`5bbb230`。新增 OpenSSL libcrypto 封装和空串/`abc` 已知向量测试；尚未接入 report v2 digest 字段。
+45:- CLI 报告摘要：当前增量。`hash-report` 输出报告原始字节 SHA-256，并有内容变更回归；仍未替代 report v2 内嵌 digest/replay。
+46:- 外部摘要门禁：当前增量。`hash-report REPORT EXPECTED_SHA256` 对已保存摘要执行比较，匹配返回 0、不匹配返回 4；这是完整性比对，不是来源认证。
+47:- v2 envelope CLI：当前增量。`verify-report-v2` 校验 payload SHA-256 后执行 ADR 0003 完整 payload schema 和语义校验，篡改输入返回码 2；`replay` 已提供保存 flow 的独立执行。
+48-- v2 envelope 严格解析：`86f6282`。envelope 现在复用项目 JSON parser，校验版本、字段集合、算法和 digest 格式，并支持 payload 转义。
+49:- v2 envelope 状态：基础完成。`wrap_v2`/`verify_v2` 与 `verify-report-v2` 已覆盖转义 payload、摘要匹配和篡改拒绝；`run` 现在生成真实运行 payload，`replay` 支持独立重放。
+50-- v2 payload 包装 CLI：`224c69c`。`wrap-report-v2` 可将 payload 文件封装为 SHA-256 envelope，并通过 `verify-report-v2` 复核。
+--
+82-
+83:### 报告元数据与 replay
+84-
+--
+86-完整 flow、effective args、expected/observed state、returns、adapter 绝对路径/
+87:SHA-256/参数/工作目录以及固定 runtime 约束和环境。`replay` 覆盖正常、历史
+88-mismatch、payload schema 错误、模型/flow 矛盾、摘要不一致、缺失工作目录和输入
+--
+90-
+91:仍未纳入当前契约的是稳定 report ID、截断标记和外部 adapter 状态恢复。SHA-256
+92:只提供篡改检测，不是来源认证。
+93-
+--
+117-
+118:状态：基础资料已完成；随着 replay、评估资产和高级约束落地，需要持续补充矩阵。
+119-
+--
+126-- `docs/adr/0002-generation-seed-policy.md`
+127:- `docs/adr/0003-report-and-replay-format.md`
+128-
+--
+134-`generate::validate_flow` 校验状态连续性、flow_id、步数、before 与 argument producer
+135:前置关系；当前 v2 校验和 replay 复用这一边界。
+136-
+--
+143-3. seed、非自环重复、空流程和子集语义。
+144:4. 报告元数据、replay 和篡改校验。
+145-5. Q1–Q6 项目内回归入口。
+--- docs/requirements-matrix.md
+13-| CT-007 | 报告写入失败稳定退出 | `src/cli`, `src/report` | `cli_reports_error`, 22/22 suites | 基础完成 |
+14:| CT-008 | 失败报告独立 replay 和篡改校验 | `src/report`, `src/cli`, `src/integrity`, `src/runtime::validate_executable` | `cli_replay_v2`、`cli_verify_report_v2`、`cli_wrap_report_v2`：normal/mismatch replay、schema/model/flow 校验、篡改、摘要不一致、路径/输出拒绝 | 已验证 |
+15-| CT-009 | 完整 JSON 响应语法解析 | `src/spec/spec.cpp::parse_adapter_response` | runtime malformed/extra/duplicate/formatted/unicode/escaped 回归 | 基础完成 |
+--- docs/test-matrix.md
+10-| runtime | ok、argument relation | malformed、extra、unknown status、allowlist | mismatch、error、timeout、crash、cap | `ctest -R runtime` |
+11:| CLI | validate/generate/run/report/verify-report-v2/replay/help | invalid spec、reports path、unknown command、payload schema、模型/flow 矛盾 | adapter failure、报告写入失败、摘要不一致、缺失工作目录、输出冲突、mismatch replay | `ctest -R cli` |
+12-
+--
+25-
+26:`cli_replay_v2` 覆盖 run 产生的 v1/TXT/v2、严格 payload 校验、normal/mismatch
+27:replay、摘要不一致且无子进程、缺失工作目录和输入/输出冲突。payload 顶层
+28-extra/missing/incorrect 字段、flow/model 矛盾和 digest tampering 已纳入
+29:`cli_replay_v2`；v2 envelope 的字段重排、转义 payload、版本/算法/digest/重复字段/
+30-尾随数据攻击场景已纳入 `cli_verify_report_v2`；adapter 响应的字段重排、嵌套
+C003_RESULT=PASS

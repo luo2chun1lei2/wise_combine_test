@@ -2,7 +2,7 @@
   "version": 1,
   "evidenceLayoutVersion": 2,
   "createdAt": "2026-09-14T11:51:53.883Z",
-  "updatedAt": "2026-09-14T13:00:03.975Z",
+  "updatedAt": "2026-09-14T13:59:08.400Z",
   "briefPath": ".omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/brief.md",
   "goalsPath": ".omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/goals.json",
   "ledgerPath": ".omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/ledger.jsonl",
@@ -12,7 +12,7 @@
       "id": "G001-implement-the-report-v2-payload-cont",
       "title": "Implement the report v2 payload contract and safe CLI replay enhancem...",
       "objective": "Implement the report v2 payload contract and safe CLI replay enhancement defined by docs/improvement-roadmap.md and ADR 0003 while preserving Linux C++20 CMake behavior, minimal dependencies, existing v1 behavior and failure exit codes. The work must strictly validate the ADR payload schema after integrity verification, allow replay only with an explicit allowlisted adapter whose SHA-256 matches the recorded adapter, reject unsafe states before spawning, execute only the saved flow without generator search, write outputs without overwriting input, update bilingual and project documentation, and pass failing-first tests plus Debug, sanitizer, coverage and real CLI replay evidence. Stop when all registered success criteria pass with current-tree evidence and the final quality gate approves the frozen HEAD.",
-      "status": "pending",
+      "status": "complete",
       "successCriteria": [
         {
           "id": "C001",
@@ -47,8 +47,26 @@
       ],
       "attempt": 0,
       "createdAt": "2026-09-14T11:51:53.883Z",
-      "updatedAt": "2026-09-14T13:00:03.975Z"
+      "updatedAt": "2026-09-14T13:59:08.400Z",
+      "completedAt": "2026-09-14T13:59:08.400Z",
+      "evidence": "All C001-C003 PASS on frozen evidence; delta code review and QA approved at d04e650; final gate APPROVE at ecc1614; Debug/ASan 45/45 and coverage 84%. Cleanup: no QA child/port/temp retained; configured build dirs retained."
     }
   ],
-  "codexObjective": "Complete the durable ulw-loop plan in .omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/goals.json, including later accepted/appended stories, under the original brief constraints; use .omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/ledger.jsonl as the audit trail."
+  "codexObjective": "Complete the durable ulw-loop plan in .omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/goals.json, including later accepted/appended stories, under the original brief constraints; use .omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/ledger.jsonl as the audit trail.",
+  "aggregateCompletion": {
+    "status": "complete",
+    "completedAt": "2026-09-14T13:59:08.400Z",
+    "evidence": "All C001-C003 PASS on frozen evidence; delta code review and QA approved at d04e650; final gate APPROVE at ecc1614; Debug/ASan 45/45 and coverage 84%. Cleanup: no QA child/port/temp retained; configured build dirs retained.",
+    "codexGoal": {
+      "threadId": "01a09fbd-7249-75a0-a9c6-d4d89cedd373",
+      "objective": "Complete the durable ulw-loop plan in .omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/goals.json, including later accepted/appended stories, under the original brief constraints; use .omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/ledger.jsonl as the audit trail.",
+      "status": "complete",
+      "tokensUsed": 365,
+      "timeUsedSeconds": 2,
+      "createdAt": 1789394270,
+      "updatedAt": 1789394273,
+      "remainingTokens": null,
+      "completionBudgetReport": null
+    }
+  }
 }
