@@ -129,25 +129,25 @@ branch  1 never executed
        47:   75:    return 0;
         -:   76:}
 function reap_deadline called 13 returned 100% blocks executed 75%
-       26:   77:static int reap_deadline(pid_t pid, int *status, long long deadline) {
-       13:   78:    for (;;) {
-       26:   79:        pid_t r = waitpid(pid, status, WNOHANG);
+       35:   77:static int reap_deadline(pid_t pid, int *status, long long deadline) {
+       22:   78:    for (;;) {
+       35:   79:        pid_t r = waitpid(pid, status, WNOHANG);
 call    0 returned 100%
-       26:   80:        if (r == pid) return 0;
-branch  0 taken 50% (fallthrough)
-branch  1 taken 50%
-      13*:   81:        if (r < 0) { if (errno == EINTR) continue; return -1; }
+       35:   80:        if (r == pid) return 0;
+branch  0 taken 37% (fallthrough)
+branch  1 taken 63%
+      22*:   81:        if (r < 0) { if (errno == EINTR) continue; return -1; }
 branch  0 taken 0% (fallthrough)
 branch  1 taken 100%
 branch  2 never executed
 branch  3 never executed
-      13*:   82:        if (deadline >= 0 && now_ms() >= deadline) return 1;
-branch  0 taken 62% (fallthrough)
-branch  1 taken 38%
+      22*:   82:        if (deadline >= 0 && now_ms() >= deadline) return 1;
+branch  0 taken 36% (fallthrough)
+branch  1 taken 64%
 call    2 returned 100%
 branch  3 taken 0% (fallthrough)
 branch  4 taken 100%
-       13:   83:        struct timespec ts = {.tv_sec = 0, .tv_nsec = 1000000}; nanosleep(&ts, NULL);
+       22:   83:        struct timespec ts = {.tv_sec = 0, .tv_nsec = 1000000}; nanosleep(&ts, NULL);
 call    0 returned 100%
         -:   84:    }
         -:   85:}
@@ -456,20 +456,20 @@ branch  3 never executed
     #####:  176:    return rc;
         -:  177:}
         -:  178:
-function dupstr called 244 returned 100% blocks executed 83%
-      244:  179:static char *dupstr(const char *s) {
-     244*:  180:    if (!s) return NULL;
+function dupstr called 1588 returned 100% blocks executed 83%
+     1588:  179:static char *dupstr(const char *s) {
+    1588*:  180:    if (!s) return NULL;
 branch  0 taken 0% (fallthrough)
 branch  1 taken 100%
-      244:  181:    size_t n = strlen(s) + 1;
-      244:  182:    char *p = malloc(n);
-      244:  183:    if (p) memcpy(p, s, n);
+     1588:  181:    size_t n = strlen(s) + 1;
+     1588:  182:    char *p = malloc(n);
+     1588:  183:    if (p) memcpy(p, s, n);
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
-      244:  184:    return p;
+     1588:  184:    return p;
         -:  185:}
-function seterr called 27 returned 100% blocks executed 100%
-       27:  186:static void seterr(char *e, size_t n, const char *s) { if (n) { snprintf(e, n, "%s", s); } }
+function seterr called 28 returned 100% blocks executed 100%
+       28:  186:static void seterr(char *e, size_t n, const char *s) { if (n) { snprintf(e, n, "%s", s); } }
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
 function addstr called 50 returned 100% blocks executed 71%
@@ -488,25 +488,25 @@ branch  1 taken 100%
        50:  194:    (*n)++;
        50:  195:    return 0;
         -:  196:}
-function parse_unsigned_strict called 33 returned 100% blocks executed 92%
-       33:  197:static int parse_unsigned_strict(const char *text, unsigned long long *out) {
-      33*:  198:    if (!text || !*text || *text == '-') return -1;
+function parse_unsigned_strict called 463 returned 100% blocks executed 92%
+      463:  197:static int parse_unsigned_strict(const char *text, unsigned long long *out) {
+     463*:  198:    if (!text || !*text || *text == '-') return -1;
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
 branch  2 taken 100% (fallthrough)
 branch  3 taken 0%
 branch  4 taken 0% (fallthrough)
 branch  5 taken 100%
-       33:  199:    errno = 0; char *end = NULL; unsigned long long v = strtoull(text, &end, 10);
+      463:  199:    errno = 0; char *end = NULL; unsigned long long v = strtoull(text, &end, 10);
 call    0 returned 100%
-       33:  200:    if (errno == ERANGE || end == text || *end != '\0') return -1;
+      463:  200:    if (errno == ERANGE || end == text || *end != '\0') return -1;
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
 branch  2 taken 100% (fallthrough)
 branch  3 taken 0%
-branch  4 taken 6% (fallthrough)
-branch  5 taken 94%
-       31:  201:    *out = v; return 0;
+branch  4 taken 1% (fallthrough)
+branch  5 taken 100%
+      461:  201:    *out = v; return 0;
         -:  202:}
         -:  203:
 function find_state called 743 returned 100% blocks executed 100%
@@ -515,10 +515,10 @@ branch  0 taken 60% (fallthrough)
 branch  1 taken 40%
 branch  2 taken 100%
 branch  3 taken 1% (fallthrough)
-function find_call called 471 returned 100% blocks executed 100%
-      852:  205:static int find_call(const wct_relation_graph *g, const char *id) { for (size_t i=0;i<g->call_count;i++) if (!strcmp(g->calls[i].id,id)) return (int)i; return -1; }
-branch  0 taken 55% (fallthrough)
-branch  1 taken 45%
+function find_call called 19670 returned 100% blocks executed 100%
+    55770:  205:static int find_call(const wct_relation_graph *g, const char *id) { for (size_t i=0;i<g->call_count;i++) if (!strcmp(g->calls[i].id,id)) return (int)i; return -1; }
+branch  0 taken 35% (fallthrough)
+branch  1 taken 65%
 branch  2 taken 100%
 branch  3 taken 1% (fallthrough)
         -:  206:static int parse_value_type(const char *name, wct_value_type *type);
@@ -530,24 +530,24 @@ branch  1 taken 0%
         9:  209:    x ^= x << 13; x ^= x >> 17; x ^= x << 5; *state = x; return x;
         -:  210:}
         -:  211:
-function call_depends_on called 145 returned 100% blocks executed 100%
-      145:  212:static int call_depends_on(const wct_relation_graph *g, size_t dependent,
+function call_depends_on called 2224 returned 100% blocks executed 100%
+     2224:  212:static int call_depends_on(const wct_relation_graph *g, size_t dependent,
         -:  213:                           size_t prerequisite) {
-      266:  214:    for (size_t i = 0; i < g->relation_count; ++i)
-branch  0 taken 57%
-branch  1 taken 43% (fallthrough)
-      151:  215:        if (find_call(g, g->relations[i].from) == (int)prerequisite &&
+     9007:  214:    for (size_t i = 0; i < g->relation_count; ++i)
+branch  0 taken 81%
+branch  1 taken 19% (fallthrough)
+     7325:  215:        if (find_call(g, g->relations[i].from) == (int)prerequisite &&
 call    0 returned 100%
-branch  1 taken 42% (fallthrough)
-branch  2 taken 58%
-       63:  216:            find_call(g, g->relations[i].to) == (int)dependent)
+branch  1 taken 25% (fallthrough)
+branch  2 taken 75%
+     1801:  216:            find_call(g, g->relations[i].to) == (int)dependent)
 call    0 returned 100%
-branch  1 taken 48% (fallthrough)
-branch  2 taken 52%
-       30:  217:            return 1;
-      177:  218:    for (size_t i = 0; i < g->calls[dependent].argc; ++i) {
-branch  0 taken 38%
-branch  1 taken 62% (fallthrough)
+branch  1 taken 30% (fallthrough)
+branch  2 taken 70%
+      542:  217:            return 1;
+     1744:  218:    for (size_t i = 0; i < g->calls[dependent].argc; ++i) {
+branch  0 taken 4%
+branch  1 taken 96% (fallthrough)
        68:  219:        const char *arg = g->calls[dependent].args[i];
        68:  220:        if (arg && arg[0] == '$' &&
 branch  0 taken 100% (fallthrough)
@@ -560,33 +560,33 @@ branch  1 taken 50% (fallthrough)
 branch  2 taken 50%
         6:  222:            return 1;
         -:  223:    }
-      109:  224:    return 0;
+     1676:  224:    return 0;
         -:  225:}
         -:  226:
-function relation_call_is_ready called 108 returned 100% blocks executed 100%
-      108:  227:static int relation_call_is_ready(const wct_relation_graph *g,
+function relation_call_is_ready called 1934 returned 100% blocks executed 100%
+     1934:  227:static int relation_call_is_ready(const wct_relation_graph *g,
         -:  228:                                  const unsigned char *done, size_t candidate) {
-      176:  229:    for (size_t i = 0; i < g->relation_count; ++i) {
-branch  0 taken 55%
-branch  1 taken 45% (fallthrough)
-       97:  230:        int target = find_call(g, g->relations[i].to);
+     6446:  229:    for (size_t i = 0; i < g->relation_count; ++i) {
+branch  0 taken 88%
+branch  1 taken 12% (fallthrough)
+     5693:  230:        int target = find_call(g, g->relations[i].to);
 call    0 returned 100%
-       97:  231:        if (target != (int)candidate)
-branch  0 taken 52% (fallthrough)
-branch  1 taken 48%
-       50:  232:            continue;
-       47:  233:        int source = find_call(g, g->relations[i].from);
+     5693:  231:        if (target != (int)candidate)
+branch  0 taken 70% (fallthrough)
+branch  1 taken 30%
+     3992:  232:            continue;
+     1701:  233:        int source = find_call(g, g->relations[i].from);
 call    0 returned 100%
-       47:  234:        if (source < 0 || !done[(size_t)source])
+     1701:  234:        if (source < 0 || !done[(size_t)source])
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
-branch  2 taken 62% (fallthrough)
-branch  3 taken 38%
-       29:  235:            return 0;
+branch  2 taken 69% (fallthrough)
+branch  3 taken 31%
+     1181:  235:            return 0;
         -:  236:    }
-      111:  237:    for (size_t i = 0; i < g->calls[candidate].argc; ++i) {
-branch  0 taken 31%
-branch  1 taken 69% (fallthrough)
+      785:  237:    for (size_t i = 0; i < g->calls[candidate].argc; ++i) {
+branch  0 taken 4%
+branch  1 taken 96% (fallthrough)
        34:  238:        const char *arg = g->calls[candidate].args[i];
        34:  239:        if (arg && arg[0] == '$') {
 branch  0 taken 100% (fallthrough)
@@ -603,66 +603,66 @@ branch  3 taken 67%
         2:  242:                return 0;
         -:  243:        }
         -:  244:    }
-       77:  245:    return 1;
+      751:  245:    return 1;
         -:  246:}
         -:  247:
-function wct_state_graph_free called 64 returned 100% blocks executed 90%
-     242*:  248:void wct_state_graph_free(wct_state_graph *g) { if (!g) return; free(g->id); free(g->initial); for(size_t i=0;i<g->state_count;i++) free(g->states[i]); free(g->states); for(size_t i=0;i<g->transition_count;i++){free(g->transitions[i].id);free(g->transitions[i].from);free(g->transitions[i].to);free(g->transitions[i].input);free(g->transitions[i].expect);} free(g->transitions); memset(g,0,sizeof *g); }
+function wct_state_graph_free called 151 returned 100% blocks executed 90%
+     329*:  248:void wct_state_graph_free(wct_state_graph *g) { if (!g) return; free(g->id); free(g->initial); for(size_t i=0;i<g->state_count;i++) free(g->states[i]); free(g->states); for(size_t i=0;i<g->transition_count;i++){free(g->transitions[i].id);free(g->transitions[i].from);free(g->transitions[i].to);free(g->transitions[i].input);free(g->transitions[i].expect);} free(g->transitions); memset(g,0,sizeof *g); }
 branch  0 taken 0% (fallthrough)
 branch  1 taken 100%
-branch  2 taken 63%
-branch  3 taken 37% (fallthrough)
-branch  4 taken 52%
-branch  5 taken 48% (fallthrough)
-function wct_relation_graph_free called 45 returned 100% blocks executed 92%
-     144*:  249:void wct_relation_graph_free(wct_relation_graph *g) { if (!g) return; free(g->id); for(size_t i=0;i<g->call_count;i++){free(g->calls[i].id);for(size_t j=0;j<g->calls[i].argc;j++)free(g->calls[i].args[j]);free(g->calls[i].args);free(g->calls[i].arg_types);free(g->calls[i].expected_result);} free(g->calls); for(size_t i=0;i<g->relation_count;i++){free(g->relations[i].from);free(g->relations[i].to);} free(g->relations); memset(g,0,sizeof *g); }
+branch  2 taken 42%
+branch  3 taken 58% (fallthrough)
+branch  4 taken 32%
+branch  5 taken 68% (fallthrough)
+function wct_relation_graph_free called 132 returned 100% blocks executed 92%
+     831*:  249:void wct_relation_graph_free(wct_relation_graph *g) { if (!g) return; free(g->id); for(size_t i=0;i<g->call_count;i++){free(g->calls[i].id);for(size_t j=0;j<g->calls[i].argc;j++)free(g->calls[i].args[j]);free(g->calls[i].args);free(g->calls[i].arg_types);free(g->calls[i].expected_result);} free(g->calls); for(size_t i=0;i<g->relation_count;i++){free(g->relations[i].from);free(g->relations[i].to);} free(g->relations); memset(g,0,sizeof *g); }
 branch  0 taken 0% (fallthrough)
 branch  1 taken 100%
-branch  2 taken 43%
-branch  3 taken 57% (fallthrough)
-branch  4 taken 51%
-branch  5 taken 49% (fallthrough)
-branch  6 taken 29%
-branch  7 taken 71% (fallthrough)
-function wct_report_free called 58 returned 100% blocks executed 100%
-       58:  250:void wct_report_free(wct_report *r) {
-       58:  251:    if (r) {
+branch  2 taken 8%
+branch  3 taken 92% (fallthrough)
+branch  4 taken 75%
+branch  5 taken 25% (fallthrough)
+branch  6 taken 68%
+branch  7 taken 32% (fallthrough)
+function wct_report_free called 145 returned 100% blocks executed 100%
+      145:  250:void wct_report_free(wct_report *r) {
+      145:  251:    if (r) {
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
-       58:  252:        free(r->error);
-       58:  253:        free(r->scenario);
-       58:  254:        free(r->expected);
-       58:  255:        free(r->actual);
-       58:  256:        memset(r,0,sizeof *r);
+      145:  252:        free(r->error);
+      145:  253:        free(r->scenario);
+      145:  254:        free(r->expected);
+      145:  255:        free(r->actual);
+      145:  256:        memset(r,0,sizeof *r);
         -:  257:    }
-       58:  258:}
+      145:  258:}
         -:  259:
-function wct_parse_file called 33 returned 100% blocks executed 81%
-       33:  260:int wct_parse_file(const char *path, wct_state_graph *s, wct_relation_graph *r, char *err, size_t errlen) {
-       33:  261:    if (!s || !r) { seterr(err, errlen, "null graph output"); return -1; }
-branch  0 taken 97% (fallthrough)
-branch  1 taken 3%
+function wct_parse_file called 120 returned 100% blocks executed 81%
+      120:  260:int wct_parse_file(const char *path, wct_state_graph *s, wct_relation_graph *r, char *err, size_t errlen) {
+      120:  261:    if (!s || !r) { seterr(err, errlen, "null graph output"); return -1; }
+branch  0 taken 99% (fallthrough)
+branch  1 taken 1%
 branch  2 taken 0% (fallthrough)
 branch  3 taken 100%
 call    4 returned 100%
-       32:  262:    memset(s,0,sizeof *s); memset(r,0,sizeof *r);
-       32:  263:    FILE *f = fopen(path,"r"); char line[2048]; unsigned schema=0;
+      119:  262:    memset(s,0,sizeof *s); memset(r,0,sizeof *r);
+      119:  263:    FILE *f = fopen(path,"r"); char line[2048]; unsigned schema=0;
 call    0 returned 100%
-       32:  264:    size_t ln=0, schema_line=0, state_graph_line=0, relation_graph_line=0;
-       32:  265:    int schema_seen=0, state_graph_seen=0, relation_graph_seen=0;
-       32:  266:    if (!f) { seterr(err,errlen,"cannot open model"); return -1; }
-branch  0 taken 3% (fallthrough)
-branch  1 taken 97%
-call    2 returned 100%
-      165:  267:    while (fgets(line,sizeof line,f)) {
-call    0 returned 100%
-branch  1 taken 88%
-branch  2 taken 12% (fallthrough)
-      145:  268:        ln++;
-      145:  269:        size_t col = strspn(line, " \t") + 1;
-      145:  270:        if (!strchr(line, '\n') && !feof(f)) {
+      119:  264:    size_t ln=0, schema_line=0, state_graph_line=0, relation_graph_line=0;
+      119:  265:    int schema_seen=0, state_graph_seen=0, relation_graph_seen=0;
+      119:  266:    if (!f) { seterr(err,errlen,"cannot open model"); return -1; }
 branch  0 taken 1% (fallthrough)
 branch  1 taken 99%
+call    2 returned 100%
+     1369:  267:    while (fgets(line,sizeof line,f)) {
+call    0 returned 100%
+branch  1 taken 92%
+branch  2 taken 8% (fallthrough)
+     1262:  268:        ln++;
+     1262:  269:        size_t col = strspn(line, " \t") + 1;
+     1262:  270:        if (!strchr(line, '\n') && !feof(f)) {
+branch  0 taken 1% (fallthrough)
+branch  1 taken 100%
 call    2 returned 100%
 branch  3 taken 100% (fallthrough)
 branch  4 taken 0%
@@ -670,35 +670,35 @@ branch  4 taken 0%
         2:  272:            seterr(err, errlen, msg); goto fail;
 call    0 returned 100%
         -:  273:        }
-     143*:  274:        char *save=NULL, *tok=strtok_r(line," \t\r\n",&save); if(!tok || tok[0]=='#') continue;
+    1260*:  274:        char *save=NULL, *tok=strtok_r(line," \t\r\n",&save); if(!tok || tok[0]=='#') continue;
 call    0 returned 100%
 branch  1 taken 100% (fallthrough)
 branch  2 taken 0%
 branch  3 taken 0% (fallthrough)
 branch  4 taken 100%
-      143:  275:        if(!strcmp(tok,"schema")){ char *v=strtok_r(NULL," \t\r\n",&save); if(schema_seen++){char msg[160]; snprintf(msg,sizeof msg,"line %zu column %zu: duplicate schema; first declared at line %zu",ln,col,schema_line); seterr(err,errlen,msg);goto fail;} schema_line=ln; unsigned long long parsed_schema=0; if(!v || parse_unsigned_strict(v,&parsed_schema) || parsed_schema > UINT_MAX || (schema=(unsigned)parsed_schema)!=WCT_SCHEMA_VERSION || strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: unsupported schema",ln, col); seterr(err,errlen,msg);goto fail;} }
-branch  0 taken 21% (fallthrough)
-branch  1 taken 79%
+     1260:  275:        if(!strcmp(tok,"schema")){ char *v=strtok_r(NULL," \t\r\n",&save); if(schema_seen++){char msg[160]; snprintf(msg,sizeof msg,"line %zu column %zu: duplicate schema; first declared at line %zu",ln,col,schema_line); seterr(err,errlen,msg);goto fail;} schema_line=ln; unsigned long long parsed_schema=0; if(!v || parse_unsigned_strict(v,&parsed_schema) || parsed_schema > UINT_MAX || (schema=(unsigned)parsed_schema)!=WCT_SCHEMA_VERSION || strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: unsupported schema",ln, col); seterr(err,errlen,msg);goto fail;} }
+branch  0 taken 9% (fallthrough)
+branch  1 taken 91%
 call    2 returned 100%
-branch  3 taken 3% (fallthrough)
-branch  4 taken 97%
+branch  3 taken 1% (fallthrough)
+branch  4 taken 99%
 call    5 returned 100%
 branch  6 taken 100% (fallthrough)
 branch  7 taken 0%
 call    8 returned 100%
-branch  9 taken 97% (fallthrough)
-branch 10 taken 3%
+branch  9 taken 99% (fallthrough)
+branch 10 taken 1%
 branch 11 taken 100% (fallthrough)
 branch 12 taken 0%
-branch 13 taken 96% (fallthrough)
-branch 14 taken 4%
+branch 13 taken 99% (fallthrough)
+branch 14 taken 1%
 call   15 returned 100%
 branch 16 taken 0% (fallthrough)
 branch 17 taken 100%
 call   18 returned 100%
-     113*:  276:        else if(!strcmp(tok,"state_graph")){ if (state_graph_seen++) { char msg[160]; snprintf(msg,sizeof msg,"line %zu column %zu: duplicate state_graph; first declared at line %zu",ln,col,state_graph_line); seterr(err,errlen,msg); goto fail; } state_graph_line=ln; char *id=strtok_r(NULL," \t\r\n",&save), *init=strtok_r(NULL," \t\r\n",&save); if(!id||!init||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing state_graph fields",ln, col); seterr(err,errlen,msg);goto fail;} free(s->id); free(s->initial); s->id=dupstr(id);s->initial=dupstr(init); if(!s->id||!s->initial)goto oom; }
-branch  0 taken 13% (fallthrough)
-branch  1 taken 87%
+    1143*:  276:        else if(!strcmp(tok,"state_graph")){ if (state_graph_seen++) { char msg[160]; snprintf(msg,sizeof msg,"line %zu column %zu: duplicate state_graph; first declared at line %zu",ln,col,state_graph_line); seterr(err,errlen,msg); goto fail; } state_graph_line=ln; char *id=strtok_r(NULL," \t\r\n",&save), *init=strtok_r(NULL," \t\r\n",&save); if(!id||!init||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing state_graph fields",ln, col); seterr(err,errlen,msg);goto fail;} free(s->id); free(s->initial); s->id=dupstr(id);s->initial=dupstr(init); if(!s->id||!s->initial)goto oom; }
+branch  0 taken 1% (fallthrough)
+branch  1 taken 99%
 branch  2 taken 7% (fallthrough)
 branch  3 taken 93%
 call    4 returned 100%
@@ -718,9 +718,9 @@ branch 17 taken 100% (fallthrough)
 branch 18 taken 0%
 branch 19 taken 0% (fallthrough)
 branch 20 taken 100%
-      98*:  277:        else if(!strcmp(tok,"state")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid state fields",ln, col); seterr(err,errlen,msg);goto fail;} if(addstr(&s->states,&s->state_count,id)){goto oom;} }
-branch  0 taken 21% (fallthrough)
-branch  1 taken 79%
+    1128*:  277:        else if(!strcmp(tok,"state")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid state fields",ln, col); seterr(err,errlen,msg);goto fail;} if(addstr(&s->states,&s->state_count,id)){goto oom;} }
+branch  0 taken 2% (fallthrough)
+branch  1 taken 98%
 call    2 returned 100%
 branch  3 taken 100% (fallthrough)
 branch  4 taken 0%
@@ -731,9 +731,9 @@ call    8 never executed
 call    9 returned 100%
 branch 10 taken 0% (fallthrough)
 branch 11 taken 100%
-     112*:  278:        else if(!strcmp(tok,"transition")){ char *a[5]; for(int i=0;i<5;i++)a[i]=strtok_r(NULL," \t\r\n",&save); if(!a[4]||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid transition fields",ln, col); seterr(err,errlen,msg);goto fail;} wct_transition *t=realloc(s->transitions,(s->transition_count+1)*sizeof *t); if(!t)goto oom; s->transitions=t; t=&t[s->transition_count]; memset(t,0,sizeof *t); t->id=dupstr(a[0]);t->from=dupstr(a[1]);t->to=dupstr(a[2]);t->input=dupstr(a[3]);t->expect=dupstr(a[4]); if(!t->id||!t->from||!t->to||!t->input||!t->expect)goto oom; s->transition_count++; }
-branch  0 taken 9% (fallthrough)
-branch  1 taken 91%
+    1142*:  278:        else if(!strcmp(tok,"transition")){ char *a[5]; for(int i=0;i<5;i++)a[i]=strtok_r(NULL," \t\r\n",&save); if(!a[4]||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid transition fields",ln, col); seterr(err,errlen,msg);goto fail;} wct_transition *t=realloc(s->transitions,(s->transition_count+1)*sizeof *t); if(!t)goto oom; s->transitions=t; t=&t[s->transition_count]; memset(t,0,sizeof *t); t->id=dupstr(a[0]);t->from=dupstr(a[1]);t->to=dupstr(a[2]);t->input=dupstr(a[3]);t->expect=dupstr(a[4]); if(!t->id||!t->from||!t->to||!t->input||!t->expect)goto oom; s->transition_count++; }
+branch  0 taken 1% (fallthrough)
+branch  1 taken 99%
 call    2 returned 100%
 branch  3 taken 83%
 branch  4 taken 17% (fallthrough)
@@ -760,11 +760,11 @@ branch 24 taken 100% (fallthrough)
 branch 25 taken 0%
 branch 26 taken 0% (fallthrough)
 branch 27 taken 100%
-      70*:  279:        else if(!strcmp(tok,"relation_graph")){ if (relation_graph_seen++) { char msg[160]; snprintf(msg,sizeof msg,"line %zu column %zu: duplicate relation_graph; first declared at line %zu",ln,col,relation_graph_line); seterr(err,errlen,msg); goto fail; } relation_graph_line=ln; char *id=strtok_r(NULL," \t\r\n",&save); if(!id||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid relation_graph fields",ln, col); seterr(err,errlen,msg);goto fail;} free(r->id); r->id=dupstr(id); if(!r->id)goto oom; }
-branch  0 taken 26% (fallthrough)
-branch  1 taken 74%
-branch  2 taken 6% (fallthrough)
-branch  3 taken 94%
+    1100*:  279:        else if(!strcmp(tok,"relation_graph")){ if (relation_graph_seen++) { char msg[160]; snprintf(msg,sizeof msg,"line %zu column %zu: duplicate relation_graph; first declared at line %zu",ln,col,relation_graph_line); seterr(err,errlen,msg); goto fail; } relation_graph_line=ln; char *id=strtok_r(NULL," \t\r\n",&save); if(!id||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid relation_graph fields",ln, col); seterr(err,errlen,msg);goto fail;} free(r->id); r->id=dupstr(id); if(!r->id)goto oom; }
+branch  0 taken 10% (fallthrough)
+branch  1 taken 90%
+branch  2 taken 1% (fallthrough)
+branch  3 taken 99%
 call    4 returned 100%
 call    5 returned 100%
 branch  6 taken 100% (fallthrough)
@@ -776,9 +776,9 @@ call   11 never executed
 call   12 returned 100%
 branch 13 taken 0% (fallthrough)
 branch 14 taken 100%
-      81*:  280:        else if(!strcmp(tok,"call")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing call id",ln, col); seterr(err,errlen,msg);goto fail;} wct_call *c=realloc(r->calls,(r->call_count+1)*sizeof *c); if(!c)goto oom; r->calls=c; c=&c[r->call_count]; memset(c,0,sizeof *c); c->id=dupstr(id); if(!c->id)goto oom; char *arg; while((arg=strtok_r(NULL," \t\r\n",&save))){ if(addstr(&c->args,&c->argc,arg))goto oom; } r->call_count++; }
-branch  0 taken 60% (fallthrough)
-branch  1 taken 40%
+    1024*:  280:        else if(!strcmp(tok,"call")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing call id",ln, col); seterr(err,errlen,msg);goto fail;} wct_call *c=realloc(r->calls,(r->call_count+1)*sizeof *c); if(!c)goto oom; r->calls=c; c=&c[r->call_count]; memset(c,0,sizeof *c); c->id=dupstr(id); if(!c->id)goto oom; char *arg; while((arg=strtok_r(NULL," \t\r\n",&save))){ if(addstr(&c->args,&c->argc,arg))goto oom; } r->call_count++; }
+branch  0 taken 38% (fallthrough)
+branch  1 taken 62%
 call    2 returned 100%
 branch  3 taken 0% (fallthrough)
 branch  4 taken 100%
@@ -792,11 +792,11 @@ call   11 returned 100%
 branch 12 taken 0% (fallthrough)
 branch 13 taken 100%
 call   14 returned 100%
-branch 15 taken 48%
-branch 16 taken 52% (fallthrough)
-      27*:  281:        else if(!strcmp(tok,"contract")){ char *id=strtok_r(NULL," \t\r\n",&save), *argc_s=strtok_r(NULL," \t\r\n",&save); int ci=id ? find_call(r,id) : -1; size_t argc=0; unsigned long long parsed_argc=0; if(!id || !argc_s || ci < 0 || parse_unsigned_strict(argc_s,&parsed_argc) || parsed_argc > SIZE_MAX){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid call contract",ln, col); seterr(err,errlen,msg);goto fail;} argc=(size_t)parsed_argc; wct_call *c=&r->calls[(size_t)ci]; c->expected_argc=argc; c->contract_set=1; char *typ; size_t count=0; while((typ=strtok_r(NULL," \t\r\n",&save))){ if (!strncmp(typ,"result=",7)) { if (parse_value_type(typ+7, &c->result_type)) { seterr(err,errlen,"unknown result type"); goto fail; } c->result_type_set=1; continue; } if (!strncmp(typ,"expect=",7)) { free(c->expected_result); c->expected_result=dupstr(typ+7); if (!c->expected_result) goto oom; continue; } wct_value_type t=WCT_ANY; if(parse_value_type(typ,&t)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: unknown argument type",ln, col); seterr(err,errlen,msg);goto fail;} wct_value_type *types=realloc(c->arg_types,(count+1)*sizeof *types); if(!types)goto oom; c->arg_types=types; c->arg_types[count++]=t; } c->arg_type_count=count; }
-branch  0 taken 19% (fallthrough)
-branch  1 taken 81%
+branch 15 taken 7%
+branch 16 taken 93% (fallthrough)
+    1313*:  281:        else if(!strcmp(tok,"contract")){ char *id=strtok_r(NULL," \t\r\n",&save), *argc_s=strtok_r(NULL," \t\r\n",&save); int ci=id ? find_call(r,id) : -1; size_t argc=0; unsigned long long parsed_argc=0; if(!id || !argc_s || ci < 0 || parse_unsigned_strict(argc_s,&parsed_argc) || parsed_argc > SIZE_MAX){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid call contract",ln, col); seterr(err,errlen,msg);goto fail;} argc=(size_t)parsed_argc; wct_call *c=&r->calls[(size_t)ci]; c->expected_argc=argc; c->contract_set=1; char *typ; size_t count=0; while((typ=strtok_r(NULL," \t\r\n",&save))){ if (!strncmp(typ,"result=",7)) { if (parse_value_type(typ+7, &c->result_type)) { seterr(err,errlen,"unknown result type"); goto fail; } c->result_type_set=1; continue; } if (!strncmp(typ,"expect=",7)) { free(c->expected_result); c->expected_result=dupstr(typ+7); if (!c->expected_result) goto oom; continue; } wct_value_type t=WCT_ANY; if(parse_value_type(typ,&t)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: unknown argument type",ln, col); seterr(err,errlen,msg);goto fail;} wct_value_type *types=realloc(c->arg_types,(count+1)*sizeof *types); if(!types)goto oom; c->arg_types=types; c->arg_types[count++]=t; } c->arg_type_count=count; }
+branch  0 taken 56% (fallthrough)
+branch  1 taken 44%
 call    2 returned 100%
 call    3 returned 100%
 branch  4 taken 100% (fallthrough)
@@ -809,17 +809,17 @@ branch 10 taken 0%
 branch 11 taken 100% (fallthrough)
 branch 12 taken 0%
 call   13 returned 100%
-branch 14 taken 25% (fallthrough)
-branch 15 taken 75%
+branch 14 taken 1% (fallthrough)
+branch 15 taken 100%
 call   16 returned 100%
-branch 17 taken 33% (fallthrough)
-branch 18 taken 67%
+branch 17 taken 50% (fallthrough)
+branch 18 taken 50%
 call   19 returned 100%
 branch 20 taken 0% (fallthrough)
 branch 21 taken 100%
 call   22 never executed
-branch 23 taken 50% (fallthrough)
-branch 24 taken 50%
+branch 23 taken 99% (fallthrough)
+branch 24 taken 1%
 call   25 returned 100%
 branch 26 taken 0% (fallthrough)
 branch 27 taken 100%
@@ -832,9 +832,9 @@ branch 33 taken 100%
 call   34 returned 100%
 branch 35 taken 67%
 branch 36 taken 33% (fallthrough)
-      17*:  282:        else if(!strcmp(tok,"relation")){ char *a=strtok_r(NULL," \t\r\n",&save), *b=strtok_r(NULL," \t\r\n",&save); if(!a||!b||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid relation fields",ln, col); seterr(err,errlen,msg);goto fail;} wct_relation *x=realloc(r->relations,(r->relation_count+1)*sizeof *x);if(!x)goto oom;r->relations=x;x=&x[r->relation_count];x->from=dupstr(a);x->to=dupstr(b);if(!x->from||!x->to)goto oom;r->relation_count++; }
-branch  0 taken 88% (fallthrough)
-branch  1 taken 12%
+     274*:  282:        else if(!strcmp(tok,"relation")){ char *a=strtok_r(NULL," \t\r\n",&save), *b=strtok_r(NULL," \t\r\n",&save); if(!a||!b||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid relation fields",ln, col); seterr(err,errlen,msg);goto fail;} wct_relation *x=realloc(r->relations,(r->relation_count+1)*sizeof *x);if(!x)goto oom;r->relations=x;x=&x[r->relation_count];x->from=dupstr(a);x->to=dupstr(b);if(!x->from||!x->to)goto oom;r->relation_count++; }
+branch  0 taken 99% (fallthrough)
+branch  1 taken 1%
 call    2 returned 100%
 call    3 returned 100%
 branch  4 taken 100% (fallthrough)
@@ -856,11 +856,11 @@ branch 19 taken 100%
         2:  283:        else { char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: unknown directive",ln, col);seterr(err,errlen,msg);goto fail; }
 call    0 returned 100%
         -:  284:    }
-       20:  285:    fclose(f);
+      107:  285:    fclose(f);
 call    0 returned 100%
-       20:  286:    if (schema != WCT_SCHEMA_VERSION) {
-branch  0 taken 10% (fallthrough)
-branch  1 taken 90%
+      107:  286:    if (schema != WCT_SCHEMA_VERSION) {
+branch  0 taken 2% (fallthrough)
+branch  1 taken 98%
        2*:  287:        char msg[128]; snprintf(msg,sizeof msg,"line %zu column 1: missing schema", schema_line ? schema_line : 1u); seterr(err, errlen, msg);
 branch  0 taken 0% (fallthrough)
 branch  1 taken 100%
@@ -871,7 +871,7 @@ call    0 returned 100%
 call    0 returned 100%
         2:  290:        return -1;
         -:  291:    }
-       18:  292:    return 0;
+      105:  292:    return 0;
     #####:  293:oom: seterr(err,errlen,"out of memory");
 call    0 never executed
        11:  294:fail: fclose(f); wct_state_graph_free(s); wct_relation_graph_free(r); return -1;
@@ -973,25 +973,25 @@ call    0 returned 100%
        33:  333:    return 0;
         -:  334:}
         -:  335:
-function infer_arg_type called 5 returned 100% blocks executed 63%
-        5:  336:static wct_value_type infer_arg_type(const char *arg) {
-       5*:  337:    if (!arg) return WCT_ANY;
+function infer_arg_type called 342 returned 100% blocks executed 63%
+      342:  336:static wct_value_type infer_arg_type(const char *arg) {
+     342*:  337:    if (!arg) return WCT_ANY;
 branch  0 taken 0% (fallthrough)
 branch  1 taken 100%
-       5*:  338:    if (arg[0] == '$' && arg[1] != '\0') return WCT_REF;
+     342*:  338:    if (arg[0] == '$' && arg[1] != '\0') return WCT_REF;
 branch  0 taken 0% (fallthrough)
 branch  1 taken 100%
 branch  2 never executed
 branch  3 never executed
-        5:  339:    if (!strcmp(arg, "true") || !strcmp(arg, "false")) return WCT_BOOL;
-branch  0 taken 60% (fallthrough)
-branch  1 taken 40%
+      342:  339:    if (!strcmp(arg, "true") || !strcmp(arg, "false")) return WCT_BOOL;
+branch  0 taken 99% (fallthrough)
+branch  1 taken 1%
 branch  2 taken 0% (fallthrough)
 branch  3 taken 100%
-        3:  340:    char *end = NULL;
-        3:  341:    (void)strtoll(arg, &end, 10);
+      340:  340:    char *end = NULL;
+      340:  341:    (void)strtoll(arg, &end, 10);
 call    0 returned 100%
-        3:  342:    if (end && *end == '\0' && end != arg) return WCT_INT;
+      340:  342:    if (end && *end == '\0' && end != arg) return WCT_INT;
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
 branch  2 taken 100% (fallthrough)
@@ -1027,11 +1027,11 @@ branch  3 taken 0%
 call    0 returned 100%
         -:  353:}
         -:  354:
-function parse_value_type called 4 returned 100% blocks executed 40%
-        4:  355:static int parse_value_type(const char *name, wct_value_type *type) {
-        4:  356:    if (!strcmp(name, "int")) *type = WCT_INT;
-branch  0 taken 50% (fallthrough)
-branch  1 taken 50%
+function parse_value_type called 347 returned 100% blocks executed 40%
+      347:  355:static int parse_value_type(const char *name, wct_value_type *type) {
+      347:  356:    if (!strcmp(name, "int")) *type = WCT_INT;
+branch  0 taken 99% (fallthrough)
+branch  1 taken 1%
         2:  357:    else if (!strcmp(name, "bool")) *type = WCT_BOOL;
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
@@ -1048,55 +1048,55 @@ branch  1 never executed
 branch  0 never executed
 branch  1 never executed
     #####:  362:    else return -1;
-        4:  363:    return 0;
+      347:  363:    return 0;
         -:  364:}
         -:  365:
-function wct_validate_relation called 26 returned 100% blocks executed 84%
-       26:  366:int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) {
-       26:  367:    if (!g || (g->call_count && !g->calls) ||
+function wct_validate_relation called 113 returned 100% blocks executed 84%
+      113:  366:int wct_validate_relation(const wct_relation_graph *g, char *err, size_t n) {
+      113:  367:    if (!g || (g->call_count && !g->calls) ||
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
 branch  2 taken 100% (fallthrough)
 branch  3 taken 0%
 branch  4 taken 100% (fallthrough)
 branch  5 taken 0%
-       26:  368:        (g->relation_count && !g->relations)) {
-branch  0 taken 42% (fallthrough)
-branch  1 taken 58%
+      113:  368:        (g->relation_count && !g->relations)) {
+branch  0 taken 87% (fallthrough)
+branch  1 taken 13%
 branch  2 taken 0% (fallthrough)
 branch  3 taken 100%
     #####:  369:        seterr(err, n, "null relation graph"); return -1;
 call    0 never executed
         -:  370:    }
-       74:  371:    for (size_t i = 0; i < g->call_count; i++) {
-branch  0 taken 72%
-branch  1 taken 28% (fallthrough)
-       53:  372:        if (!g->calls[i].id || !*g->calls[i].id) {
+      504:  371:    for (size_t i = 0; i < g->call_count; i++) {
+branch  0 taken 79%
+branch  1 taken 21% (fallthrough)
+      396:  372:        if (!g->calls[i].id || !*g->calls[i].id) {
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
-branch  2 taken 2% (fallthrough)
-branch  3 taken 98%
+branch  2 taken 1% (fallthrough)
+branch  3 taken 100%
         1:  373:            seterr(err, n, "empty call id");
 call    0 returned 100%
         1:  374:            return -1;
         -:  375:        }
-       52:  376:        if (g->calls[i].argc && !g->calls[i].args) {
-branch  0 taken 69% (fallthrough)
-branch  1 taken 31%
+      395:  376:        if (g->calls[i].argc && !g->calls[i].args) {
+branch  0 taken 9% (fallthrough)
+branch  1 taken 91%
 branch  2 taken 0% (fallthrough)
 branch  3 taken 100%
     #####:  377:            seterr(err, n, "call arguments missing");
 call    0 never executed
     #####:  378:            return -1;
         -:  379:        }
-       52:  380:        if ((g->calls[i].contract_set || g->calls[i].expected_argc != 0) &&
-branch  0 taken 94% (fallthrough)
-branch  1 taken 6%
+      395:  380:        if ((g->calls[i].contract_set || g->calls[i].expected_argc != 0) &&
+branch  0 taken 12% (fallthrough)
+branch  1 taken 88%
 branch  2 taken 6% (fallthrough)
 branch  3 taken 94%
-        6:  381:            g->calls[i].argc != g->calls[i].expected_argc) {
-branch  0 taken 33% (fallthrough)
-branch  1 taken 67%
+      349:  381:            g->calls[i].argc != g->calls[i].expected_argc) {
+branch  0 taken 1% (fallthrough)
+branch  1 taken 99%
         -:  382:            char msg[128];
         2:  383:            snprintf(msg, sizeof msg, "call %s arity mismatch: expected %zu, got %zu",
         2:  384:                     g->calls[i].id, g->calls[i].expected_argc, g->calls[i].argc);
@@ -1104,9 +1104,9 @@ branch  1 taken 67%
 call    0 returned 100%
         2:  386:            return -1;
         -:  387:        }
-       50:  388:        if (g->calls[i].arg_type_count) {
-branch  0 taken 6% (fallthrough)
-branch  1 taken 94%
+      393:  388:        if (g->calls[i].arg_type_count) {
+branch  0 taken 1% (fallthrough)
+branch  1 taken 99%
         3:  389:            if (!g->calls[i].arg_types || g->calls[i].arg_type_count != g->calls[i].argc) {
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
@@ -1138,14 +1138,14 @@ call    0 returned 100%
         -:  402:                }
         -:  403:            }
         -:  404:        }
-       49:  405:        if (g->calls[i].expected_result && !g->calls[i].result_type_set) {
-branch  0 taken 10% (fallthrough)
-branch  1 taken 90%
+      392:  405:        if (g->calls[i].expected_result && !g->calls[i].result_type_set) {
+branch  0 taken 89% (fallthrough)
+branch  1 taken 11%
         -:  406:            /* An exact result assertion is meaningful without a type annotation. */
         -:  407:        }
-       81:  408:        for (size_t j = 0; j < g->calls[i].argc; ++j) {
-branch  0 taken 41%
-branch  1 taken 59% (fallthrough)
+      424:  408:        for (size_t j = 0; j < g->calls[i].argc; ++j) {
+branch  0 taken 8%
+branch  1 taken 92% (fallthrough)
        33:  409:            const char *arg = g->calls[i].args[j];
        33:  410:            if (!arg) {
 branch  0 taken 0% (fallthrough)
@@ -1170,10 +1170,10 @@ call    0 returned 100%
         1:  417:                return -1;
         -:  418:            }
         -:  419:        }
-       85:  420:        for (size_t j = i + 1; j < g->call_count; j++) {
-branch  0 taken 44%
-branch  1 taken 56% (fallthrough)
-       37:  421:            if (!strcmp(g->calls[i].id, g->calls[j].id)) {
+     1007:  420:        for (size_t j = i + 1; j < g->call_count; j++) {
+branch  0 taken 61%
+branch  1 taken 39% (fallthrough)
+      616:  421:            if (!strcmp(g->calls[i].id, g->calls[j].id)) {
 branch  0 taken 0% (fallthrough)
 branch  1 taken 100%
     #####:  422:                seterr(err, n, "duplicate call");
@@ -1182,37 +1182,37 @@ call    0 never executed
         -:  424:            }
         -:  425:        }
         -:  426:    }
-       37:  427:    for (size_t i = 0; i < g->relation_count; i++) {
-branch  0 taken 46%
-branch  1 taken 54% (fallthrough)
-       34:  428:        if (!g->relations[i].from || !g->relations[i].to ||
+      381:  427:    for (size_t i = 0; i < g->relation_count; i++) {
+branch  0 taken 72%
+branch  1 taken 28% (fallthrough)
+      548:  428:        if (!g->relations[i].from || !g->relations[i].to ||
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
 branch  2 taken 100% (fallthrough)
 branch  3 taken 0%
 branch  4 taken 100% (fallthrough)
 branch  5 taken 0%
-       34:  429:            find_call(g, g->relations[i].from) < 0 ||
+      548:  429:            find_call(g, g->relations[i].from) < 0 ||
 call    0 returned 100%
-branch  1 taken 6% (fallthrough)
-branch  2 taken 94%
-       17:  430:            find_call(g, g->relations[i].to) < 0) {
+branch  1 taken 1% (fallthrough)
+branch  2 taken 100%
+      274:  430:            find_call(g, g->relations[i].to) < 0) {
 call    0 returned 100%
         1:  431:            seterr(err, n, "relation references unknown call");
 call    0 returned 100%
         1:  432:            return -1;
         -:  433:        }
-       16:  434:        if (!strcmp(g->relations[i].from, g->relations[i].to)) {
+      273:  434:        if (!strcmp(g->relations[i].from, g->relations[i].to)) {
 branch  0 taken 0% (fallthrough)
 branch  1 taken 100%
     #####:  435:            seterr(err, n, "relation cycle");
 call    0 never executed
     #####:  436:            return -1;
         -:  437:        }
-       22:  438:        for (size_t j = 0; j < i; ++j) {
-branch  0 taken 27%
-branch  1 taken 73% (fallthrough)
-       6*:  439:            if (!strcmp(g->relations[i].from, g->relations[j].from) &&
+      603:  438:        for (size_t j = 0; j < i; ++j) {
+branch  0 taken 55%
+branch  1 taken 45% (fallthrough)
+     330*:  439:            if (!strcmp(g->relations[i].from, g->relations[j].from) &&
 branch  0 taken 0% (fallthrough)
 branch  1 taken 100%
     #####:  440:                !strcmp(g->relations[i].to, g->relations[j].to)) {
@@ -1224,54 +1224,54 @@ call    0 never executed
         -:  443:            }
         -:  444:        }
         -:  445:    }
-      20*:  446:    size_t *ind = calloc(g->call_count ? g->call_count : 1, sizeof *ind);
+     107*:  446:    size_t *ind = calloc(g->call_count ? g->call_count : 1, sizeof *ind);
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
-      20*:  447:    if (!ind) { seterr(err, n, "out of memory"); return -1; }
+     107*:  447:    if (!ind) { seterr(err, n, "out of memory"); return -1; }
 branch  0 taken 0% (fallthrough)
 branch  1 taken 100%
 call    2 never executed
-       65:  448:    for (size_t dependent = 0; dependent < g->call_count; ++dependent)
-branch  0 taken 69%
-branch  1 taken 31% (fallthrough)
-      158:  449:        for (size_t prerequisite = 0; prerequisite < g->call_count; ++prerequisite)
-branch  0 taken 72%
-branch  1 taken 28% (fallthrough)
-      113:  450:            if (call_depends_on(g, dependent, prerequisite)) ind[dependent]++;
+      495:  448:    for (size_t dependent = 0; dependent < g->call_count; ++dependent)
+branch  0 taken 78%
+branch  1 taken 22% (fallthrough)
+     2002:  449:        for (size_t prerequisite = 0; prerequisite < g->call_count; ++prerequisite)
+branch  0 taken 81%
+branch  1 taken 19% (fallthrough)
+     1614:  450:            if (call_depends_on(g, dependent, prerequisite)) ind[dependent]++;
 call    0 returned 100%
-branch  1 taken 18% (fallthrough)
-branch  2 taken 82%
-       20:  451:    size_t done = 0;
-       41:  452:    while (1) {
-       61:  453:        int found = -1;
-      138:  454:        for (size_t i = 0; i < g->call_count; i++)
-branch  0 taken 86%
-branch  1 taken 14% (fallthrough)
-      118:  455:            if (ind[i] == 0) { found = (int)i; break; }
-branch  0 taken 35% (fallthrough)
-branch  1 taken 65%
-       61:  456:        if (found < 0) break;
-branch  0 taken 33% (fallthrough)
-branch  1 taken 67%
-       41:  457:        ind[(size_t)found] = (size_t)-1;
-       41:  458:        done++;
-      144:  459:        for (size_t dependent = 0; dependent < g->call_count; ++dependent)
-branch  0 taken 72%
-branch  1 taken 28% (fallthrough)
-      135:  460:            if (ind[dependent] != (size_t)-1 &&
-branch  0 taken 31% (fallthrough)
-branch  1 taken 69%
-branch  2 taken 50% (fallthrough)
-branch  3 taken 50%
-       48:  461:                call_depends_on(g, dependent, (size_t)found)) ind[dependent]--;
+branch  1 taken 17% (fallthrough)
+branch  2 taken 83%
+      107:  451:    size_t done = 0;
+      382:  452:    while (1) {
+      489:  453:        int found = -1;
+     1487:  454:        for (size_t i = 0; i < g->call_count; i++)
+branch  0 taken 93%
+branch  1 taken 7% (fallthrough)
+     1380:  455:            if (ind[i] == 0) { found = (int)i; break; }
+branch  0 taken 28% (fallthrough)
+branch  1 taken 72%
+      489:  456:        if (found < 0) break;
+branch  0 taken 22% (fallthrough)
+branch  1 taken 78%
+      382:  457:        ind[(size_t)found] = (size_t)-1;
+      382:  458:        done++;
+     1982:  459:        for (size_t dependent = 0; dependent < g->call_count; ++dependent)
+branch  0 taken 81%
+branch  1 taken 19% (fallthrough)
+     2210:  460:            if (ind[dependent] != (size_t)-1 &&
+branch  0 taken 38% (fallthrough)
+branch  1 taken 62%
+branch  2 taken 44% (fallthrough)
+branch  3 taken 56%
+      881:  461:                call_depends_on(g, dependent, (size_t)found)) ind[dependent]--;
 call    0 returned 100%
         -:  462:    }
-       20:  463:    free(ind);
-       20:  464:    if (done != g->call_count) { seterr(err, n, "relation cycle"); return -1; }
-branch  0 taken 10% (fallthrough)
-branch  1 taken 90%
+      107:  463:    free(ind);
+      107:  464:    if (done != g->call_count) { seterr(err, n, "relation cycle"); return -1; }
+branch  0 taken 3% (fallthrough)
+branch  1 taken 97%
 call    2 returned 100%
-       18:  465:    return 0;
+      104:  465:    return 0;
         -:  466:}
         -:  467:
 function wct_run_state_impl called 29 returned 100% blocks executed 78%
@@ -1897,34 +1897,34 @@ branch  6 taken 100%
 call    7 never executed
         -:  693:}
         -:  694:
-function wct_run_relation_impl called 13 returned 100% blocks executed 87%
-       13:  695:static int wct_run_relation_impl(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
+function wct_run_relation_impl called 100 returned 100% blocks executed 89%
+      100:  695:static int wct_run_relation_impl(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
         -:  696:                    wct_limits lim, wct_report *r) {
-      13*:  697:    if (!r) return -1;
+     100*:  697:    if (!r) return -1;
 branch  0 taken 0% (fallthrough)
 branch  1 taken 100%
-       13:  698:    memset(r, 0, sizeof *r);
-       13:  699:    r->seed = lim.seed;
-       13:  700:    unsigned rng = lim.seed;
+      100:  698:    memset(r, 0, sizeof *r);
+      100:  699:    r->seed = lim.seed;
+      100:  700:    unsigned rng = lim.seed;
         -:  701:    char err[128];
-       13:  702:    if (wct_validate_relation(g, err, sizeof err)) {
+      100:  702:    if (wct_validate_relation(g, err, sizeof err)) {
 call    0 returned 100%
-branch  1 taken 0% (fallthrough)
-branch  2 taken 100%
-    #####:  703:        r->error = dupstr(err);
-call    0 never executed
-    #####:  704:        return -1;
+branch  1 taken 1% (fallthrough)
+branch  2 taken 99%
+        1:  703:        r->error = dupstr(err);
+call    0 returned 100%
+        1:  704:        return -1;
         -:  705:    }
-       13:  706:    size_t n = g->call_count;
-       13:  707:    size_t max = lim.max_steps ? lim.max_steps : n;
-branch  0 taken 23% (fallthrough)
-branch  1 taken 77%
-       13:  708:    size_t flow_limit = lim.max_flows ? lim.max_flows : 1;
-branch  0 taken 46% (fallthrough)
-branch  1 taken 54%
-       13:  709:    if (flow_limit > 1 && (!lim.state_snapshot || !lim.state_restore)) {
-branch  0 taken 8% (fallthrough)
-branch  1 taken 92%
+       99:  706:    size_t n = g->call_count;
+       99:  707:    size_t max = lim.max_steps ? lim.max_steps : n;
+branch  0 taken 90% (fallthrough)
+branch  1 taken 10%
+       99:  708:    size_t flow_limit = lim.max_flows ? lim.max_flows : 1;
+branch  0 taken 6% (fallthrough)
+branch  1 taken 94%
+       99:  709:    if (flow_limit > 1 && (!lim.state_snapshot || !lim.state_restore)) {
+branch  0 taken 1% (fallthrough)
+branch  1 taken 99%
 branch  2 taken 100% (fallthrough)
 branch  3 taken 0%
 branch  4 taken 0% (fallthrough)
@@ -1933,20 +1933,20 @@ branch  5 taken 100%
 call    0 never executed
     #####:  711:        return -1;
         -:  712:    }
-       13:  713:    r->declared_edges = g->relation_count;
-      13*:  714:    unsigned char *done = calloc(n ? n : 1, 1);
+       99:  713:    r->declared_edges = g->relation_count;
+      99*:  714:    unsigned char *done = calloc(n ? n : 1, 1);
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
-      13*:  715:    unsigned char *ever_done = calloc(n ? n : 1, 1);
+      99*:  715:    unsigned char *ever_done = calloc(n ? n : 1, 1);
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
-       13:  716:    unsigned char *edge_seen = calloc(g->relation_count ? g->relation_count : 1, 1);
-branch  0 taken 54% (fallthrough)
-branch  1 taken 46%
-      13*:  717:    char **res = calloc(n ? n : 1, sizeof *res);
+       99:  716:    unsigned char *edge_seen = calloc(g->relation_count ? g->relation_count : 1, 1);
+branch  0 taken 94% (fallthrough)
+branch  1 taken 6%
+      99*:  717:    char **res = calloc(n ? n : 1, sizeof *res);
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
-       13:  718:    if (!done || !ever_done || !edge_seen || !res) {
+       99:  718:    if (!done || !ever_done || !edge_seen || !res) {
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
 branch  2 taken 100% (fallthrough)
@@ -1958,10 +1958,10 @@ branch  7 taken 100%
     #####:  719:        free(done); free(ever_done); free(edge_seen); free(res); r->error = dupstr("out of memory"); return -1;
 call    0 never executed
         -:  720:    }
-       13:  721:    void *flow_baseline = NULL; size_t flow_baseline_size = 0; int flow_baseline_valid = 0;
-       13:  722:    if (flow_limit > 1 && lim.state_snapshot && lim.state_restore) {
-branch  0 taken 8% (fallthrough)
-branch  1 taken 92%
+       99:  721:    void *flow_baseline = NULL; size_t flow_baseline_size = 0; int flow_baseline_valid = 0;
+       99:  722:    if (flow_limit > 1 && lim.state_snapshot && lim.state_restore) {
+branch  0 taken 1% (fallthrough)
+branch  1 taken 99%
 branch  2 taken 100% (fallthrough)
 branch  3 taken 0%
 branch  4 taken 100% (fallthrough)
@@ -1975,12 +1975,12 @@ call    0 never executed
         -:  725:        }
         1:  726:        flow_baseline_valid = 1;
         -:  727:    }
-       24:  728:    for (size_t flow = 0; flow < flow_limit; flow++) {
-branch  0 taken 58%
-branch  1 taken 42% (fallthrough)
-       14:  729:      if (flow > 0 && flow_baseline_valid && lim.state_restore(ctx, flow_baseline, flow_baseline_size)) {
-branch  0 taken 7% (fallthrough)
-branch  1 taken 93%
+      182:  728:    for (size_t flow = 0; flow < flow_limit; flow++) {
+branch  0 taken 55%
+branch  1 taken 45% (fallthrough)
+      100:  729:      if (flow > 0 && flow_baseline_valid && lim.state_restore(ctx, flow_baseline, flow_baseline_size)) {
+branch  0 taken 1% (fallthrough)
+branch  1 taken 99%
 branch  2 taken 100% (fallthrough)
 branch  3 taken 0%
 call    4 returned 100%
@@ -1989,53 +1989,53 @@ branch  6 taken 100%
     #####:  730:          r->failures++; r->error=dupstr("relation flow reset failed"); break;
 call    0 never executed
         -:  731:      }
-      14*:  732:      memset(done, 0, n ? n : 1);
+     100*:  732:      memset(done, 0, n ? n : 1);
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
-       46:  733:      for (size_t i = 0; i < n; i++) { free(res[i]); res[i] = NULL; }
-branch  0 taken 70%
-branch  1 taken 30% (fallthrough)
-       14:  734:      size_t flow_steps = 0;
-       41:  735:      for (size_t step = 0; step < max; step++) {
-branch  0 taken 73%
-branch  1 taken 27% (fallthrough)
-       30:  736:        int pick = -1;
-       30:  737:        size_t ready_count = 0;
-      106:  738:        for (size_t i = 0; i < n; i++) {
-branch  0 taken 72%
-branch  1 taken 28% (fallthrough)
-       76:  739:            if (!done[i] && relation_call_is_ready(g, done, i))
-branch  0 taken 72% (fallthrough)
-branch  1 taken 28%
+      473:  733:      for (size_t i = 0; i < n; i++) { free(res[i]); res[i] = NULL; }
+branch  0 taken 79%
+branch  1 taken 21% (fallthrough)
+      100:  734:      size_t flow_steps = 0;
+      450:  735:      for (size_t step = 0; step < max; step++) {
+branch  0 taken 98%
+branch  1 taken 2% (fallthrough)
+      439:  736:        int pick = -1;
+      439:  737:        size_t ready_count = 0;
+     2269:  738:        for (size_t i = 0; i < n; i++) {
+branch  0 taken 81%
+branch  1 taken 19% (fallthrough)
+     1830:  739:            if (!done[i] && relation_call_is_ready(g, done, i))
+branch  0 taken 53% (fallthrough)
+branch  1 taken 47%
 call    2 returned 100%
-branch  3 taken 71% (fallthrough)
-branch  4 taken 29%
-       39:  740:                ready_count++;
+branch  3 taken 39% (fallthrough)
+branch  4 taken 61%
+      376:  740:                ready_count++;
         -:  741:        }
-       30:  742:        if (ready_count) {
-branch  0 taken 100% (fallthrough)
-branch  1 taken 0%
-       30:  743:            size_t choice = lim.seed ? (next_rand(&rng) % ready_count) : (flow % ready_count);
-branch  0 taken 7% (fallthrough)
-branch  1 taken 93%
+      439:  742:        if (ready_count) {
+branch  0 taken 84% (fallthrough)
+branch  1 taken 16%
+      367:  743:            size_t choice = lim.seed ? (next_rand(&rng) % ready_count) : (flow % ready_count);
+branch  0 taken 1% (fallthrough)
+branch  1 taken 99%
 call    2 returned 100%
-       97:  744:            for (size_t i = 0; i < n; i++) {
-branch  0 taken 74%
-branch  1 taken 26% (fallthrough)
-       72:  745:                if (!done[i] && relation_call_is_ready(g, done, i)) {
-branch  0 taken 74% (fallthrough)
-branch  1 taken 26%
+     1907:  744:            for (size_t i = 0; i < n; i++) {
+branch  0 taken 81%
+branch  1 taken 19% (fallthrough)
+     1545:  745:                if (!done[i] && relation_call_is_ready(g, done, i)) {
+branch  0 taken 63% (fallthrough)
+branch  1 taken 37%
 call    2 returned 100%
-branch  3 taken 72% (fallthrough)
-branch  4 taken 28%
-       38:  746:                    if (!lim.seed && flow == 0) {
-branch  0 taken 95% (fallthrough)
-branch  1 taken 5%
-branch  2 taken 86% (fallthrough)
-branch  3 taken 14%
-       31:  747:                        if (pick < 0 || strcmp(g->calls[i].id, g->calls[(size_t)pick].id) < 0) pick = (int)i;
-branch  0 taken 19% (fallthrough)
-branch  1 taken 81%
+branch  3 taken 39% (fallthrough)
+branch  4 taken 61%
+      375:  746:                    if (!lim.seed && flow == 0) {
+branch  0 taken 99% (fallthrough)
+branch  1 taken 1%
+branch  2 taken 99% (fallthrough)
+branch  3 taken 1%
+      368:  747:                        if (pick < 0 || strcmp(g->calls[i].id, g->calls[(size_t)pick].id) < 0) pick = (int)i;
+branch  0 taken 2% (fallthrough)
+branch  1 taken 98%
 branch  2 taken 33% (fallthrough)
 branch  3 taken 67%
         7:  748:                    } else if (choice == 0) { pick = (int)i; break; }
@@ -2045,20 +2045,20 @@ branch  1 taken 29%
         -:  750:                }
         -:  751:            }
         -:  752:        }
-      33*:  753:        if (pick < 0) break;
-branch  0 taken 0% (fallthrough)
-branch  1 taken 100%
-       30:  754:        const wct_call *c = &g->calls[(size_t)pick];
-       30:  755:        const char **args = calloc(c->argc ? c->argc : 1, sizeof *args);
-branch  0 taken 53% (fallthrough)
-branch  1 taken 47%
-      30*:  756:        if (!args) { r->failures++; r->error = dupstr("out of memory"); break; }
+      456:  753:        if (pick < 0) break;
+branch  0 taken 16% (fallthrough)
+branch  1 taken 84%
+      367:  754:        const wct_call *c = &g->calls[(size_t)pick];
+      367:  755:        const char **args = calloc(c->argc ? c->argc : 1, sizeof *args);
+branch  0 taken 4% (fallthrough)
+branch  1 taken 96%
+     367*:  756:        if (!args) { r->failures++; r->error = dupstr("out of memory"); break; }
 branch  0 taken 0% (fallthrough)
 branch  1 taken 100%
 call    2 never executed
-       46:  757:        for (size_t i = 0; i < c->argc; ++i) {
-branch  0 taken 35%
-branch  1 taken 65% (fallthrough)
+      383:  757:        for (size_t i = 0; i < c->argc; ++i) {
+branch  0 taken 4%
+branch  1 taken 96% (fallthrough)
        16:  758:            const char *arg = c->args[i];
        16:  759:            if (arg && arg[0] == '$') {
 branch  0 taken 100% (fallthrough)
@@ -2076,21 +2076,21 @@ branch  3 taken 0%
         -:  763:            }
        16:  764:            args[i] = arg;
         -:  765:        }
-       30:  766:        char *out = NULL;
-       30:  767:        const char *isolation_error = NULL;
+      367:  766:        char *out = NULL;
+      367:  767:        const char *isolation_error = NULL;
     #####:  768:        int rc = lim.isolate > 0 ? isolate_relation_cb(fn, c->id, args, c->argc, &out, ctx, lim.timeout_ms, &isolation_error,
 call    0 never executed
         -:  769:                                                   &r->process_exit, &r->process_signal, &r->timed_out)
-      30*:  770:                             : (fn ? fn(c->id, args, c->argc, &out, ctx) : 0);
+     367*:  770:                             : (fn ? fn(c->id, args, c->argc, &out, ctx) : 0);
 branch  0 taken 0% (fallthrough)
 branch  1 taken 100%
 branch  2 taken 100% (fallthrough)
 branch  3 taken 0%
 call    4 returned 100%
-       30:  771:        free(args);
-       30:  772:        if (rc || !out) {
-branch  0 taken 97% (fallthrough)
-branch  1 taken 3%
+      367:  771:        free(args);
+      367:  772:        if (rc || !out) {
+branch  0 taken 100% (fallthrough)
+branch  1 taken 1%
 branch  2 taken 0% (fallthrough)
 branch  3 taken 100%
         1:  773:            r->failures++;
@@ -2106,14 +2106,14 @@ call    4 returned 100%
         1:  777:            free(out);
         1:  778:            break;
         -:  779:        }
-       32:  780:        if (c->result_type_set && c->result_type != WCT_ANY &&
-branch  0 taken 10% (fallthrough)
-branch  1 taken 90%
+      706:  780:        if (c->result_type_set && c->result_type != WCT_ANY &&
+branch  0 taken 93% (fallthrough)
+branch  1 taken 7%
 branch  2 taken 100% (fallthrough)
 branch  3 taken 0%
-branch  4 taken 33% (fallthrough)
-branch  5 taken 67%
-        3:  781:            c->result_type != infer_arg_type(out)) {
+branch  4 taken 1% (fallthrough)
+branch  5 taken 100%
+      340:  781:            c->result_type != infer_arg_type(out)) {
 call    0 returned 100%
         1:  782:            r->failures++;
         1:  783:            r->failed_step = step + 1;
@@ -2124,86 +2124,86 @@ call    0 returned 100%
         1:  786:            free(out);
         1:  787:            break;
         -:  788:        }
-       28:  789:        if (c->expected_result && strcmp(c->expected_result, out) != 0) {
-branch  0 taken 7% (fallthrough)
-branch  1 taken 93%
-branch  2 taken 50% (fallthrough)
-branch  3 taken 50%
-        1:  790:            r->failures++;
-        1:  791:            r->failed_step = step + 1;
-        1:  792:            r->scenario = dupstr(c->id);
+      365:  789:        if (c->expected_result && strcmp(c->expected_result, out) != 0) {
+branch  0 taken 93% (fallthrough)
+branch  1 taken 7%
+branch  2 taken 4% (fallthrough)
+branch  3 taken 96%
+       15:  790:            r->failures++;
+       15:  791:            r->failed_step = step + 1;
+       15:  792:            r->scenario = dupstr(c->id);
 call    0 returned 100%
-        1:  793:            r->expected = dupstr(c->expected_result);
+       15:  793:            r->expected = dupstr(c->expected_result);
 call    0 returned 100%
-        1:  794:            r->actual = dupstr(out);
+       15:  794:            r->actual = dupstr(out);
 call    0 returned 100%
-        1:  795:            r->error = dupstr("call result assertion failed");
+       15:  795:            r->error = dupstr("call result assertion failed");
 call    0 returned 100%
-        1:  796:            free(out);
-        1:  797:            break;
+       15:  796:            free(out);
+       15:  797:            break;
         -:  798:        }
-       27:  799:        res[(size_t)pick] = out;
-       27:  800:        done[(size_t)pick] = 1;
-       27:  801:        r->steps++;
-       27:  802:        if (!ever_done[(size_t)pick]) { ever_done[(size_t)pick] = 1; r->covered++; }
-branch  0 taken 89% (fallthrough)
-branch  1 taken 11%
-       51:  803:        for (size_t i = 0; i < g->relation_count; i++) {
-branch  0 taken 47%
-branch  1 taken 53% (fallthrough)
-       24:  804:            int a = find_call(g, g->relations[i].from);
+      350:  799:        res[(size_t)pick] = out;
+      350:  800:        done[(size_t)pick] = 1;
+      350:  801:        r->steps++;
+      350:  802:        if (!ever_done[(size_t)pick]) { ever_done[(size_t)pick] = 1; r->covered++; }
+branch  0 taken 99% (fallthrough)
+branch  1 taken 1%
+     1464:  803:        for (size_t i = 0; i < g->relation_count; i++) {
+branch  0 taken 76%
+branch  1 taken 24% (fallthrough)
+     1114:  804:            int a = find_call(g, g->relations[i].from);
 call    0 returned 100%
-       24:  805:            int b = find_call(g, g->relations[i].to);
+     1114:  805:            int b = find_call(g, g->relations[i].to);
 call    0 returned 100%
-       24:  806:            if (a >= 0 && b == pick && done[(size_t)a]) edge_seen[i] = 1;
+     1114:  806:            if (a >= 0 && b == pick && done[(size_t)a]) edge_seen[i] = 1;
 branch  0 taken 100% (fallthrough)
 branch  1 taken 0%
-branch  2 taken 33% (fallthrough)
-branch  3 taken 67%
+branch  2 taken 22% (fallthrough)
+branch  3 taken 78%
 branch  4 taken 100% (fallthrough)
 branch  5 taken 0%
         -:  807:        }
-       27:  808:        flow_steps++;
+      350:  808:        flow_steps++;
         -:  809:      }
-       14:  810:      r->flows++;
-       14:  811:      if (r->failures || flow_steps == 0) break;
-branch  0 taken 79% (fallthrough)
-branch  1 taken 21%
+      100:  810:      r->flows++;
+      100:  811:      if (r->failures || flow_steps == 0) break;
+branch  0 taken 83% (fallthrough)
+branch  1 taken 17%
 branch  2 taken 100% (fallthrough)
 branch  3 taken 0%
         -:  812:    }
-       42:  813:    for (size_t i = 0; i < n; i++) if (!ever_done[i]) r->uncovered++;
-branch  0 taken 17% (fallthrough)
-branch  1 taken 83%
-branch  2 taken 69%
-branch  3 taken 31% (fallthrough)
-       13:  814:    r->covered_edges = 0;
-       24:  815:    for (size_t i = 0; i < g->relation_count; i++) if (edge_seen[i]) r->covered_edges++;
-branch  0 taken 73% (fallthrough)
-branch  1 taken 27%
-branch  2 taken 46%
-branch  3 taken 54% (fallthrough)
-       13:  816:    r->uncovered_edges = r->declared_edges - r->covered_edges;
-       42:  817:    for (size_t i = 0; i < n; i++) free(res[i]);
-branch  0 taken 69%
-branch  1 taken 31% (fallthrough)
-       13:  818:    free(res);
-       13:  819:    free(done);
-       13:  820:    free(ever_done);
-       13:  821:    free(edge_seen);
-       13:  822:    free(flow_baseline);
-       13:  823:    if (!r->failures && r->uncovered) {
-branch  0 taken 77% (fallthrough)
-branch  1 taken 23%
-branch  2 taken 10% (fallthrough)
-branch  3 taken 90%
+      469:  813:    for (size_t i = 0; i < n; i++) if (!ever_done[i]) r->uncovered++;
+branch  0 taken 6% (fallthrough)
+branch  1 taken 94%
+branch  2 taken 79%
+branch  3 taken 21% (fallthrough)
+       99:  814:    r->covered_edges = 0;
+      365:  815:    for (size_t i = 0; i < g->relation_count; i++) if (edge_seen[i]) r->covered_edges++;
+branch  0 taken 92% (fallthrough)
+branch  1 taken 8%
+branch  2 taken 73%
+branch  3 taken 27% (fallthrough)
+       99:  816:    r->uncovered_edges = r->declared_edges - r->covered_edges;
+      469:  817:    for (size_t i = 0; i < n; i++) free(res[i]);
+branch  0 taken 79%
+branch  1 taken 21% (fallthrough)
+       99:  818:    free(res);
+       99:  819:    free(done);
+       99:  820:    free(ever_done);
+       99:  821:    free(edge_seen);
+       99:  822:    free(flow_baseline);
+       99:  823:    if (!r->failures && r->uncovered) {
+branch  0 taken 83% (fallthrough)
+branch  1 taken 17%
+branch  2 taken 1% (fallthrough)
+branch  3 taken 99%
         1:  824:        r->error = dupstr("uncovered call");
 call    0 returned 100%
         1:  825:        return -1;
         -:  826:    }
-       12:  827:    return r->failures ? -1 : 0;
-branch  0 taken 25% (fallthrough)
-branch  1 taken 75%
+       98:  827:    return r->failures ? -1 : 0;
+branch  0 taken 17% (fallthrough)
+branch  1 taken 83%
         -:  828:}
         -:  829:
         -:  830:/* Whole-scenario isolation: the child owns the complete relation run, so
@@ -2358,15 +2358,15 @@ function wct_run_state_in_process called 23 returned 100% blocks executed 100%
 call    0 returned 100%
         -:  869:}
         -:  870:
-function wct_run_relation_in_process called 9 returned 100% blocks executed 100%
-        9:  871:int wct_run_relation_in_process(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
+function wct_run_relation_in_process called 96 returned 100% blocks executed 100%
+       96:  871:int wct_run_relation_in_process(const wct_relation_graph *g, wct_call_fn fn, void *ctx,
         -:  872:                                wct_limits lim, wct_report *r) {
-        9:  873:    lim.isolate = 0;
-        9:  874:    return wct_run_relation_impl(g, fn, ctx, lim, r);
+       96:  873:    lim.isolate = 0;
+       96:  874:    return wct_run_relation_impl(g, fn, ctx, lim, r);
 call    0 returned 100%
         -:  875:}
 File 'src/wct.c'
-Lines executed:78.49% of 674
+Lines executed:78.78% of 674
 Branches executed:81.49% of 1124
-Taken at least once:58.19% of 1124
-Calls executed:60.54% of 332
+Taken at least once:58.45% of 1124
+Calls executed:60.84% of 332

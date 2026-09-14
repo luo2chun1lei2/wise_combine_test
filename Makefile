@@ -115,7 +115,9 @@ coverage: clean
 				grep -E '^(File|Lines executed|Branches executed|Taken at least once):' "$$report"; \
 			done; \
 		} > $(COVERAGE)/summary.txt; \
-		rm -f $(BUILD)/test_api.gcda $(BUILD)/test_api.gcno; \
+		rm -f $(BUILD)/test_api.gcda $(BUILD)/test_api.gcno \
+			test_api.gcda test_api.gcno \
+			queue_harness.gcda queue_harness.gcno; \
 		printf 'coverage reports: %s\n' "$(COVERAGE)/summary.txt"
 
 clean:
