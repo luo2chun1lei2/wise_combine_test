@@ -186,6 +186,14 @@ static int write_trace_header(FILE *trace, const char *model, const char *mode,
                    limits.max_flows) < 0;
 }
 
+static int parse_num_line(const char *line, const char *prefix, int base, unsigned long long *out) {
+    size_t n = strlen(prefix); if (strncmp(line,prefix,n)) return 0;
+    const char *p=line+n; while (*p==' '||*p=='\t') p++; char buf[128]; size_t i=0;
+    while (*p && *p!='\n' && *p!='\r' && *p!=' ' && *p!='\t' && i<sizeof(buf)-1) buf[i++]=*p++;
+    buf[i]='\0'; while (*p==' '||*p=='\t') p++; if (!i || (*p && *p!='\n'&&*p!='\r')) return -1;
+    errno=0; char *e=NULL; unsigned long long v=strtoull(buf,&e,base); if(errno==ERANGE||e==buf||*e) return -1; *out=v; return 1;
+}
+
 static int exact_single_value(const char *line, const char *prefix) {
     size_t n = strlen(prefix);
     if (strncmp(line, prefix, n)) return 1;
@@ -224,10 +232,10 @@ static int parse_trace(const char *path, char *model, size_t model_len, char *mo
             if (got_model) { fclose(file); return -1; } got_model = 1; continue;
         }
         if (sscanf(line, "mode %63s", mode) == 1) { if (got_mode) { fclose(file); return -1; } got_mode = 1; continue; }
-        if (sscanf(line, "seed %u", &limits->seed) == 1) { if (got_seed++) return -1; continue; }
-        if (sscanf(line, "max_steps %zu", &limits->max_steps) == 1) { if (got_max_steps++) return -1; continue; }
-        if (sscanf(line, "max_flows %zu", &limits->max_flows) == 1) { if (got_max_flows++) return -1; continue; }
-        if (sscanf(line, "steps %zu", steps) == 1) { if (got_steps++) return -1; continue; }
+        if (!strncmp(line,"seed ",5)) { unsigned long long v; int pr=parse_num_line(line,"seed ",10,&v); if(pr!=1 || v>UINT_MAX || got_seed++) { fclose(file); return -1; } limits->seed=(unsigned)v; continue; }
+        if (!strncmp(line,"max_steps ",10)) { unsigned long long v; int pr=parse_num_line(line,"max_steps ",10,&v); if(pr!=1 || v>SIZE_MAX || got_max_steps++) { fclose(file); return -1; } limits->max_steps=(size_t)v; continue; }
+        if (!strncmp(line,"max_flows ",10)) { unsigned long long v; int pr=parse_num_line(line,"max_flows ",10,&v); if(pr!=1 || v>SIZE_MAX || got_max_flows++) { fclose(file); return -1; } limits->max_flows=(size_t)v; continue; }
+        if (!strncmp(line,"steps ",6)) { unsigned long long v; int pr=parse_num_line(line,"steps ",10,&v); if(pr!=1 || v>SIZE_MAX || got_steps++) { fclose(file); return -1; } *steps=(size_t)v; continue; }
         if (sscanf(line, "declared_edges %zu", declared_edges) == 1) { if (got_report & 1) { fclose(file); return -1; } got_report |= 1; continue; }
         if (sscanf(line, "covered_edges %zu", covered_edges) == 1) { if (got_report & 2) { fclose(file); return -1; } got_report |= 2; continue; }
         if (sscanf(line, "uncovered_edges %zu", uncovered_edges) == 1) { if (got_report & 4) { fclose(file); return -1; } got_report |= 4; continue; }

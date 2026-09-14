@@ -1,7 +1,7 @@
 {
   "version": 1,
   "createdAt": "2026-09-11T03:20:32.090Z",
-  "updatedAt": "2026-09-11T08:26:25.638Z",
+  "updatedAt": "2026-09-14T02:14:45.774Z",
   "briefPath": ".omx/ultragoal/brief.md",
   "goalsPath": ".omx/ultragoal/goals.json",
   "ledgerPath": ".omx/ultragoal/ledger.jsonl",
@@ -62,7 +62,19 @@
       "resolvesReviewBlockedGoalId": "G002-resolve-final-state-transaction-and",
       "startedAt": "2026-09-11T05:09:28.101Z",
       "completedAt": "2026-09-11T08:19:03.264Z"
+    },
+    {
+      "id": "G004-implement-review-improvement-plan-an",
+      "title": "Implement review improvement plan and repair scheduled runner",
+      "objective": "Execute docs/improvement-plan.md: strict parser/replay numeric validation, duplicate declarations, critical regression and coverage accounting, current release evidence and capability boundaries, queue oracle and AI provenance; repair the failed cron launcher with explicit runtime and isolated launch tests; preserve historical evidence and reconcile old blocker states through supported CLI; verify and independently review before completion.",
+      "status": "in_progress",
+      "attempt": 1,
+      "createdAt": "2026-09-14T02:14:34.013Z",
+      "updatedAt": "2026-09-14T02:14:45.774Z",
+      "evidence": "User requested continuing the recorded improvement plan; docs/improvement-plan.md; scheduled log ultragoal-20260913-100001.jsonl shows runtime startup failure; current plan has no runnable handoff.",
+      "startedAt": "2026-09-14T02:14:45.774Z"
     }
   ],
-  "codexObjective": "Complete the durable ultragoal plan in .omx/ultragoal/goals.json, including later accepted/appended stories, under the original brief constraints; use .omx/ultragoal/ledger.jsonl as the audit trail."
+  "codexObjective": "Complete the durable ultragoal plan in .omx/ultragoal/goals.json, including later accepted/appended stories, under the original brief constraints; use .omx/ultragoal/ledger.jsonl as the audit trail.",
+  "activeGoalId": "G004-implement-review-improvement-plan-an"
 }

@@ -9,3 +9,12 @@
 决策。不要把不同问题合并计数，也不要在第三次之后继续修改。
 
 结束条件：所有 durable goals 完成且最终验证通过，或触发上述三次相同问题退出规则。
+
+## Runner environment note
+
+The 2026-09-13 cron launch used the `omx` shim, whose `/usr/bin/env node`
+shebang selected the system Node.js 10 under cron's minimal `PATH`; OMX's ESM
+entry point therefore failed before any goal ran. The runner now invokes the
+pinned Node.js 22 binary and OMX JavaScript entry point directly and prepends
+that Node `bin` directory to `PATH`. Run `tests/run_scheduled_ultragoal_test.sh`
+to verify this launch contract without starting OMX.
