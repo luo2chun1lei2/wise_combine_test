@@ -218,6 +218,22 @@ static void test_state_commit_restore_rollback(void)
     wct_state_graph_free(&graph);
 }
 
+static void test_unpaired_state_hooks_rejected(void)
+{
+    wct_state_graph graph;
+    wct_report report;
+    state_context context = {0};
+    init_state_graph(&graph);
+    CHECK(wct_run_state(&graph, state_callback, &context,
+                        (wct_limits){.state_snapshot = snapshot_count}, &report) == -1,
+          "snapshot without restore must be rejected before isolation");
+    CHECK(report.failures == 1 && report.error &&
+              strcmp(report.error, "state restore hook is required with snapshot") == 0,
+          "unpaired state hooks should be diagnosed");
+    wct_report_free(&report);
+    wct_state_graph_free(&graph);
+}
+
 static void test_zero_snapshot_and_rollback_failure(void)
 {
     wct_state_graph graph; wct_report report; state_context context = {0};
@@ -917,6 +933,7 @@ int main(void)
     test_state_failure_atomic_snapshot();
     test_isolated_state_snapshot_commit();
     test_state_commit_restore_rollback();
+    test_unpaired_state_hooks_rejected();
     test_zero_snapshot_and_rollback_failure();
     test_isolation_timeout();
     test_timeout_range_and_zero_arity_contract();

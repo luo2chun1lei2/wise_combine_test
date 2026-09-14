@@ -713,6 +713,7 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
     if (!r) return -1;
     memset(r, 0, sizeof *r);
     if (lim.timeout_ms > (unsigned)INT_MAX) { r->failures=1; r->error=dupstr("timeout exceeds poll limit"); return -1; }
+    if (lim.state_snapshot && !lim.state_restore) { r->failures=1; r->error=dupstr("state restore hook is required with snapshot"); return -1; }
     void *parent_before=NULL; size_t parent_before_size=0; int parent_before_valid=0;
     if (lim.state_snapshot) { if (lim.state_snapshot(ctx,&parent_before,&parent_before_size)) return -1; parent_before_valid=1; }
     int p[2]; if (pipe(p) < 0) { free(parent_before); return -1; }

@@ -93,7 +93,7 @@ coverage: clean
 		}; \
 	done
 	rm -f $(BUILD)/test_api.gcda
-	@fork_profiles=$$(tools/merge-coverage.sh $(BUILD) $(BUILD)/gcov-forks); \
+	@set -e; fork_profiles=$$(tools/merge-coverage.sh $(BUILD) $(BUILD)/gcov-forks); \
 		printf '%s\n' "$$fork_profiles" > $(BUILD)/fork-profile-count.txt
 	@mkdir -p $(COVERAGE)
 	@set -e; \

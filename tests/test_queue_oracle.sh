@@ -71,7 +71,7 @@ for probe in cycle repeat subset; do
 done
 
 if [ -n "${WCT_COVERAGE_ROOT:-}" ]; then
-    tools/merge-coverage.sh "$root/build" "$bin_dir/gcov"
+    tools/merge-coverage.sh "$root/build" "$bin_dir/gcov" >/dev/null
 fi
 
 for mutant in 0 1 2 3 4 5 6; do
