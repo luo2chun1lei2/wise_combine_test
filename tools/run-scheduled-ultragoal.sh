@@ -30,7 +30,7 @@ export PATH
 MARKER='# WCT_ULTRAGOAL_ONESHOT_20260913'
 if command -v crontab >/dev/null 2>&1; then
   current=$(crontab -l 2>/dev/null || :)
-  printf '%s\n' "$current" | awk -v marker="$MARKER" '$0 != marker && index($0, marker) == 0' | crontab - || :
+  printf '%s\n' "$current" | awk -v marker="$MARKER" 'index($0, marker) == 0' | crontab - || :
 fi
 
 exec "$NODE_BIN" "$OMX_JS" exec \

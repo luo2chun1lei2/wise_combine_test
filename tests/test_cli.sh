@@ -15,6 +15,17 @@ sed 's/model_digest .*/model_digest 0000000000000000/' /tmp/wct-test-trace.$$ > 
 sed '/^model /p' /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-duplicate.$$
 sed 's/^mode relation$/mode relation EXTRA/' /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-trailing.$$
 if $bin --replay /tmp/wct-test-trace-trailing.$$ >/dev/null 2>&1; then echo 'trailing singleton data unexpectedly replayed' >&2; exit 1; fi
+for field in 'WCT_TRACE 1x' 'seed 0x' 'max_steps 1x' 'max_flows 1x' 'steps 1x' \
+             'declared_edges 1x' 'covered_edges 1x' 'uncovered_edges 1x' \
+             'process_exit 0x' 'process_signal 0x' 'timed_out 0x' 'exit 0x' \
+             'digest 0000000000000000x'; do
+    key=${field%% *}; value=${field#* }
+    sed "s/^$key .*/$key $value/" /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-malformed.$$
+    if $bin --replay /tmp/wct-test-trace-malformed.$$ >/dev/null 2>&1; then
+        echo "malformed $key unexpectedly replayed" >&2
+        exit 1
+    fi
+done
 if $bin --replay /tmp/wct-test-trace-duplicate.$$ >/dev/null 2>&1; then echo 'duplicate model trace unexpectedly replayed' >&2; exit 1; fi
 sed 's/edge fetch->transform/edge altered->transform/' /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-edge-tampered.$$
 if $bin --replay /tmp/wct-test-trace-edge-tampered.$$ >/dev/null 2>&1; then
@@ -28,7 +39,7 @@ fi
 cp /tmp/wct-test-trace.$$ /tmp/wct-test-trace-garbage.$$
 echo 'garbage blah' >> /tmp/wct-test-trace-garbage.$$
 if $bin --replay /tmp/wct-test-trace-garbage.$$ >/dev/null 2>&1; then echo 'garbage trace unexpectedly replayed' >&2; exit 1; fi
-rm -f /tmp/wct-test-trace.$$ /tmp/wct-test-trace-edge-tampered.$$
+rm -f /tmp/wct-test-trace.$$ /tmp/wct-test-trace-edge-tampered.$$ /tmp/wct-test-trace-malformed.$$
 rm -f /tmp/wct-test-trace-tampered.$$
 if $bin --model fixtures/smoke.model --mode invalid >/dev/null 2>&1; then
     echo 'invalid mode unexpectedly succeeded' >&2

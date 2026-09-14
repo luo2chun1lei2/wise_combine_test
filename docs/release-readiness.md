@@ -5,6 +5,19 @@ for a local release review. It is intentionally explicit about features that
 are not yet implemented so a passing smoke test is not mistaken for full
 iteration acceptance.
 
+## Current Release Status (2026-09-14)
+
+Release status is **BLOCKED** because fresh iteration 16 evidence and the final
+independent review are pending. The current boundary and gates are indexed by
+[`.omx/current-status.md`](../.omx/current-status.md),
+[`.omx/capability-matrix.md`](../.omx/capability-matrix.md), and
+[`.omx/release-blockers.md`](../.omx/release-blockers.md). The regression-to-oracle
+map is [`docs/oracle-matrix.md`](oracle-matrix.md).
+
+The I15 section below is historical evidence for commit
+`b8e5d68808ba573bb6e5c13b465ee214a2428043`. It is preserved unchanged and does
+not describe the current HEAD or release candidate.
+
 ## Current Baseline
 
 The checked-in I0 baseline is reproducible with:
@@ -65,7 +78,7 @@ The CLI prints completed `steps`, `covered` items and `failures`; diagnostics
 are written to stderr and the process exits non-zero for invalid models or
 callback/expectation failures.
 
-## I15 Final Verification (2026-09-11)
+## Historical I15 Final Verification (2026-09-11)
 
 `evidence/iter-15/` records the current release verification. Clean test,
 ASan/UBSan (including intentional OOB/leak sentinels), Valgrind, coverage,

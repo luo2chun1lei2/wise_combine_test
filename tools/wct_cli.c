@@ -193,6 +193,21 @@ static int parse_num_line(const char *line, const char *prefix, int base, unsign
     buf[i]='\0'; while (*p==' '||*p=='\t') p++; if (!i || (*p && *p!='\n'&&*p!='\r')) return -1;
     errno=0; char *e=NULL; unsigned long long v=strtoull(buf,&e,base); if(errno==ERANGE||e==buf||*e) return -1; *out=v; return 1;
 }
+static int parse_signed_line(const char *line, const char *prefix, int *out) {
+    size_t n = strlen(prefix); if (strncmp(line,prefix,n)) return 0;
+    const char *p=line+n; while (*p==' '||*p=='\t') p++;
+    char *e; errno=0; long long x=strtoll(p,&e,10); while (*e==' '||*e=='\t') e++;
+    if (errno==ERANGE || e==p || (*e && *e!='\n' && *e!='\r') || x<INT_MIN || x>INT_MAX) return -1;
+    *out=(int)x; return 1;
+}
+static int parse_hex_line(const char *line, const char *prefix, uint64_t *out) {
+    unsigned long long v; int r = parse_num_line(line, prefix, 16, &v);
+    if (r != 1) {
+        return r;
+    }
+    *out = (uint64_t)v;
+    return 1;
+}
 
 static int exact_single_value(const char *line, const char *prefix) {
     size_t n = strlen(prefix);
@@ -219,31 +234,30 @@ static int parse_trace(const char *path, char *model, size_t model_len, char *mo
     if (!file) return -1;
     while (fgets(line, sizeof line, file)) {
         if ((!strncmp(line, "WCT_TRACE ", 10) && !exact_single_value(line, "WCT_TRACE ")) || (!strncmp(line, "model_digest ", 13) && !exact_single_value(line, "model_digest ")) || (!strncmp(line, "ir_digest ", 10) && !exact_single_value(line, "ir_digest ")) || (!strncmp(line, "metadata_digest ", 16) && !exact_single_value(line, "metadata_digest ")) || (!strncmp(line, "selection ", 10) && !exact_single_value(line, "selection ")) || (!strncmp(line, "model ", 6) && !exact_single_value(line, "model ")) || (!strncmp(line, "mode ", 5) && !exact_single_value(line, "mode ")) || (!strncmp(line, "seed ", 5) && !exact_single_value(line, "seed ")) || (!strncmp(line, "max_steps ", 10) && !exact_single_value(line, "max_steps ")) || (!strncmp(line, "max_flows ", 10) && !exact_single_value(line, "max_flows ")) || (!strncmp(line, "steps ", 6) && !exact_single_value(line, "steps ")) || (!strncmp(line, "declared_edges ", 15) && !exact_single_value(line, "declared_edges ")) || (!strncmp(line, "covered_edges ", 14) && !exact_single_value(line, "covered_edges ")) || (!strncmp(line, "uncovered_edges ", 16) && !exact_single_value(line, "uncovered_edges ")) || (!strncmp(line, "exit ", 5) && !exact_single_value(line, "exit ")) || (!strncmp(line, "process_exit ", 13) && !exact_single_value(line, "process_exit ")) || (!strncmp(line, "process_signal ", 15) && !exact_single_value(line, "process_signal ")) || (!strncmp(line, "timed_out ", 10) && !exact_single_value(line, "timed_out ")) || (!strncmp(line, "digest ", 7) && !exact_single_value(line, "digest "))) { fclose(file); return -1; }
-        if (sscanf(line, "WCT_TRACE %d", &version) == 1) { if (got_header++) { fclose(file); return -1; } continue; }
-        if (!strncmp(line, "model_digest ", 13) &&
-            sscanf(line + 13, "%" SCNx64, model_digest) == 1) {
+        { unsigned long long v; int pr=parse_num_line(line,"WCT_TRACE ",10,&v); if (pr==1) version=(int)v; if (pr==1) { if (version != 1 || got_header++) { fclose(file); return -1; } continue; } if (pr<0) { fclose(file); return -1; } }
+        if (!strncmp(line, "model_digest ", 13) && parse_hex_line(line,"model_digest ",model_digest)==1) {
             if (got_model_digest) { fclose(file); return -1; } got_model_digest = 1; continue;
         }
-        if (!strncmp(line, "ir_digest ", 10) && sscanf(line + 10, "%" SCNx64, ir_digest) == 1) { if (got_ir) { fclose(file); return -1; } got_ir = 1; continue; }
-        if (!strncmp(line, "metadata_digest ", 16) && sscanf(line + 16, "%" SCNx64, metadata_digest) == 1) { if (got_metadata_digest) { fclose(file); return -1; } got_metadata_digest = 1; continue; }
+        if (!strncmp(line, "ir_digest ", 10) && parse_hex_line(line,"ir_digest ",ir_digest)==1) { if (got_ir) { fclose(file); return -1; } got_ir = 1; continue; }
+        if (!strncmp(line, "metadata_digest ", 16) && parse_hex_line(line,"metadata_digest ",metadata_digest)==1) { if (got_metadata_digest) { fclose(file); return -1; } got_metadata_digest = 1; continue; }
         if (!strncmp(line, "selection ", 10) && sscanf(line + 10, "%63s", selection) == 1) { line[strcspn(line, "\r\n")] = 0; hash_bytes(&metadata, line); if (got_selection) { fclose(file); return -1; } got_selection = 1; continue; }
         if (!strncmp(line, "edge ", 5)) { line[strcspn(line, "\r\n")] = 0; hash_bytes(&metadata, line); continue; }
         if (!strncmp(line, "model ", 6) && sscanf(line + 6, "%2047s", model) == 1) {
             if (got_model) { fclose(file); return -1; } got_model = 1; continue;
         }
-        if (sscanf(line, "mode %63s", mode) == 1) { if (got_mode) { fclose(file); return -1; } got_mode = 1; continue; }
+        if (!strncmp(line,"mode ",5) && sscanf(line, "mode %63s", mode) == 1) { if (got_mode) { fclose(file); return -1; } got_mode = 1; continue; }
         if (!strncmp(line,"seed ",5)) { unsigned long long v; int pr=parse_num_line(line,"seed ",10,&v); if(pr!=1 || v>UINT_MAX || got_seed++) { fclose(file); return -1; } limits->seed=(unsigned)v; continue; }
         if (!strncmp(line,"max_steps ",10)) { unsigned long long v; int pr=parse_num_line(line,"max_steps ",10,&v); if(pr!=1 || v>SIZE_MAX || got_max_steps++) { fclose(file); return -1; } limits->max_steps=(size_t)v; continue; }
         if (!strncmp(line,"max_flows ",10)) { unsigned long long v; int pr=parse_num_line(line,"max_flows ",10,&v); if(pr!=1 || v>SIZE_MAX || got_max_flows++) { fclose(file); return -1; } limits->max_flows=(size_t)v; continue; }
         if (!strncmp(line,"steps ",6)) { unsigned long long v; int pr=parse_num_line(line,"steps ",10,&v); if(pr!=1 || v>SIZE_MAX || got_steps++) { fclose(file); return -1; } *steps=(size_t)v; continue; }
-        if (sscanf(line, "declared_edges %zu", declared_edges) == 1) { if (got_report & 1) { fclose(file); return -1; } got_report |= 1; continue; }
-        if (sscanf(line, "covered_edges %zu", covered_edges) == 1) { if (got_report & 2) { fclose(file); return -1; } got_report |= 2; continue; }
-        if (sscanf(line, "uncovered_edges %zu", uncovered_edges) == 1) { if (got_report & 4) { fclose(file); return -1; } got_report |= 4; continue; }
-        if (sscanf(line, "process_exit %d", process_exit) == 1) { if (got_report & 8) { fclose(file); return -1; } got_report |= 8; continue; }
-        if (sscanf(line, "process_signal %d", process_signal) == 1) { if (got_report & 16) { fclose(file); return -1; } got_report |= 16; continue; }
-        if (sscanf(line, "timed_out %d", timed_out) == 1) { if (got_report & 32) { fclose(file); return -1; } got_report |= 32; continue; }
-        if (sscanf(line, "exit %d", exit_code) == 1) { if (got_exit++) return -1; continue; }
-        if (sscanf(line, "digest %" SCNx64, digest) == 1) { if (got_digest) { fclose(file); return -1; } got_digest = 1; continue; }
+        { unsigned long long v; int pr=parse_num_line(line,"declared_edges ",10,&v); if (pr) { if (pr<0 || v>SIZE_MAX || (got_report&1)) { fclose(file); return -1; } *declared_edges=(size_t)v; got_report|=1; continue; } }
+        { unsigned long long v; int pr=parse_num_line(line,"covered_edges ",10,&v); if (pr) { if (pr<0 || v>SIZE_MAX || (got_report&2)) { fclose(file); return -1; } *covered_edges=(size_t)v; got_report|=2; continue; } }
+        { unsigned long long v; int pr=parse_num_line(line,"uncovered_edges ",10,&v); if (pr) { if (pr<0 || v>SIZE_MAX || (got_report&4)) { fclose(file); return -1; } *uncovered_edges=(size_t)v; got_report|=4; continue; } }
+        { int v; int pr=parse_signed_line(line,"process_exit ",&v); if (pr) { if (pr<0 || (got_report&8)) { fclose(file); return -1; } *process_exit=v; got_report|=8; continue; } }
+        { int v; int pr=parse_signed_line(line,"process_signal ",&v); if (pr) { if (pr<0 || (got_report&16)) { fclose(file); return -1; } *process_signal=v; got_report|=16; continue; } }
+        { int v; int pr=parse_signed_line(line,"timed_out ",&v); if (pr) { if (pr<0 || (got_report&32)) { fclose(file); return -1; } *timed_out=v; got_report|=32; continue; } }
+        { int v; int pr=parse_signed_line(line,"exit ",&v); if (pr) { if (pr<0 || got_exit++) { fclose(file); return -1; } *exit_code=v; continue; } }
+        { int pr=parse_hex_line(line,"digest ",digest); if (pr) { if (pr<0 || got_digest) { fclose(file); return -1; } got_digest = 1; continue; } }
         if (sscanf(line, "%63s %2047s", key, value) == 2 && !strcmp(key, "step")) {
             line[strcspn(line, "\r\n")] = '\0';
             trace_record(&stored, line);
