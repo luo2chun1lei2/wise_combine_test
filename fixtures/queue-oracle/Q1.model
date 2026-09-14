@@ -1,0 +1,7 @@
+schema 1
+relation_graph Q1
+call q_open
+contract q_open 0 result=int expect=0
+call q_pop
+contract q_pop 0 result=int expect=-2
+relation q_open q_pop

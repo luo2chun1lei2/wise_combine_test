@@ -15,10 +15,9 @@ result. Current release status remains
 - **Replay determinism** asks whether explicit trace/replay or repeated seeded
   execution is checked.
 
-Evidence is currently regression-based. **No controlled mutant-detection
-experiment has been generated.** Consequently these tests cannot prove that the
-generator enumerates all possible models or paths; they prove only that the
-listed semantics are encoded and observed.
+The repository now also contains a controlled queue-oracle regression. It
+provides executor fault detection and stateful oracle evidence, but does not
+prove that the generator enumerates all possible models or paths.
 
 ## Mapped dimensions
 
@@ -32,10 +31,28 @@ listed semantics are encoded and observed.
 | Branch replay / reset | `test_state_branching_coverage`, `test_seed_sampling_determinism` | Both edges of a branch and multiple same-source transitions are generated; optional `state_reset` is supplied. | Coverage counters and exact callback sequences detect a lost or duplicated branch scenario. | `state_reset` returns the callback fixture to the initial context before each branch scenario; declared/covered/uncovered edge counts are checked. | Same seeded run is repeatable. This is semantic branch replay, not the checksummed trace path. |
 | Trace capture and replay determinism | [`tests/test_cli.sh`](../tests/test_cli.sh) :: relation `--trace`, then `--replay`; tampering loops for header/schema, digest, model, mode, seed, limits, counters, metadata, and selection | A valid relation flow is captured and re-executed from the trace's recorded model and selection. | Missing/duplicate fields, malformed numbers, altered edge metadata, changed model digest, trailing singleton data, and garbage are rejected. | Replay compares steps, declared/covered/uncovered edges, exit/process/signal/timeout metadata, selection, and canonical digests before printing `replay=PASS`. | The recomputed step digest must equal the recorded digest; repeated execution and replay are checksum-bound. |
 
+## Queue mutant regression
+
+`make test` runs `tests/test_queue_oracle.sh`. The fixed 84-run matrix executes
+six clean Queue cases twice against clean and mutant 1–6 harnesses (84 rows),
+then repeats clean/probe checks. The SUT has no assertions; every expected
+Queue result is declared with `contract ... result=int expect=...`, so the
+product's result contract performs the judgment.
+
+| Measurement | Contract and result |
+| --- | --- |
+| Generator coverage | The six review cases, non-self cycle, declared subset, and alias repeat are supplied models. `probe-cycle` must be rejected; `probe-subset` and `probe-repeat` must succeed. This is not exhaustive generation. |
+| Executor fault detection | Each of mutants 1–6 must detect its mapped case twice. A mutant may detect additional Queue violations; extra detections are not false positives. The clean harness must pass all twelve clean runs. |
+| Oracle coverage | The model/result contract compares exact Queue return values. The report must show failures and uncovered calls on mutation detection. |
+| Repeat determinism | Every mutant/case pair must produce byte-identical output for both repetitions. |
+
+The mapped defects are: empty pop wrong value (M1/Q1), LIFO instead of FIFO
+(M2, also detected by Q5), reopen retaining old state (M3/Q3), peek consuming
+(M4/Q4), second pop retaining count (M5/Q5), and close failing to close (M6/Q6).
+
 ## Generation-completeness boundary
 
-Mutant-based experiments could measure how often the executor detects injected
-behavior differences, but they would still not prove generator completeness:
-a surviving mutant can reveal a gap, while killed mutants only establish fault
-detection for generated cases. No such mutant evidence exists yet, so this
-document does not make a generation-completeness claim.
+All six supplied mutants are detected, but that measures executor/oracle fault
+detection for supplied flows. It does not prove generator completeness, reveal
+all equivalent mutants, or enumerate undeclared parameter domains. New generators
+must be measured separately from executor mutation score.

@@ -9,7 +9,7 @@ COVERAGE := coverage
 WCT_COVERAGE_ROOT := $(CURDIR)/$(BUILD)/gcov-forks
 export WCT_COVERAGE_ROOT
 
-.PHONY: all clean clean-profiles test sanitize sanitizer-sentinels valgrind measure coverage
+.PHONY: all clean clean-profiles test queue-oracle sanitize sanitizer-sentinels valgrind measure coverage
 
 all: $(BIN)
 
@@ -34,11 +34,17 @@ test: all $(API_TEST)
 	./$(API_TEST)
 	./tests/test_fuzz.sh
 
+queue-oracle: all
+	WCT_QUEUE_CFLAGS='$(CFLAGS)' WCT_QUEUE_LDFLAGS='$(LDFLAGS)' \
+		./tests/test_queue_oracle.sh
+
 sanitize: clean
 	$(MAKE) CFLAGS='$(CFLAGS) -fsanitize=address,undefined -fno-omit-frame-pointer' LDFLAGS='-fsanitize=address,undefined' all $(API_TEST)
 	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./tests/test_cli.sh
 	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./$(API_TEST)
 	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./tests/test_fuzz.sh
+	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
+		$(MAKE) CFLAGS='$(CFLAGS) -fsanitize=address,undefined -fno-omit-frame-pointer' LDFLAGS='-fsanitize=address,undefined' queue-oracle
 	ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ./tests/sanitizer_sentinels.sh
 
 # Intentional failures are isolated from the product tests and must be
@@ -49,9 +55,11 @@ sanitizer-sentinels:
 valgrind: clean
 	$(MAKE) CFLAGS='-std=c11 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Iinclude' LDFLAGS='' all $(API_TEST)
 	@if command -v valgrind >/dev/null 2>&1; then \
-		valgrind --leak-check=full --error-exitcode=1 ./$(API_TEST); \
+	valgrind --leak-check=full --error-exitcode=1 ./$(API_TEST); \
 		valgrind --leak-check=full --error-exitcode=1 $(BIN) --model fixtures/smoke.model --mode state; \
 		valgrind --leak-check=full --error-exitcode=1 $(BIN) --model fixtures/relation.model --mode relation --isolate --timeout-ms 100; \
+		WCT_QUEUE_RUNNER='valgrind --leak-check=full --error-exitcode=1 --log-file=/dev/null' \
+			$(MAKE) queue-oracle; \
 	else \
 		echo 'SKIP: valgrind not installed'; \
 	fi
@@ -73,6 +81,8 @@ coverage: clean
 	./tests/test_cli.sh
 	./$(API_TEST)
 	./tests/test_fuzz.sh
+	WCT_QUEUE_CFLAGS='$(CFLAGS)' WCT_QUEUE_LDFLAGS='$(LDFLAGS)' \
+		./tests/test_queue_oracle.sh
 	rm -f $(BUILD)/test_api.gcda
 	tools/merge-coverage.sh $(BUILD) $(BUILD)/gcov-forks
 	@mkdir -p $(COVERAGE)

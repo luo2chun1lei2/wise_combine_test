@@ -77,7 +77,9 @@ begin each scenario from the declared initial state.
 
 ## Verification
 
-`make test` runs the standalone smoke checks. `make sanitize` enables
+`make test` runs the standalone smoke checks and the controlled queue-oracle
+regression (`tests/test_queue_oracle.sh`): 84 clean/mutant matrix runs plus
+cycle/subset/repeat probes. `make sanitize` enables
 AddressSanitizer and UndefinedBehaviorSanitizer and runs isolated intentional
 OOB/leak sentinels; expected sanitizer findings are classified separately from
 product failures. `make valgrind` runs when
@@ -91,7 +93,7 @@ The iteration gates and verification evidence are tracked in
 [`docs/release-readiness.md`](docs/release-readiness.md). `make coverage`
 cleans stale `*.gcda`, `*.gcno`, and report files, instruments the shared
 library object used by both the CLI and API test harness, runs the CLI/API/fuzz
-suite, and writes one gcov report per discovered profile plus
+queue-oracle suite, and writes one gcov report per discovered profile plus
 `coverage/summary.txt`. It fails if the expected `src/wct.c` and
 `tools/wct_cli.c` profiles are absent.
 

@@ -1,0 +1,13 @@
+schema 1
+relation_graph Q4
+call q_open
+contract q_open 0 result=int expect=0
+call q_push1
+contract q_push1 0 result=int expect=0
+call q_peek
+contract q_peek 0 result=int expect=11
+call q_size
+contract q_size 0 result=int expect=1
+relation q_open q_push1
+relation q_push1 q_peek
+relation q_peek q_size

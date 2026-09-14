@@ -1,0 +1,10 @@
+schema 1
+relation_graph repeat
+call q_open
+contract q_open 0 result=int expect=0
+call q_push1a
+contract q_push1a 0 result=int expect=0
+call q_push1b
+contract q_push1b 0 result=int expect=0
+relation q_open q_push1a
+relation q_push1a q_push1b

@@ -1,0 +1,7 @@
+schema 1
+relation_graph subset
+call q_open
+contract q_open 0 result=int expect=0
+call q_push1
+contract q_push1 0 result=int expect=0
+relation q_open q_push1
