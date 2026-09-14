@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "evidenceLayoutVersion": 2,
+  "createdAt": "2026-09-14T11:51:53.883Z",
+  "updatedAt": "2026-09-14T11:53:25.458Z",
+  "briefPath": ".omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/brief.md",
+  "goalsPath": ".omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/goals.json",
+  "ledgerPath": ".omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/ledger.jsonl",
+  "codexGoalMode": "aggregate",
+  "goals": [
+    {
+      "id": "G001-implement-the-report-v2-payload-cont",
+      "title": "Implement the report v2 payload contract and safe CLI replay enhancem...",
+      "objective": "Implement the report v2 payload contract and safe CLI replay enhancement defined by docs/improvement-roadmap.md and ADR 0003 while preserving Linux C++20 CMake behavior, minimal dependencies, existing v1 behavior and failure exit codes. The work must strictly validate the ADR payload schema after integrity verification, allow replay only with an explicit allowlisted adapter whose SHA-256 matches the recorded adapter, reject unsafe states before spawning, execute only the saved flow without generator search, write outputs without overwriting input, update bilingual and project documentation, and pass failing-first tests plus Debug, sanitizer, coverage and real CLI replay evidence. Stop when all registered success criteria pass with current-tree evidence and the final quality gate approves the frozen HEAD.",
+      "status": "pending",
+      "successCriteria": [
+        {
+          "id": "C001",
+          "scenario": "Build Debug, then run: ./build/wise-combine run tests/integration/relation_workflow.json --adapter tests/fixtures/bin/adapter_ok --reports <tmp>/original --run-id clean. PASS iff exit 0; clean-0.json and clean-0.v2.json are nonempty; verify-report-v2 clean-0.v2.json exits 0 and prints payload_valid:true; replay clean-0.v2.json --adapter tests/fixtures/bin/adapter_ok --reports <tmp>/replay-clean --run-id clean-replay exits 0, creates clean-replay-0.json/.txt/.v2.json, and leaves the input SHA-256 unchanged.",
+          "userModel": "happy",
+          "expectedEvidence": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a1/criterion-c1-clean-replay.txt",
+          "essential": true,
+          "capturedEvidence": null,
+          "status": "pending"
+        },
+        {
+          "id": "C002",
+          "scenario": "From a valid run v2 report, use CLI replay with (1) digest-mismatching adapter, (2) missing working directory, (3) schema-invalid or tampered payload, and (4) reports path equal to input report directory. Create a sentinel file the adapter would create on launch for every rejection. PASS iff each exits nonzero with a specific diagnostic, input report bytes are unchanged, and no sentinel exists; additionally a preserved mismatch report replayed with adapter_mismatch exits the documented observed-failure code and records mismatch.",
+          "userModel": "edge",
+          "expectedEvidence": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a1/criterion-c2-replay-safety.txt",
+          "essential": true,
+          "capturedEvidence": null,
+          "status": "pending"
+        },
+        {
+          "id": "C003",
+          "scenario": "Run cmake --build build --parallel; (cd build && ctest --output-on-failure); configure/build/test build-asan with sanitizers; run coverage-check target; then inspect README.md, README.zh.md, docs/improvement-roadmap.md, docs/requirements-matrix.md and docs/test-matrix.md for synchronized replay guidance. PASS iff all commands exit 0, coverage is at least 80%, no sanitizer diagnostics appear, and each documented file explicitly describes v2/replay behavior and limitations.",
+          "userModel": "regression",
+          "expectedEvidence": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a1/criterion-c3-regression-docs.txt",
+          "essential": false,
+          "capturedEvidence": null,
+          "status": "pending"
+        }
+      ],
+      "attempt": 0,
+      "createdAt": "2026-09-14T11:51:53.883Z",
+      "updatedAt": "2026-09-14T11:53:25.458Z"
+    }
+  ],
+  "codexObjective": "Complete the durable ulw-loop plan in .omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/goals.json, including later accepted/appended stories, under the original brief constraints; use .omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/ledger.jsonl as the audit trail."
+}
