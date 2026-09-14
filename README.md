@@ -81,19 +81,23 @@ mismatch report records the state oracle used for that step.
 `hash-report` prints a SHA-256 digest of the exact report bytes. With an optional
 expected digest it returns `0` on match or `4` on mismatch; it does not
 authenticate the source.
-`verify-report-v2` first verifies the decoded payload digest, then strictly
+`verify-report-v2` first strictly parses the envelope, extracts the exact decoded
+payload bytes, and verifies their digest before validating payload JSON. It then
 validates the complete ADR 0003 payload: exact keys and types, a version-1 model
 object, generator metadata, a flow that is valid for that model, adapter/runtime
-metadata, and result steps that agree with the saved plan prefix. A historical
+metadata, and result steps that agree with the saved plan prefix. An empty result
+is valid only for an empty passed flow or a zero-step timeout. A historical
 mismatch or failure prefix remains valid when its prefix is internally
 consistent.
-`replay REPORT --adapter EXEC --reports DIR --run-id ID` verifies that payload
-before spawning a child. It executes only the one saved flow, re-computes model
-argument bindings from new adapter responses, and rejects overrides or missing/
-extra command arguments. `EXEC` must pass the existing allowlist and have the
-recorded SHA-256; the recorded working directory must exist, and the output
-directory may not replace the input report. Replay writes v1, TXT, and v2
-reports and preserves the existing run exit statuses.
+`replay REPORT --adapter EXEC --reports NEW_DIR --run-id ID` verifies that
+payload before spawning a child. It executes only the one saved flow,
+re-computes model argument bindings from new adapter responses, and rejects
+overrides or missing/extra command arguments. `EXEC` must pass the existing
+allowlist and have the recorded SHA-256; the recorded working directory must
+exist. Before spawning, `ID-0.json`, `ID-0.txt`, and `ID-0.v2.json` must all be
+new nonexistent paths, including symlinks and hard links, so replay cannot
+overwrite the input report. Replay writes v1, TXT, and v2 reports and preserves
+the existing run exit statuses.
 SHA-256 detects accidental or independently uncoordinated changes but is not
 origin authentication: an attacker who changes both payload and digest can make
 them agree. Replay does not save, restore, or inspect external adapter state, and

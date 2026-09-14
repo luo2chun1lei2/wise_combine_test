@@ -5,6 +5,7 @@ endif()
 get_filename_component(REPLAY_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 set(RELATIVE_ADAPTER "tests/fixtures/bin/adapter_ok")
 
+file(REMOVE_RECURSE "${CASE_DIR}")
 file(MAKE_DIRECTORY "${CASE_DIR}")
 set(REPORTS "${CASE_DIR}/reports")
 set(REPLAY_REPORTS "${CASE_DIR}/replay-reports")
@@ -102,6 +103,13 @@ execute_process(COMMAND "${CLI}" wrap-report-v2 "${CASE_DIR}/contradiction-paylo
 file(WRITE "${CASE_DIR}/contradiction-envelope.json" "${envelope}")
 expect_verify("${CASE_DIR}/contradiction-envelope.json" 2 "")
 
+# Runtime can return a zero-step timeout, but step-derived failures cannot be empty.
+set(empty_mismatch "{\"model\":${model_json},\"generator\":{\"strategy\":\"seeded-dfs-v1\",\"termination_status\":\"dead_end\"},\"flow\":{\"flow_id\":\"produce\",\"transition_ids\":[\"produce\",\"consume\"]},\"adapter\":${adapter_json},\"runtime\":${runtime_json},\"result\":{\"status\":\"mismatch\",\"flow_id\":\"produce\",\"steps\":[]}}")
+file(WRITE "${CASE_DIR}/empty-mismatch-payload.json" "${empty_mismatch}")
+execute_process(COMMAND "${CLI}" wrap-report-v2 "${CASE_DIR}/empty-mismatch-payload.json" OUTPUT_VARIABLE envelope)
+file(WRITE "${CASE_DIR}/empty-mismatch-envelope.json" "${envelope}")
+expect_verify("${CASE_DIR}/empty-mismatch-envelope.json" 2 "")
+
 # A different allowlisted adapter digest is rejected before a child can start.
 set(nonexistent_output "${CASE_DIR}/digest-mismatch-reports")
 set(MARKER_REPORTS "${CASE_DIR}/marker-reports")
@@ -147,6 +155,26 @@ if(NOT missing_result EQUAL 5 OR NOT missing_error MATCHES "working directory do
 endif()
 
 # Output may not replace the input envelope or reports.
+set(ALIAS_OUTPUT "${CASE_DIR}/alias-output")
+file(MAKE_DIRECTORY "${ALIAS_OUTPUT}")
+file(SHA256 "${V2_REPORT}" input_before_alias)
+file(CREATE_LINK "${V2_REPORT}" "${ALIAS_OUTPUT}/alias-0.json" SYMBOLIC)
+execute_process(
+  COMMAND "${CLI}" replay "${V2_REPORT}" --adapter "${ADAPTER}"
+          --reports "${ALIAS_OUTPUT}" --run-id alias
+  RESULT_VARIABLE alias_result OUTPUT_VARIABLE alias_output ERROR_VARIABLE alias_error
+)
+file(SHA256 "${V2_REPORT}" input_after_alias)
+if(NOT alias_result EQUAL 5 OR NOT alias_error MATCHES "output report path already exists")
+  message(FATAL_ERROR "output alias accepted: ${alias_result}: ${alias_output} ${alias_error}")
+endif()
+if(NOT input_after_alias STREQUAL input_before_alias)
+  message(FATAL_ERROR "output alias changed the input report")
+endif()
+if(EXISTS "${ALIAS_OUTPUT}/alias-0.v2.json")
+  message(FATAL_ERROR "output alias replay created a v2 report")
+endif()
+
 execute_process(
   COMMAND "${CLI}" replay "${V2_REPORT}" --adapter "${ADAPTER}"
           --reports "${REPORTS}" --run-id clean

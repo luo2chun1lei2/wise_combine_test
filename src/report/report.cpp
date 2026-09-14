@@ -198,6 +198,9 @@ void verify_result(const generate::Flow& flow, const spec::Document& document,
                    const runtime::RunResult& result) {
   if (result.flow_id != flow.flow_id) invalid("result flow_id does not match flow");
   if (result.steps.size() > flow.transition_ids.size()) invalid("result is longer than flow");
+  if (result.status != runtime::Status::passed && result.steps.empty() &&
+      result.status != runtime::Status::timeout)
+    invalid("failure result cannot be empty");
 
   std::map<std::string, std::map<std::string, model::Scalar>> returned;
   for (std::size_t i = 0; i < result.steps.size(); ++i) {

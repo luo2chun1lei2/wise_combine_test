@@ -18,6 +18,14 @@ std::string wrap_v2(const std::string& payload) {
   return "{\"schema_version\":2,\"payload\":\"" + escape_json(payload) + "\",\"integrity\":{\"algorithm\":\"sha256\",\"digest\":\"" + sha256_hex(payload) + "\"}}";
 }
 bool verify_v2(const std::string& document, std::string* payload) {
-  try { const auto envelope = spec::parse_integrity_envelope(document); spec::validate_json(envelope.payload); if (sha256_hex(envelope.payload) != envelope.digest) return false; if (payload != nullptr) *payload = envelope.payload; return true; } catch (const std::exception&) { return false; }
+  try {
+    const auto envelope = spec::parse_integrity_envelope(document);
+    if (sha256_hex(envelope.payload) != envelope.digest) return false;
+    spec::validate_json(envelope.payload);
+    if (payload != nullptr) *payload = envelope.payload;
+    return true;
+  } catch (const std::exception&) {
+    return false;
+  }
 }
 }

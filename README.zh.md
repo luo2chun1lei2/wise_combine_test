@@ -72,15 +72,18 @@ summary 还会记录 `schema_version: 1` 和本次规范使用的 `seed`，便�
 包含该步骤使用的状态 oracle。
 `hash-report` 会输出报告原始字节的 SHA-256 摘要。提供期望摘要时，匹配返回 `0`，
 不匹配返回 `4`；它不负责验证来源身份。
-`verify-report-v2` 先校验解码后 payload 的 SHA-256，再严格校验 ADR 0003 的完整
-payload：顶层键和类型必须精确，model 必须是版本 1 规范对象，generator 元数据、
-flow 必须与模型一致，adapter/runtime 字段必须有效，result steps 必须与保存计划
-前缀对应。历史上真实发生过的 mismatch 或失败前缀在前缀自身一致时仍然有效。
-`replay REPORT --adapter EXEC --reports DIR --run-id ID` 会在启动子进程前校验
+`verify-report-v2` 先严格解析 envelope 并取出解码后的 payload 原始字节，在验证
+payload JSON 前校验其 SHA-256。随后严格校验 ADR 0003 的完整 payload：顶层键和
+类型必须精确，model 必须是版本 1 规范对象，generator 元数据、flow 必须与模型一致，
+adapter/runtime 字段必须有效，result steps 必须与保存计划前缀对应。空 result 仅在
+`passed` 且流程为空，或 `timeout` 且零步骤时有效。历史上真实发生过的 mismatch 或
+失败前缀在前缀自身一致时仍然有效。
+`replay REPORT --adapter EXEC --reports NEW_DIR --run-id ID` 会在启动子进程前校验
 payload。它只执行保存的这一条完整 flow，并根据新的 adapter 响应重新计算模型参数
 绑定；缺失或多余命令参数都会被拒绝。`EXEC` 必须通过现有 allowlist 且 SHA-256 与
-记录一致；记录的工作目录必须存在；输出目录不得覆盖输入报告。重放会写出 v1、TXT
-和 v2 报告，并保持既有 run 退出码。
+记录一致；记录的工作目录必须存在。启动前 `ID-0.json`、`ID-0.txt` 和
+`ID-0.v2.json` 都必须是新的不存在路径，包括符号链接和硬链接，因此重放不能覆盖输入
+报告。重放会写出 v1、TXT 和 v2 报告，并保持既有 run 退出码。
 SHA-256 能检测意外修改或未同步修改 digest 的篡改，但不是来源认证：能同时修改
 payload 和 digest 的人可以生成一致报告。replay 不保存、恢复或检查 adapter 外部
 状态，也不收集宿主环境变量或凭证。子进程固定环境仍为

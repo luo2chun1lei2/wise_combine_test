@@ -11,6 +11,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 
 namespace wise::replay {
 namespace {
@@ -28,6 +29,13 @@ bool same_file(const std::filesystem::path& left, const std::filesystem::path& r
     return false;
   }
   return std::filesystem::equivalent(left, right, error);
+}
+
+bool path_exists(const std::filesystem::path& path) {
+  std::error_code error;
+  const auto status = std::filesystem::symlink_status(path, error);
+  if (!error) return status.type() != std::filesystem::file_type::not_found;
+  return error != std::make_error_condition(std::errc::no_such_file_or_directory);
 }
 
 }  // namespace
@@ -55,6 +63,15 @@ Outcome run(const Request& request) {
     if (path_error) throw std::runtime_error("cannot resolve output report: " + path_error.message());
     if (collision) {
       std::cerr << "replay output directory would overwrite the input report\n";
+      outcome.code = Outcome::Code::runtime_failure;
+      return outcome;
+    }
+
+    const auto output_base = output_directory / (request.run_id + "-0");
+    for (const auto* suffix : {".json", ".txt", ".v2.json"}) {
+      const auto output_path = output_base.string() + suffix;
+      if (!path_exists(output_path)) continue;
+      std::cerr << "replay output report path already exists: " << output_path << '\n';
       outcome.code = Outcome::Code::runtime_failure;
       return outcome;
     }
