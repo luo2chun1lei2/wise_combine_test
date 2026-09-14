@@ -14,7 +14,11 @@ command -v gcov-tool >/dev/null 2>&1 || {
 }
 
 profile_count=$(find "$forks" -type f -name '*.gcda' | wc -l)
-[ "$profile_count" -gt 0 ] || exit 0
+if [ "$profile_count" -eq 0 ]; then
+    echo 'coverage failure: no fork-child profiles were generated' >&2
+    exit 1
+fi
+printf '%s\n' "$profile_count"
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT

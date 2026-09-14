@@ -1,7 +1,7 @@
 {
   "version": 1,
   "createdAt": "2026-09-11T03:20:32.090Z",
-  "updatedAt": "2026-09-14T02:14:45.774Z",
+  "updatedAt": "2026-09-14T13:31:46.234Z",
   "briefPath": ".omx/ultragoal/brief.md",
   "goalsPath": ".omx/ultragoal/goals.json",
   "ledgerPath": ".omx/ultragoal/ledger.jsonl",
@@ -11,32 +11,33 @@
       "id": "G001-wise-combine-test-c11-linux",
       "title": "完成 wise_combine_test 原始计划：在现有 C11/Linux 组合测试工具基础上，补齐并验证状态图与函数关系的完整规格。...",
       "objective": "完成 wise_combine_test 原始计划：在现有 C11/Linux 组合测试工具基础上，补齐并验证状态图与函数关系的完整规格。必须保持低依赖、版本化 DSL/C API/CLI；实现状态迁移的真实顺序语义、失败原子性、循环/步数边界；实现关系 DAG 的参数/结果绑定、typed/arity 校验、声明边覆盖、确定性 seed sampling；实现 POSIX fork/waitpid 场景隔离与超时报告；完善 trace schema/hash/replay、行列号诊断、边界/fuzz、ASan/UBSan/Valgrind、测量、覆盖率、README、每轮 evidence manifest；所有变更提交并推送。明确排除未声明参数空间穷举。最终必须有干净工作树、远端同步、所有测试和内存检查通过。",
-      "status": "review_blocked",
+      "status": "complete",
       "attempt": 1,
       "createdAt": "2026-09-11T03:20:32.090Z",
-      "updatedAt": "2026-09-11T08:25:59.957Z",
+      "updatedAt": "2026-09-14T13:31:17.352Z",
       "startedAt": "2026-09-11T03:20:47.932Z",
       "reviewBlockedAt": "2026-09-11T04:50:31.474Z",
-      "evidence": "Independent code review REQUEST_CHANGES and architecture review BLOCK; see evidence/iter-6/summary.json.",
+      "evidence": "G003 resolver completed original relation/evidence gates and I16 revalidated the current candidate; historical review blockers are closed, not open release gates.",
       "reviewBlockerResolution": {
         "resolverGoalId": "G002-resolve-final-state-transaction-and",
         "status": "pending",
         "evidence": "Independent code review REQUEST_CHANGES and architecture review BLOCK; see evidence/iter-6/summary.json."
       },
       "steeringStatus": "blocked",
-      "blockedReason": "Subsequent resolver goals closed all blockers.",
-      "steeringEvidence": "evidence/iter-15 PASS; final reviews APPROVE/CLEAR; clean synced worktree.",
-      "steeringRationale": "Subsequent resolver goals closed all blockers."
+      "steeringEvidence": "G003 completed the resolver requirements; I16 and independent review pair moved current work to G004. Historical blocked state is superseded.",
+      "steeringRationale": "Historical resolver success and current G004 review flow supersede stale blocked steering state.",
+      "completedAt": "2026-09-14T13:29:40.491Z",
+      "blockedReason": "Historical resolver success and current G004 review flow supersede stale blocked steering state."
     },
     {
       "id": "G002-resolve-final-state-transaction-and",
       "title": "Resolve final state transaction and trace contract blockers",
       "objective": "Make transaction hooks mandatory or provide whole-scenario isolation, complete trace path/metadata validation, then rerun final independent reviews.",
-      "status": "review_blocked",
+      "status": "complete",
       "attempt": 1,
       "createdAt": "2026-09-11T04:50:31.474Z",
-      "updatedAt": "2026-09-11T08:26:25.638Z",
-      "evidence": "G002 code review APPROVE, but aggregate original-plan architecture review identifies relation result assertions/flow semantics and sequential evidence gates still incomplete.",
+      "updatedAt": "2026-09-14T13:31:17.584Z",
+      "evidence": "G003 resolver completed transaction/trace requirements and I16 revalidated the current candidate; historical review blockers are closed, not open release gates.",
       "resolvesReviewBlockedGoalId": "G001-wise-combine-test-c11-linux",
       "startedAt": "2026-09-11T04:50:42.310Z",
       "reviewBlockedAt": "2026-09-11T05:09:15.646Z",
@@ -46,9 +47,10 @@
         "evidence": "G002 code review APPROVE, but aggregate original-plan architecture review identifies relation result assertions/flow semantics and sequential evidence gates still incomplete."
       },
       "steeringStatus": "blocked",
-      "blockedReason": "G003 resolver completed the remaining requirements.",
-      "steeringEvidence": "evidence/iter-15 PASS; final reviews APPROVE/CLEAR; clean synced worktree.",
-      "steeringRationale": "G003 resolver completed the remaining requirements."
+      "steeringEvidence": "G003 completed the resolver requirements; I16 and independent review pair moved current work to G004. Historical blocked state is superseded.",
+      "steeringRationale": "Historical resolver success and current G004 review flow supersede stale blocked steering state.",
+      "completedAt": "2026-09-14T13:29:40.718Z",
+      "blockedReason": "Historical resolver success and current G004 review flow supersede stale blocked steering state."
     },
     {
       "id": "G003-close-original-plan-relation-and-evi",
@@ -73,6 +75,16 @@
       "updatedAt": "2026-09-14T02:14:45.774Z",
       "evidence": "User requested continuing the recorded improvement plan; docs/improvement-plan.md; scheduled log ultragoal-20260913-100001.jsonl shows runtime startup failure; current plan has no runnable handoff.",
       "startedAt": "2026-09-14T02:14:45.774Z"
+    },
+    {
+      "id": "G005-resolve-i16-review-blockers-and-rege",
+      "title": "Resolve I16 review blockers and regenerate evidence",
+      "objective": "Fix replay canonical numeric/hex parsing, mandatory fork-profile coverage aggregation, parser OOM ownership, and state commit rollback; align relation multi-flow, CLI isolation, trace trust, and paired evidence documentation; regenerate release evidence and obtain independent code and architecture approval.",
+      "status": "pending",
+      "attempt": 0,
+      "createdAt": "2026-09-14T13:31:46.234Z",
+      "updatedAt": "2026-09-14T13:31:46.234Z",
+      "evidence": "{\n  \"verdict\":\"REQUEST_CHANGES\",\n  \"source\":\"f890b768aca48e37299a9ba2403e10b7b590620f\",\n  \"evidence\":\"6b6ff4cfbe84cda93e61a790d7ccda8582a8c80b\",\n  \"required\":[\n    \"Reject signed and non-canonical unsigned trace numbers; require canonical fixed-width hex digests.\",\n    \"Fail coverage when fork profiles are absent; record and aggregate the fork-profile count.\",\n    \"Free partially constructed parser records on allocation failure.\",\n    \"Restore parent state when successful-child final commit restore fails; add public regression.\",\n    \"Make unseeded relation multi-flow order contract explicit or change behavior; align capability matrix.\",\n    \"Document CLI --isolate compatibility behavior, independent timeout, trace child boundary, unkeyed digest trust, replay model-path trust, and timeout exclusion.\",\n    \"Document paired source/evidence release candidate commits.\"\n  ]\n}"
     }
   ],
   "codexObjective": "Complete the durable ultragoal plan in .omx/ultragoal/goals.json, including later accepted/appended stories, under the original brief constraints; use .omx/ultragoal/ledger.jsonl as the audit trail.",

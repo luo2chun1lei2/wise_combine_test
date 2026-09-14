@@ -200,6 +200,57 @@ static int parse_unsigned_strict(const char *text, unsigned long long *out) {
     if (errno == ERANGE || end == text || *end != '\0') return -1;
     *out = v; return 0;
 }
+static int append_transition(wct_state_graph *g, char *const a[5]) {
+    wct_transition *slots = realloc(g->transitions, (g->transition_count + 1) * sizeof *slots);
+    if (!slots) return -1;
+    g->transitions = slots;
+    wct_transition *t = &g->transitions[g->transition_count];
+    memset(t, 0, sizeof *t);
+    t->id = dupstr(a[0]); t->from = dupstr(a[1]); t->to = dupstr(a[2]);
+    t->input = dupstr(a[3]); t->expect = dupstr(a[4]);
+    if (!t->id || !t->from || !t->to || !t->input || !t->expect) {
+        free(t->id); free(t->from); free(t->to); free(t->input); free(t->expect);
+        memset(t, 0, sizeof *t);
+        return -1;
+    }
+    g->transition_count++;
+    return 0;
+}
+static int append_call(wct_relation_graph *g, const char *id, char **save) {
+    wct_call *slots = realloc(g->calls, (g->call_count + 1) * sizeof *slots);
+    if (!slots) return -1;
+    g->calls = slots;
+    wct_call *c = &g->calls[g->call_count];
+    memset(c, 0, sizeof *c);
+    c->id = dupstr(id);
+    if (!c->id) return -1;
+    char *arg;
+    while ((arg = strtok_r(NULL, " \t\r\n", save))) {
+        if (addstr(&c->args, &c->argc, arg)) {
+            for (size_t i = 0; i < c->argc; ++i) free(c->args[i]);
+            free(c->args);
+            free(c->id);
+            memset(c, 0, sizeof *c);
+            return -1;
+        }
+    }
+    g->call_count++;
+    return 0;
+}
+static int append_relation(wct_relation_graph *g, const char *from, const char *to) {
+    wct_relation *slots = realloc(g->relations, (g->relation_count + 1) * sizeof *slots);
+    if (!slots) return -1;
+    g->relations = slots;
+    wct_relation *edge = &g->relations[g->relation_count];
+    edge->from = dupstr(from); edge->to = dupstr(to);
+    if (!edge->from || !edge->to) {
+        free(edge->from); free(edge->to);
+        memset(edge, 0, sizeof *edge);
+        return -1;
+    }
+    g->relation_count++;
+    return 0;
+}
 
 static int find_state(const wct_state_graph *g, const char *id) { for (size_t i=0;i<g->state_count;i++) if (!strcmp(g->states[i], id)) return (int)i; return -1; }
 static int find_call(const wct_relation_graph *g, const char *id) { for (size_t i=0;i<g->call_count;i++) if (!strcmp(g->calls[i].id,id)) return (int)i; return -1; }
@@ -275,11 +326,11 @@ int wct_parse_file(const char *path, wct_state_graph *s, wct_relation_graph *r, 
         if(!strcmp(tok,"schema")){ char *v=strtok_r(NULL," \t\r\n",&save); if(schema_seen++){char msg[160]; snprintf(msg,sizeof msg,"line %zu column %zu: duplicate schema; first declared at line %zu",ln,col,schema_line); seterr(err,errlen,msg);goto fail;} schema_line=ln; unsigned long long parsed_schema=0; if(!v || parse_unsigned_strict(v,&parsed_schema) || parsed_schema > UINT_MAX || (schema=(unsigned)parsed_schema)!=WCT_SCHEMA_VERSION || strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: unsupported schema",ln, col); seterr(err,errlen,msg);goto fail;} }
         else if(!strcmp(tok,"state_graph")){ if (state_graph_seen++) { char msg[160]; snprintf(msg,sizeof msg,"line %zu column %zu: duplicate state_graph; first declared at line %zu",ln,col,state_graph_line); seterr(err,errlen,msg); goto fail; } state_graph_line=ln; char *id=strtok_r(NULL," \t\r\n",&save), *init=strtok_r(NULL," \t\r\n",&save); if(!id||!init||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing state_graph fields",ln, col); seterr(err,errlen,msg);goto fail;} free(s->id); free(s->initial); s->id=dupstr(id);s->initial=dupstr(init); if(!s->id||!s->initial)goto oom; }
         else if(!strcmp(tok,"state")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid state fields",ln, col); seterr(err,errlen,msg);goto fail;} if(addstr(&s->states,&s->state_count,id)){goto oom;} }
-        else if(!strcmp(tok,"transition")){ char *a[5]; for(int i=0;i<5;i++)a[i]=strtok_r(NULL," \t\r\n",&save); if(!a[4]||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid transition fields",ln, col); seterr(err,errlen,msg);goto fail;} wct_transition *t=realloc(s->transitions,(s->transition_count+1)*sizeof *t); if(!t)goto oom; s->transitions=t; t=&t[s->transition_count]; memset(t,0,sizeof *t); t->id=dupstr(a[0]);t->from=dupstr(a[1]);t->to=dupstr(a[2]);t->input=dupstr(a[3]);t->expect=dupstr(a[4]); if(!t->id||!t->from||!t->to||!t->input||!t->expect)goto oom; s->transition_count++; }
+        else if(!strcmp(tok,"transition")){ char *a[5]; for(int i=0;i<5;i++)a[i]=strtok_r(NULL," \t\r\n",&save); if(!a[4]||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid transition fields",ln, col); seterr(err,errlen,msg);goto fail;} if(append_transition(s,a))goto oom; }
         else if(!strcmp(tok,"relation_graph")){ if (relation_graph_seen++) { char msg[160]; snprintf(msg,sizeof msg,"line %zu column %zu: duplicate relation_graph; first declared at line %zu",ln,col,relation_graph_line); seterr(err,errlen,msg); goto fail; } relation_graph_line=ln; char *id=strtok_r(NULL," \t\r\n",&save); if(!id||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid relation_graph fields",ln, col); seterr(err,errlen,msg);goto fail;} free(r->id); r->id=dupstr(id); if(!r->id)goto oom; }
-        else if(!strcmp(tok,"call")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing call id",ln, col); seterr(err,errlen,msg);goto fail;} wct_call *c=realloc(r->calls,(r->call_count+1)*sizeof *c); if(!c)goto oom; r->calls=c; c=&c[r->call_count]; memset(c,0,sizeof *c); c->id=dupstr(id); if(!c->id)goto oom; char *arg; while((arg=strtok_r(NULL," \t\r\n",&save))){ if(addstr(&c->args,&c->argc,arg))goto oom; } r->call_count++; }
+        else if(!strcmp(tok,"call")){ char *id=strtok_r(NULL," \t\r\n",&save); if(!id){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: missing call id",ln, col); seterr(err,errlen,msg);goto fail;} if(append_call(r,id,&save))goto oom; }
         else if(!strcmp(tok,"contract")){ char *id=strtok_r(NULL," \t\r\n",&save), *argc_s=strtok_r(NULL," \t\r\n",&save); int ci=id ? find_call(r,id) : -1; size_t argc=0; unsigned long long parsed_argc=0; if(!id || !argc_s || ci < 0 || parse_unsigned_strict(argc_s,&parsed_argc) || parsed_argc > SIZE_MAX){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid call contract",ln, col); seterr(err,errlen,msg);goto fail;} argc=(size_t)parsed_argc; wct_call *c=&r->calls[(size_t)ci]; c->expected_argc=argc; c->contract_set=1; char *typ; size_t count=0; while((typ=strtok_r(NULL," \t\r\n",&save))){ if (!strncmp(typ,"result=",7)) { if (parse_value_type(typ+7, &c->result_type)) { seterr(err,errlen,"unknown result type"); goto fail; } c->result_type_set=1; continue; } if (!strncmp(typ,"expect=",7)) { free(c->expected_result); c->expected_result=dupstr(typ+7); if (!c->expected_result) goto oom; continue; } wct_value_type t=WCT_ANY; if(parse_value_type(typ,&t)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: unknown argument type",ln, col); seterr(err,errlen,msg);goto fail;} wct_value_type *types=realloc(c->arg_types,(count+1)*sizeof *types); if(!types)goto oom; c->arg_types=types; c->arg_types[count++]=t; } c->arg_type_count=count; }
-        else if(!strcmp(tok,"relation")){ char *a=strtok_r(NULL," \t\r\n",&save), *b=strtok_r(NULL," \t\r\n",&save); if(!a||!b||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid relation fields",ln, col); seterr(err,errlen,msg);goto fail;} wct_relation *x=realloc(r->relations,(r->relation_count+1)*sizeof *x);if(!x)goto oom;r->relations=x;x=&x[r->relation_count];x->from=dupstr(a);x->to=dupstr(b);if(!x->from||!x->to)goto oom;r->relation_count++; }
+        else if(!strcmp(tok,"relation")){ char *a=strtok_r(NULL," \t\r\n",&save), *b=strtok_r(NULL," \t\r\n",&save); if(!a||!b||strtok_r(NULL," \t\r\n",&save)){char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: invalid relation fields",ln, col); seterr(err,errlen,msg);goto fail;} if(append_relation(r,a,b))goto oom; }
         else { char msg[128]; snprintf(msg,sizeof msg,"line %zu column %zu: unknown directive",ln, col);seterr(err,errlen,msg);goto fail; }
     }
     fclose(f);
@@ -689,7 +740,7 @@ int wct_run_state(const wct_state_graph *g, wct_transition_fn fn, void *ctx,
     close(p[0]); int status=0; if(rr==-2){free(final_state);kill_reap(pid);if(parent_before_valid)lim.state_restore(ctx,parent_before,parent_before_size);free(parent_before);wct_report_free(r);r->timed_out=1;r->process_signal=SIGKILL;r->error=dupstr("scenario timeout");return -1;} if(rr){free(final_state);kill_reap(pid);if(parent_before_valid)lim.state_restore(ctx,parent_before,parent_before_size);free(parent_before);wct_report_free(r);r->error=dupstr("scenario isolation read failed");return -1;}
     int wr=reap_deadline(pid,&status,deadline);if(wr==1){free(final_state);kill_reap(pid);if(parent_before_valid)lim.state_restore(ctx,parent_before,parent_before_size);free(parent_before);wct_report_free(r);r->timed_out=1;r->process_signal=SIGKILL;r->error=dupstr("scenario timeout");return -1;}if(wr<0||!WIFEXITED(status)||WEXITSTATUS(status)!=0){free(final_state);kill_reap(pid);if(parent_before_valid)lim.state_restore(ctx,parent_before,parent_before_size);free(parent_before);wct_report_free(r);r->error=dupstr("scenario terminated");return -1;}
     if(rc){if(parent_before_valid)lim.state_restore(ctx,parent_before,parent_before_size);free(parent_before);free(final_state);r->process_exit=WEXITSTATUS(status);return rc;}
-    if(state_present && lim.state_restore && lim.state_restore(ctx,final_state,(size_t)lens[4])){free(final_state);free(parent_before);r->failures++;r->error=dupstr("scenario commit failed");return -1;}free(parent_before);free(final_state);r->process_exit=WEXITSTATUS(status);return rc;
+    if(state_present && lim.state_restore && lim.state_restore(ctx,final_state,(size_t)lens[4])){int rollback_failed=0;if(parent_before_valid && lim.state_restore(ctx,parent_before,parent_before_size))rollback_failed=1;free(parent_before);free(final_state);r->failures++;r->error=dupstr(rollback_failed ? "scenario commit and rollback failed" : "scenario commit failed");return -1;}free(parent_before);free(final_state);r->process_exit=WEXITSTATUS(status);return rc;
 }
 
 static int wct_run_relation_impl(const wct_relation_graph *g, wct_call_fn fn, void *ctx,

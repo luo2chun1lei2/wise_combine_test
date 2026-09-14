@@ -26,6 +26,16 @@ for field in 'WCT_TRACE 1x' 'seed 0x' 'max_steps 1x' 'max_flows 1x' 'steps 1x' \
         exit 1
     fi
 done
+for malformed in 'seed -1' 'seed +1' 'max_steps -1' 'max_steps +1' \
+                 'steps -1' 'digest 0x0000000000000000' \
+                 'digest 000000000000000'; do
+    key=${malformed%% *}; value=${malformed#* }
+    sed "s/^$key .*/$key $value/" /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-malformed.$$
+    if $bin --replay /tmp/wct-test-trace-malformed.$$ >/dev/null 2>&1; then
+        echo "malformed $malformed unexpectedly replayed" >&2
+        exit 1
+    fi
+done
 if $bin --replay /tmp/wct-test-trace-duplicate.$$ >/dev/null 2>&1; then echo 'duplicate model trace unexpectedly replayed' >&2; exit 1; fi
 sed 's/edge fetch->transform/edge altered->transform/' /tmp/wct-test-trace.$$ > /tmp/wct-test-trace-edge-tampered.$$
 if $bin --replay /tmp/wct-test-trace-edge-tampered.$$ >/dev/null 2>&1; then

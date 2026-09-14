@@ -56,17 +56,27 @@ Production users should provide callbacks through the C API rather than
 relying on these example callbacks. Invalid models and callback failures
 return exit code 1; CLI usage errors return exit code 2.
 
-The CLI isolates each complete scenario in a POSIX child by default, including
-trace capture and replay. Use `--isolate --timeout-ms N` to make the deadline
-explicit and terminate a scenario that exceeds it. Isolation status is
-included in the report (`process_exit`, `process_signal`, `timed_out`). Trace
-capture writes unbuffered child output and recomputes the step digest from the
-trace file, so callback side effects remain isolated while replay stays
-deterministic.
+The C API and CLI isolate each complete scenario in a POSIX child by default,
+including trace capture and replay. `--isolate` is retained for compatibility
+and does not add a second isolation boundary. `--timeout-ms N` is independent of
+that flag and makes the whole-scenario monotonic deadline explicit. Isolation
+status is included in the report (`process_exit`, `process_signal`,
+`timed_out`). Trace capture writes unbuffered child output and recomputes the
+step digest from the trace file, so callback side effects remain isolated while
+replay stays deterministic.
+
+Trace digests are unkeyed 64-bit consistency checks. Replay detects accidental
+editing and deterministic mutation of recorded fields; it does not authenticate
+a trace or defend against an attacker who rewrites all fields and digests.
+Replay deliberately opens the model path recorded in the trace, so replay a
+trace only when that path is trusted. Timeout settings are execution controls,
+not recorded replay inputs; a replayed scenario has no captured original
+deadline.
 
 State isolation is transactional and scenario-scoped: the parent owns state
 snapshots, and a successful state child commits its serialized post-state;
-failed state scenarios roll back atomically. Relation scenarios execute entirely
+failed scenarios, failed callbacks, timeouts, assertion mismatches, and failed
+final commits roll back atomically. Relation scenarios execute entirely
 in the child and deliberately do not commit arbitrary callback context (callers
 must return results through the callback contract). The child executes
 the callback under a monotonic deadline. Serialized state is committed only for
@@ -101,8 +111,8 @@ The last local coverage measurement used GCC/gcov 9.4.0 on Linux:
 
 | Source | Lines executed | Branches executed | Branches taken at least once |
 | --- | ---: | ---: | ---: |
-| `src/wct.c` | 78.78% (674 lines) | 81.49% (1124 branches) | 58.45% |
-| `tools/wct_cli.c` | 91.89% (333 lines) | 96.37% (606 branches) | 66.50% |
+| `src/wct.c` | 78.52% (717 lines) | 81.55% (1138 branches) | 58.35% |
+| `tools/wct_cli.c` | 92.01% (338 lines) | 96.45% (620 branches) | 67.10% |
 
 `make coverage` exports `WCT_COVERAGE_ROOT`. Every normal fork exit calls
 `child_exit()`; when the coverage root is present it sets GCC's `GCOV_PREFIX`

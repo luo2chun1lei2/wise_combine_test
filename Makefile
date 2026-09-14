@@ -87,8 +87,14 @@ coverage: clean
 	WCT_QUEUE_CFLAGS='$(CFLAGS) -w' \
 		WCT_QUEUE_LDFLAGS='--coverage -Wl,--undefined=__gcov_dump' \
 		./tests/test_queue_oracle.sh
+	@for required in wct.gcda wct_cli.gcda; do \
+		test -n "$$(find $(BUILD)/gcov-forks -type f -name "$$required" -print -quit)" || { \
+			echo "coverage failure: required fork profile $$required is absent" >&2; exit 1; \
+		}; \
+	done
 	rm -f $(BUILD)/test_api.gcda
-	tools/merge-coverage.sh $(BUILD) $(BUILD)/gcov-forks
+	@fork_profiles=$$(tools/merge-coverage.sh $(BUILD) $(BUILD)/gcov-forks); \
+		printf '%s\n' "$$fork_profiles" > $(BUILD)/fork-profile-count.txt
 	@mkdir -p $(COVERAGE)
 	@set -e; \
 		count=0; \
@@ -115,6 +121,8 @@ coverage: clean
 				grep -E '^(File|Lines executed|Branches executed|Taken at least once):' "$$report"; \
 			done; \
 		} > $(COVERAGE)/summary.txt; \
+		printf 'Fork profiles aggregated: ' >> $(COVERAGE)/summary.txt; \
+		cat $(BUILD)/fork-profile-count.txt >> $(COVERAGE)/summary.txt; \
 		rm -f $(BUILD)/test_api.gcda $(BUILD)/test_api.gcno \
 			test_api.gcda test_api.gcno \
 			queue_harness.gcda queue_harness.gcno; \

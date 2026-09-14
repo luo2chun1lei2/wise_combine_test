@@ -1,8 +1,0 @@
-=== wct.gcda.gcov.txt ===
-Lines executed:78.78% of 674
-Branches executed:81.49% of 1124
-Taken at least once:58.45% of 1124
-=== wct_cli.gcda.gcov.txt ===
-Lines executed:91.89% of 333
-Branches executed:96.37% of 606
-Taken at least once:66.50% of 606

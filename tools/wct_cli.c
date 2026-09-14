@@ -189,8 +189,14 @@ static int write_trace_header(FILE *trace, const char *model, const char *mode,
 static int parse_num_line(const char *line, const char *prefix, int base, unsigned long long *out) {
     size_t n = strlen(prefix); if (strncmp(line,prefix,n)) return 0;
     const char *p=line+n; while (*p==' '||*p=='\t') p++; char buf[128]; size_t i=0;
+    if (*p=='+' || *p=='-') return -1;
     while (*p && *p!='\n' && *p!='\r' && *p!=' ' && *p!='\t' && i<sizeof(buf)-1) buf[i++]=*p++;
     buf[i]='\0'; while (*p==' '||*p=='\t') p++; if (!i || (*p && *p!='\n'&&*p!='\r')) return -1;
+    for (char *d=buf; *d; ++d) {
+        int valid = base == 16 ? isxdigit((unsigned char)*d) : isdigit((unsigned char)*d);
+        if (!valid) return -1;
+    }
+    if (base == 16 && i != 16) return -1;
     errno=0; char *e=NULL; unsigned long long v=strtoull(buf,&e,base); if(errno==ERANGE||e==buf||*e) return -1; *out=v; return 1;
 }
 static int parse_signed_line(const char *line, const char *prefix, int *out) {

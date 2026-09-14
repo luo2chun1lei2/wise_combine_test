@@ -46,6 +46,7 @@ static int state_callback(const char *input, char **actual, void *opaque)
 }
 
 static int state_reset(void *opaque) { (void)opaque; return 0; }
+static int commit_restore_should_fail;
 static int snapshot_count(void *opaque, void **snapshot, size_t *size) {
     state_context *context = opaque;
     int *copy = malloc(sizeof *copy);
@@ -55,6 +56,7 @@ static int snapshot_count(void *opaque, void **snapshot, size_t *size) {
 static int restore_count(void *opaque, const void *snapshot, size_t size) {
     state_context *context = opaque;
     if (!snapshot || size != sizeof(int)) return -1;
+    if (commit_restore_should_fail && *(const int *)snapshot == 2) return -1;
     context->count = (size_t)*(const int *)snapshot; return 0;
 }
 static int zero_restore_calls;
@@ -193,6 +195,27 @@ static void test_isolated_state_snapshot_commit(void)
           "isolated expectation mismatch should fail run");
     CHECK(context.count == 0, "expectation mismatch must not commit child state");
     wct_report_free(&report); wct_state_graph_free(&graph);
+}
+
+static void test_state_commit_restore_rollback(void)
+{
+    wct_state_graph graph;
+    wct_report report;
+    state_context context = {0};
+    init_state_graph(&graph);
+    commit_restore_should_fail = 1;
+    CHECK(wct_run_state(&graph, state_callback, &context,
+                        (wct_limits){.timeout_ms = 100,
+                                    .state_snapshot = snapshot_count,
+                                    .state_restore = restore_count}, &report) == -1,
+          "failed successful-scenario commit should fail run");
+    CHECK(report.failures == 1 && report.error &&
+              strcmp(report.error, "scenario commit failed") == 0,
+          "commit failure should be reported");
+    CHECK(context.count == 0, "failed commit must roll back to the parent snapshot");
+    commit_restore_should_fail = 0;
+    wct_report_free(&report);
+    wct_state_graph_free(&graph);
 }
 
 static void test_zero_snapshot_and_rollback_failure(void)
@@ -604,7 +627,7 @@ static void test_multiple_bounded_relation_flows(void)
           "multi-flow report should separate flows, total steps, and unique coverage");
     CHECK(strcmp(context.ids[0], "b") == 0 && strcmp(context.ids[1], "c") == 0 &&
               strcmp(context.ids[2], "a") == 0,
-          "unseeded alternative flow should deterministically differ from lexical flow");
+          "unseeded alternative flow should use deterministic declaration rotation");
     wct_report_free(&report);
     wct_relation_graph_free(&graph);
 }
@@ -893,6 +916,7 @@ int main(void)
     test_state_callback_failure();
     test_state_failure_atomic_snapshot();
     test_isolated_state_snapshot_commit();
+    test_state_commit_restore_rollback();
     test_zero_snapshot_and_rollback_failure();
     test_isolation_timeout();
     test_timeout_range_and_zero_arity_contract();

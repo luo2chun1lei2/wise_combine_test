@@ -18,6 +18,11 @@ current boundary and gates are indexed by
 [`.omx/release-blockers.md`](../.omx/release-blockers.md). The regression-to-oracle
 map is [`docs/oracle-matrix.md`](oracle-matrix.md).
 
+Release candidates use paired commits: source changes are frozen first, then
+evidence and status artifacts are committed while retaining the tested source
+hash in `evidence/iter-16/{head.txt,summary.json,manifest.json}`. A candidate
+therefore refers to the source/evidence pair, not only the source commit.
+
 The I15 section below is historical evidence for commit
 `b8e5d68808ba573bb6e5c13b465ee214a2428043`. It is preserved unchanged and does
 not describe the current HEAD or release candidate.
