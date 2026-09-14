@@ -19,7 +19,7 @@ CLI、规范、适配器、报告、退出码、安全限制或测量方式发�
 [`docs/improvement-roadmap.md`](docs/improvement-roadmap.md) 中。该文件列出
 当前能力边界、发布阻断问题、后续增强批次和验收条件；每项工作完成后应同步
 更新其状态。
-计划中的报告 v2/replay 契约记录在
+已实现的报告 v2/replay 契约记录在
 [`docs/adr/0003-report-and-replay-format.md`](docs/adr/0003-report-and-replay-format.md)。
 
 ## 构建与测试

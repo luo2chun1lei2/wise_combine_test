@@ -44,9 +44,9 @@
 - SHA-256 基础模块：`5bbb230`。新增 OpenSSL libcrypto 封装和空串/`abc` 已知向量测试；尚未接入 report v2 digest 字段。
 - CLI 报告摘要：当前增量。`hash-report` 输出报告原始字节 SHA-256，并有内容变更回归；仍未替代 report v2 内嵌 digest/replay。
 - 外部摘要门禁：当前增量。`hash-report REPORT EXPECTED_SHA256` 对已保存摘要执行比较，匹配返回 0、不匹配返回 4；这是完整性比对，不是来源认证。
-- v2 envelope CLI：当前增量。`verify-report-v2` 校验 payload SHA-256 并输出 `integrity_verified:true`，篡改输入返回码 2；完整 payload schema 与 replay 仍待实现。
+- v2 envelope CLI：当前增量。`verify-report-v2` 校验 payload SHA-256 后执行 ADR 0003 完整 payload schema 和语义校验，篡改输入返回码 2；`replay` 已提供保存 flow 的独立执行。
 - v2 envelope 严格解析：`86f6282`。envelope 现在复用项目 JSON parser，校验版本、字段集合、算法和 digest 格式，并支持 payload 转义。
-- v2 envelope 状态：基础完成。`wrap_v2`/`verify_v2` 与 `verify-report-v2` 已覆盖转义 payload、摘要匹配和篡改拒绝；真实运行 payload 与 replay 仍待实现。
+- v2 envelope 状态：基础完成。`wrap_v2`/`verify_v2` 与 `verify-report-v2` 已覆盖转义 payload、摘要匹配和篡改拒绝；`run` 现在生成真实运行 payload，`replay` 支持独立重放。
 - v2 payload 包装 CLI：`224c69c`。`wrap-report-v2` 可将 payload 文件封装为 SHA-256 envelope，并通过 `verify-report-v2` 复核。
 - v2 envelope 攻击矩阵：`9c06232`。覆盖未知算法、额外/重复字段、错误版本、短 digest 与尾随数据，均返回校验失败。
 - 架构与追踪资料：`ee665d6`。新增 `docs/architecture.md`、`docs/requirements-matrix.md` 和 `docs/test-matrix.md`。

@@ -1,6 +1,6 @@
 # ADR 0003：报告 v2 与重放格式
 
-状态：v2 envelope 基础已实现（含严格 JSON payload 校验）；完整 payload schema 与 replay 尚未实现。本文不改变当前 v1 命令行为。
+状态：v2 envelope、完整 payload schema 和 `replay` 已实现并纳入回归。本文与 `wise-combine replay` 的当前行为一致。
 
 ## 数据契约
 

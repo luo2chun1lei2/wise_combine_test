@@ -23,7 +23,7 @@ recorded in [`docs/improvement-roadmap.md`](docs/improvement-roadmap.md).
 It lists current boundaries, release blockers, planned enhancements, and
 acceptance conditions; implementation status must be updated there as work
 lands.
-The planned report v2/replay contract is recorded in
+The implemented report v2/replay contract is recorded in
 [`docs/adr/0003-report-and-replay-format.md`](docs/adr/0003-report-and-replay-format.md).
 
 ## Build and test
