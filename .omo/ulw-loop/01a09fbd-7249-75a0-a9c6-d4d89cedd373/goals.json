@@ -2,7 +2,7 @@
   "version": 1,
   "evidenceLayoutVersion": 2,
   "createdAt": "2026-09-14T11:51:53.883Z",
-  "updatedAt": "2026-09-14T11:53:25.458Z",
+  "updatedAt": "2026-09-14T12:57:14.527Z",
   "briefPath": ".omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/brief.md",
   "goalsPath": ".omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/goals.json",
   "ledgerPath": ".omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/ledger.jsonl",
@@ -20,8 +20,9 @@
           "userModel": "happy",
           "expectedEvidence": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a1/criterion-c1-clean-replay.txt",
           "essential": true,
-          "capturedEvidence": null,
-          "status": "pending"
+          "capturedEvidence": "C001_RESULT=PASS: real CLI run/verify/replay/verify transcript at .omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a1/criterion-c1-clean-replay.txt; input SHA-256 unchanged @tree:dbff277 | cleanup: removed wct-c1 temp dir; no child process or port retained",
+          "status": "pass",
+          "capturedAt": "2026-09-14T12:51:41.404Z"
         },
         {
           "id": "C002",
@@ -29,8 +30,9 @@
           "userModel": "edge",
           "expectedEvidence": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a1/criterion-c2-replay-safety.txt",
           "essential": true,
-          "capturedEvidence": null,
-          "status": "pending"
+          "capturedEvidence": "C002_RESULT=PASS: digest mismatch/missing workdir/schema invalid/tampered flow all rejected nonzero; collision rejected; mismatch replay exited 4; reports unchanged and no sentinel launched at .omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a1/criterion-c2-replay-safety.txt @tree:dbff277 | cleanup: removed wct-c2b temp dir; no child process or port retained",
+          "status": "pass",
+          "capturedAt": "2026-09-14T12:55:27.763Z"
         },
         {
           "id": "C003",
@@ -38,13 +40,14 @@
           "userModel": "regression",
           "expectedEvidence": ".omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a1/criterion-c3-regression-docs.txt",
           "essential": false,
-          "capturedEvidence": null,
-          "status": "pending"
+          "capturedEvidence": "C003_RESULT=PASS: Debug/ASan 45/45, coverage 84% (1148 lines), synchronized docs inspected at .omo/evidence/ulw/01a09fbd-7249-75a0-a9c6-d4d89cedd373/G001-implement-the-report-v2-payload-cont/a1/criterion-c3-regression-docs.txt @tree:dbff277 | cleanup: no runtime resources spawned; build dirs retained as configured test artifacts",
+          "status": "pass",
+          "capturedAt": "2026-09-14T12:57:14.527Z"
         }
       ],
       "attempt": 0,
       "createdAt": "2026-09-14T11:51:53.883Z",
-      "updatedAt": "2026-09-14T11:53:25.458Z"
+      "updatedAt": "2026-09-14T12:57:14.527Z"
     }
   ],
   "codexObjective": "Complete the durable ulw-loop plan in .omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/goals.json, including later accepted/appended stories, under the original brief constraints; use .omo/ulw-loop/01a09fbd-7249-75a0-a9c6-d4d89cedd373/ledger.jsonl as the audit trail."
