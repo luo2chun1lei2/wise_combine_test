@@ -7,8 +7,8 @@ iteration acceptance.
 
 ## Current Release Status (2026-09-14)
 
-Release status remains **BLOCKED** only for the final independent code and
-architecture/product-boundary reviews. Iteration 17 automated gates completed
+Release status is **CONDITIONALLY PASS** after independent code and
+architecture/product-boundary approvals. Iteration 17 automated gates completed
 at source commit `41669164a69033a5b51383c26c638f90b2a9e52a`; see
 [`evidence/iter-18/summary.json`](../evidence/iter-18/summary.json) and
 [`evidence/iter-18/manifest.json`](../evidence/iter-18/manifest.json). The

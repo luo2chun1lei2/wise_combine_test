@@ -1,6 +1,6 @@
 # Release blockers
 
-Status: **BLOCKED**. This page tracks gates for the current candidate, not the
+Status: **CONDITIONALLY PASS**. This page tracks gates for the current candidate, not the
 historical I15 result. See [`current-status.md`](current-status.md) and
 [`docs/release-readiness.md`](../docs/release-readiness.md).
 
@@ -31,11 +31,10 @@ contains a manifest covering all of the following:
 6. Artifact hashes and source commit in `evidence/iter-18/summary.json` and
    `manifest.json`.
 
-Post-fix independent review must also be completed for the same frozen commit:
+Post-fix independent review is recorded for the same frozen source and I18 evidence pair:
 
-- independent code review;
-- independent architecture and product-boundary review;
-- explicit reconciliation of the result with
-  [`current-status.md`](current-status.md).
+- code review: APPROVE;
+- architecture/product-boundary review: APPROVE after metadata reconciliation;
+- reconciliation: [`reviews/iter-18-final-review.md`](reviews/iter-18-final-review.md).
 
 No release claim may cite historical I15 PASS as a substitute for these gates.
