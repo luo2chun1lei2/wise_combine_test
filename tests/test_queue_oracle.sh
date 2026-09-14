@@ -32,11 +32,22 @@ run_case() {
     repetition=$3
     model=$4
     harness="$bin_dir/queue_harness_m$mutant"
+    profile_prefix="$bin_dir/gcov/m$mutant"
     set +e
     if [ -n "$runner" ]; then
-        output=$($runner "$harness" "$root/$model" 2>&1)
+        if [ -n "${WCT_COVERAGE_ROOT:-}" ]; then
+            output=$(env GCOV_PREFIX="$profile_prefix" GCOV_PREFIX_STRIP=0 \
+                $runner "$harness" "$root/$model" 2>&1)
+        else
+            output=$($runner "$harness" "$root/$model" 2>&1)
+        fi
     else
-        output=$("$harness" "$root/$model" 2>&1)
+        if [ -n "${WCT_COVERAGE_ROOT:-}" ]; then
+            output=$(env GCOV_PREFIX="$profile_prefix" GCOV_PREFIX_STRIP=0 \
+                "$harness" "$root/$model" 2>&1)
+        else
+            output=$("$harness" "$root/$model" 2>&1)
+        fi
     fi
     exit_code=$?
     set -e
@@ -58,6 +69,10 @@ for probe in cycle repeat subset; do
     set -e
     printf 'probe\t%s\t1\t%s\t%s\n' "$probe" "$exit_code" "$output" >> "$results"
 done
+
+if [ -n "${WCT_COVERAGE_ROOT:-}" ]; then
+    tools/merge-coverage.sh "$root/build" "$bin_dir/gcov"
+fi
 
 for mutant in 0 1 2 3 4 5 6; do
     for case_id in 1 2 3 4 5 6; do

@@ -7,7 +7,10 @@ BIN := bin/wise-combine-test
 API_TEST := $(BUILD)/test_api
 COVERAGE := coverage
 WCT_COVERAGE_ROOT := $(CURDIR)/$(BUILD)/gcov-forks
+
+ifneq ($(filter coverage,$(MAKECMDGOALS)),)
 export WCT_COVERAGE_ROOT
+endif
 
 .PHONY: all clean clean-profiles test queue-oracle sanitize sanitizer-sentinels valgrind measure coverage
 
@@ -81,7 +84,8 @@ coverage: clean
 	./tests/test_cli.sh
 	./$(API_TEST)
 	./tests/test_fuzz.sh
-	WCT_QUEUE_CFLAGS='$(CFLAGS)' WCT_QUEUE_LDFLAGS='$(LDFLAGS)' \
+	WCT_QUEUE_CFLAGS='$(CFLAGS) -w' \
+		WCT_QUEUE_LDFLAGS='--coverage -Wl,--undefined=__gcov_dump' \
 		./tests/test_queue_oracle.sh
 	rm -f $(BUILD)/test_api.gcda
 	tools/merge-coverage.sh $(BUILD) $(BUILD)/gcov-forks
