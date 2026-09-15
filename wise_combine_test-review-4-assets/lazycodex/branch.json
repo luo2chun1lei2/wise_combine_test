@@ -1,0 +1,1 @@
+{"version":1,"states":[{"id":"s"},{"id":"x"},{"id":"y"}],"initial_state":"s","transitions":[{"id":"t_a","from":"s","to":"x","function":"f"},{"id":"t_b","from":"s","to":"y","function":"f"},{"id":"t_c","from":"x","to":"y","function":"f"}],"functions":[{"id":"f","params":[],"returns":[]}],"relations":[],"limits":{"max_cases":5,"max_steps":8,"max_subprocesses":1},"seed":1}

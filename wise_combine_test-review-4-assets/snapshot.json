@@ -1,0 +1,52 @@
+{
+  "recorded_at": "2026-09-15T00:00:00+08:00",
+  "review_round": 4,
+  "previous_review": {
+    "round": 3,
+    "recorded_at": "2026-09-12T17:17:34+08:00",
+    "asset_dir": "wise_combine_test-review-3-assets"
+  },
+  "platform": "Linux-5.15.0-139-generic-x86_64-with-glibc2.5",
+  "projects": {
+    "omx": {
+      "head": "1faa41e26488165444b88fdb486b651c16fadf0a",
+      "review3_head": "39850893cce6f0223296eadd791098aa7f7a6abe",
+      "status_after_review": "clean",
+      "remediation_commits": 21,
+      "diffstat": "180 files changed, 7502 insertions(+), 76 deletions(-)"
+    },
+    "lazycodex": {
+      "head": "b67e24f7d4da1bf36afa1f337abf939a8a50689b",
+      "review3_head": "52a7fa58ba6d6e4d55c33bbc0d7bb63fe0722514",
+      "status_after_review": "clean",
+      "remediation_commits": 89,
+      "diffstat": "76 files changed, 5112 insertions(+), 73 deletions(-)"
+    },
+    "manual": {
+      "head": "7eb9ce108f95b734060118b3317fc07bcfdc82c7",
+      "review3_head": "96d639a6bfc5d5eb363f336e2a4a52031dd0290d",
+      "status_after_review": "clean",
+      "remediation_commits": 11,
+      "diffstat": "46 files changed, 2081 insertions(+), 230 deletions(-)"
+    },
+    "plan_goal": {
+      "head": "eb219c689b55dd3848990ce7371271fb51d5da5f",
+      "review3_head": "e3f2e4705a9f6634cbbafdb87326ff71213a9704",
+      "status_after_review": "clean",
+      "remediation_commits": 16,
+      "diffstat": "35 files changed, 2171 insertions(+), 254 deletions(-)"
+    }
+  },
+  "gcc": "gcc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0",
+  "g++": "g++ (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0",
+  "cmake": "cmake version 3.16.3",
+  "make": "GNU Make 4.2.1",
+  "method": "四个独立 subagent 各负责一个项目（相同任务书），汇总者交叉复核关键承重结论后统一严重程度与评分",
+  "subagent_reports": [
+    "omx/independent-review.md",
+    "lazycodex/independent-review.md",
+    "manual/independent-review.md",
+    "plan_goal/independent-review.md",
+    "cross-check.md"
+  ]
+}

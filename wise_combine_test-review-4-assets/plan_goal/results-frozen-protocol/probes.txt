@@ -1,0 +1,241 @@
+[cycle max-depth=8 max-flows=100]
+# version=plan_goal-1.0.0 seed=0 model_digest=362b896ac134057b files=/home/workspace_data/works/myprojects/wise_combine_test.evaluate‌/wise_combine_test-review-3-assets/plan_goal/probes.ct
+total=100 passed=0 failed=0
+[not_executed] 0:a->b->b->b->b->b->b->c (dry-run: no library loaded)
+[not_executed] 1:a->b->b->b->b->b->c (dry-run: no library loaded)
+[not_executed] 2:a->b->b->b->b->c (dry-run: no library loaded)
+[not_executed] 3:a->b->b->b->c (dry-run: no library loaded)
+[not_executed] 4:a->b->b->c (dry-run: no library loaded)
+[not_executed] 5:a->b->c (dry-run: no library loaded)
+[not_executed] 6:a->c (dry-run: no library loaded)
+[not_executed] 7: (dry-run: no library loaded)
+[not_executed] 8:a (dry-run: no library loaded)
+[not_executed] 9:a->a (dry-run: no library loaded)
+[not_executed] 10:a->a->b (dry-run: no library loaded)
+[not_executed] 11:a->a->b->b (dry-run: no library loaded)
+[not_executed] 12:a->a->b->b->c (dry-run: no library loaded)
+[not_executed] 13:a->a->b->b->c->c (dry-run: no library loaded)
+[not_executed] 14:a->a->b->b->c->c->p (dry-run: no library loaded)
+[not_executed] 15:a->a->b->b->c->c->p->p (dry-run: no library loaded)
+[not_executed] 16:a->a->b->b->c->c->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 17:a->a->b->b->c->p (dry-run: no library loaded)
+[not_executed] 18:a->a->b->b->c->p->c (dry-run: no library loaded)
+[not_executed] 19:a->a->b->b->c->p->c->p (dry-run: no library loaded)
+[not_executed] 20:a->a->b->b->c->p->c->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 21:a->a->b->b->c->p->p (dry-run: no library loaded)
+[not_executed] 22:a->a->b->b->c->p->p->c (dry-run: no library loaded)
+[not_executed] 23:a->a->b->b->c->p->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 24:a->a->b->b->c->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 25:a->a->b->b->c->p->q->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 26:a->a->b->b->c->p->q->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 27:a->a->b->b->p (dry-run: no library loaded)
+[not_executed] 28:a->a->b->b->p->c (dry-run: no library loaded)
+[not_executed] 29:a->a->b->b->p->c->c (dry-run: no library loaded)
+[not_executed] 30:a->a->b->b->p->c->c->p (dry-run: no library loaded)
+[not_executed] 31:a->a->b->b->p->c->c->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 32:a->a->b->b->p->c->p (dry-run: no library loaded)
+[not_executed] 33:a->a->b->b->p->c->p->c (dry-run: no library loaded)
+[not_executed] 34:a->a->b->b->p->c->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 35:a->a->b->b->p->c->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 36:a->a->b->b->p->c->q->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 37:a->a->b->b->p->c->q->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 38:a->a->b->b->p->p (dry-run: no library loaded)
+[not_executed] 39:a->a->b->b->p->p->c (dry-run: no library loaded)
+[not_executed] 40:a->a->b->b->p->p->c->c (dry-run: no library loaded)
+[not_executed] 41:a->a->b->b->p->p->c->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 42:a->a->b->b->p->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 43:a->a->b->b->p->p->q->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 44:a->a->b->b->p->p->q->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 45:a->a->b->b->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 46:a->a->b->b->p->q->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 47:a->a->b->b->p->q->c->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 48:a->a->b->b->p->q->c->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 49:a->a->b->b->p->q->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 50:a->a->b->b->p->q->q->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 51:a->a->b->c (dry-run: no library loaded)
+[not_executed] 52:a->a->b->c->b (dry-run: no library loaded)
+[not_executed] 53:a->a->b->c->b->c (dry-run: no library loaded)
+[not_executed] 54:a->a->b->c->b->c->p (dry-run: no library loaded)
+[not_executed] 55:a->a->b->c->b->c->p->p (dry-run: no library loaded)
+[not_executed] 56:a->a->b->c->b->c->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 57:a->a->b->c->b->p (dry-run: no library loaded)
+[not_executed] 58:a->a->b->c->b->p->c (dry-run: no library loaded)
+[not_executed] 59:a->a->b->c->b->p->c->p (dry-run: no library loaded)
+[not_executed] 60:a->a->b->c->b->p->c->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 61:a->a->b->c->b->p->p (dry-run: no library loaded)
+[not_executed] 62:a->a->b->c->b->p->p->c (dry-run: no library loaded)
+[not_executed] 63:a->a->b->c->b->p->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 64:a->a->b->c->b->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 65:a->a->b->c->b->p->q->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 66:a->a->b->c->b->p->q->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 67:a->a->b->c->c (dry-run: no library loaded)
+[not_executed] 68:a->a->b->c->c->b (dry-run: no library loaded)
+[not_executed] 69:a->a->b->c->c->b->p (dry-run: no library loaded)
+[not_executed] 70:a->a->b->c->c->b->p->p (dry-run: no library loaded)
+[not_executed] 71:a->a->b->c->c->b->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 72:a->a->b->c->c->p (dry-run: no library loaded)
+[not_executed] 73:a->a->b->c->c->p->b (dry-run: no library loaded)
+[not_executed] 74:a->a->b->c->c->p->b->p (dry-run: no library loaded)
+[not_executed] 75:a->a->b->c->c->p->b->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 76:a->a->b->c->c->p->p (dry-run: no library loaded)
+[not_executed] 77:a->a->b->c->c->p->p->b (dry-run: no library loaded)
+[not_executed] 78:a->a->b->c->c->p->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 79:a->a->b->c->c->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 80:a->a->b->c->c->p->q->b (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 81:a->a->b->c->c->p->q->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 82:a->a->b->c->p (dry-run: no library loaded)
+[not_executed] 83:a->a->b->c->p->b (dry-run: no library loaded)
+[not_executed] 84:a->a->b->c->p->b->c (dry-run: no library loaded)
+[not_executed] 85:a->a->b->c->p->b->c->p (dry-run: no library loaded)
+[not_executed] 86:a->a->b->c->p->b->c->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 87:a->a->b->c->p->b->p (dry-run: no library loaded)
+[not_executed] 88:a->a->b->c->p->b->p->c (dry-run: no library loaded)
+[not_executed] 89:a->a->b->c->p->b->p->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 90:a->a->b->c->p->b->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 91:a->a->b->c->p->b->q->c (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 92:a->a->b->c->p->b->q->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 93:a->a->b->c->p->c (dry-run: no library loaded)
+[not_executed] 94:a->a->b->c->p->c->b (dry-run: no library loaded)
+[not_executed] 95:a->a->b->c->p->c->b->p (dry-run: no library loaded)
+[not_executed] 96:a->a->b->c->p->c->b->q (dry-run: no library loaded) {q.x = p.token;}
+[not_executed] 97:a->a->b->c->p->c->p (dry-run: no library loaded)
+[not_executed] 98:a->a->b->c->p->c->p->b (dry-run: no library loaded)
+[not_executed] 99:a->a->b->c->p->c->p->q (dry-run: no library loaded) {q.x = p.token;}
+# warning: generation was truncated by --max-flows
+[cycle max-flows=1]
+# version=plan_goal-1.0.0 seed=0 model_digest=362b896ac134057b files=/home/workspace_data/works/myprojects/wise_combine_test.evaluate‌/wise_combine_test-review-3-assets/plan_goal/probes.ct
+total=1 passed=0 failed=0
+[not_executed] 0:a->b->b->b->b->b->b->c (dry-run: no library loaded)
+# warning: generation was truncated by --max-flows
+[constraints]
+# version=plan_goal-1.0.0 seed=0 model_digest=5cc42112fbbb37e8 files=/home/workspace_data/works/myprojects/wise_combine_test.evaluate‌/wise_combine_test-review-3-assets/plan_goal/constraints.ct
+total=0 passed=0 failed=0
+[missing required parameter binding]
+model error: parameter consume.t has no source
+[non-self cycle]
+# version=plan_goal-1.0.0 seed=0 model_digest=94a03ba77cce4018 files=/home/workspace_data/works/myprojects/wise_combine_test.evaluate‌/wise_combine_test-review-3-assets/plan_goal/nonself_cycle.ct
+total=100 passed=0 failed=0
+[not_executed] 0:to_b->to_a->to_b->to_a->to_b->to_a->to_b->finish (dry-run: no library loaded)
+[not_executed] 1:to_b->to_a->to_b->to_a->to_b->finish (dry-run: no library loaded)
+[not_executed] 2:to_b->to_a->to_b->finish (dry-run: no library loaded)
+[not_executed] 3:to_b->finish (dry-run: no library loaded)
+[not_executed] 4: (dry-run: no library loaded)
+[not_executed] 5:to_b (dry-run: no library loaded)
+[not_executed] 6:to_b->to_b (dry-run: no library loaded)
+[not_executed] 7:to_b->to_b->to_a (dry-run: no library loaded)
+[not_executed] 8:to_b->to_b->to_a->to_a (dry-run: no library loaded)
+[not_executed] 9:to_b->to_b->to_a->to_a->finish (dry-run: no library loaded)
+[not_executed] 10:to_b->to_b->to_a->to_a->finish->finish (dry-run: no library loaded)
+[not_executed] 11:to_b->to_b->to_a->finish (dry-run: no library loaded)
+[not_executed] 12:to_b->to_b->to_a->finish->to_a (dry-run: no library loaded)
+[not_executed] 13:to_b->to_b->to_a->finish->to_a->finish (dry-run: no library loaded)
+[not_executed] 14:to_b->to_b->to_a->finish->finish (dry-run: no library loaded)
+[not_executed] 15:to_b->to_b->to_a->finish->finish->to_a (dry-run: no library loaded)
+[not_executed] 16:to_b->to_b->finish (dry-run: no library loaded)
+[not_executed] 17:to_b->to_b->finish->to_a (dry-run: no library loaded)
+[not_executed] 18:to_b->to_b->finish->to_a->to_a (dry-run: no library loaded)
+[not_executed] 19:to_b->to_b->finish->to_a->to_a->finish (dry-run: no library loaded)
+[not_executed] 20:to_b->to_b->finish->to_a->finish (dry-run: no library loaded)
+[not_executed] 21:to_b->to_b->finish->to_a->finish->to_a (dry-run: no library loaded)
+[not_executed] 22:to_b->to_b->finish->finish (dry-run: no library loaded)
+[not_executed] 23:to_b->to_b->finish->finish->to_a (dry-run: no library loaded)
+[not_executed] 24:to_b->to_b->finish->finish->to_a->to_a (dry-run: no library loaded)
+[not_executed] 25:to_b->to_a (dry-run: no library loaded)
+[not_executed] 26:to_b->to_a->to_b (dry-run: no library loaded)
+[not_executed] 27:to_b->to_a->to_b->to_a (dry-run: no library loaded)
+[not_executed] 28:to_b->to_a->to_b->to_a->finish (dry-run: no library loaded)
+[not_executed] 29:to_b->to_a->to_b->to_a->finish->finish (dry-run: no library loaded)
+[not_executed] 30:to_b->to_a->to_b->finish (dry-run: no library loaded)
+[not_executed] 31:to_b->to_a->to_b->finish->to_a (dry-run: no library loaded)
+[not_executed] 32:to_b->to_a->to_b->finish->to_a->finish (dry-run: no library loaded)
+[not_executed] 33:to_b->to_a->to_b->finish->finish (dry-run: no library loaded)
+[not_executed] 34:to_b->to_a->to_b->finish->finish->to_a (dry-run: no library loaded)
+[not_executed] 35:to_b->to_a->to_a (dry-run: no library loaded)
+[not_executed] 36:to_b->to_a->to_a->to_b (dry-run: no library loaded)
+[not_executed] 37:to_b->to_a->to_a->to_b->finish (dry-run: no library loaded)
+[not_executed] 38:to_b->to_a->to_a->to_b->finish->finish (dry-run: no library loaded)
+[not_executed] 39:to_b->to_a->to_a->finish (dry-run: no library loaded)
+[not_executed] 40:to_b->to_a->to_a->finish->to_b (dry-run: no library loaded)
+[not_executed] 41:to_b->to_a->to_a->finish->to_b->finish (dry-run: no library loaded)
+[not_executed] 42:to_b->to_a->to_a->finish->finish (dry-run: no library loaded)
+[not_executed] 43:to_b->to_a->to_a->finish->finish->to_b (dry-run: no library loaded)
+[not_executed] 44:to_b->to_a->finish (dry-run: no library loaded)
+[not_executed] 45:to_b->to_a->finish->to_b (dry-run: no library loaded)
+[not_executed] 46:to_b->to_a->finish->to_b->to_a (dry-run: no library loaded)
+[not_executed] 47:to_b->to_a->finish->to_b->to_a->finish (dry-run: no library loaded)
+[not_executed] 48:to_b->to_a->finish->to_b->finish (dry-run: no library loaded)
+[not_executed] 49:to_b->to_a->finish->to_b->finish->to_a (dry-run: no library loaded)
+[not_executed] 50:to_b->to_a->finish->to_a (dry-run: no library loaded)
+[not_executed] 51:to_b->to_a->finish->to_a->to_b (dry-run: no library loaded)
+[not_executed] 52:to_b->to_a->finish->to_a->to_b->finish (dry-run: no library loaded)
+[not_executed] 53:to_b->to_a->finish->to_a->finish (dry-run: no library loaded)
+[not_executed] 54:to_b->to_a->finish->to_a->finish->to_b (dry-run: no library loaded)
+[not_executed] 55:to_b->to_a->finish->finish (dry-run: no library loaded)
+[not_executed] 56:to_b->to_a->finish->finish->to_b (dry-run: no library loaded)
+[not_executed] 57:to_b->to_a->finish->finish->to_b->to_a (dry-run: no library loaded)
+[not_executed] 58:to_b->to_a->finish->finish->to_a (dry-run: no library loaded)
+[not_executed] 59:to_b->to_a->finish->finish->to_a->to_b (dry-run: no library loaded)
+[not_executed] 60:to_b->finish (dry-run: no library loaded)
+[not_executed] 61:to_b->finish->to_b (dry-run: no library loaded)
+[not_executed] 62:to_b->finish->to_b->to_a (dry-run: no library loaded)
+[not_executed] 63:to_b->finish->to_b->to_a->to_a (dry-run: no library loaded)
+[not_executed] 64:to_b->finish->to_b->to_a->to_a->finish (dry-run: no library loaded)
+[not_executed] 65:to_b->finish->to_b->to_a->finish (dry-run: no library loaded)
+[not_executed] 66:to_b->finish->to_b->to_a->finish->to_a (dry-run: no library loaded)
+[not_executed] 67:to_b->finish->to_b->finish (dry-run: no library loaded)
+[not_executed] 68:to_b->finish->to_b->finish->to_a (dry-run: no library loaded)
+[not_executed] 69:to_b->finish->to_b->finish->to_a->to_a (dry-run: no library loaded)
+[not_executed] 70:to_b->finish->to_a (dry-run: no library loaded)
+[not_executed] 71:to_b->finish->to_a->to_b (dry-run: no library loaded)
+[not_executed] 72:to_b->finish->to_a->to_b->to_a (dry-run: no library loaded)
+[not_executed] 73:to_b->finish->to_a->to_b->to_a->finish (dry-run: no library loaded)
+[not_executed] 74:to_b->finish->to_a->to_b->finish (dry-run: no library loaded)
+[not_executed] 75:to_b->finish->to_a->to_b->finish->to_a (dry-run: no library loaded)
+[not_executed] 76:to_b->finish->to_a->to_a (dry-run: no library loaded)
+[not_executed] 77:to_b->finish->to_a->to_a->to_b (dry-run: no library loaded)
+[not_executed] 78:to_b->finish->to_a->to_a->to_b->finish (dry-run: no library loaded)
+[not_executed] 79:to_b->finish->to_a->to_a->finish (dry-run: no library loaded)
+[not_executed] 80:to_b->finish->to_a->to_a->finish->to_b (dry-run: no library loaded)
+[not_executed] 81:to_b->finish->to_a->finish (dry-run: no library loaded)
+[not_executed] 82:to_b->finish->to_a->finish->to_b (dry-run: no library loaded)
+[not_executed] 83:to_b->finish->to_a->finish->to_b->to_a (dry-run: no library loaded)
+[not_executed] 84:to_b->finish->to_a->finish->to_a (dry-run: no library loaded)
+[not_executed] 85:to_b->finish->to_a->finish->to_a->to_b (dry-run: no library loaded)
+[not_executed] 86:to_b->finish->finish (dry-run: no library loaded)
+[not_executed] 87:to_b->finish->finish->to_b (dry-run: no library loaded)
+[not_executed] 88:to_b->finish->finish->to_b->to_a (dry-run: no library loaded)
+[not_executed] 89:to_b->finish->finish->to_b->to_a->to_a (dry-run: no library loaded)
+[not_executed] 90:to_b->finish->finish->to_a (dry-run: no library loaded)
+[not_executed] 91:to_b->finish->finish->to_a->to_b (dry-run: no library loaded)
+[not_executed] 92:to_b->finish->finish->to_a->to_b->to_a (dry-run: no library loaded)
+[not_executed] 93:to_b->finish->finish->to_a->to_a (dry-run: no library loaded)
+[not_executed] 94:to_b->finish->finish->to_a->to_a->to_b (dry-run: no library loaded)
+[not_executed] 95:to_a (dry-run: no library loaded)
+[not_executed] 96:to_a->to_b (dry-run: no library loaded)
+[not_executed] 97:to_a->to_b->to_b (dry-run: no library loaded)
+[not_executed] 98:to_a->to_b->to_b->to_a (dry-run: no library loaded)
+[not_executed] 99:to_a->to_b->to_b->to_a->finish (dry-run: no library loaded)
+# warning: generation was truncated by --max-flows
+[missing adapter protocol whitespace]
+{
+  "seed": 0,
+  "seed_set": false,
+  "version": "plan_goal-1.0.0",
+  "model_digest": "e11fe0cb52122f36",
+  "files": ["/home/workspace_data/works/myprojects/wise_combine_test.evaluate‌/wise_combine_test-review-3-assets/plan_goal/Q1.ct"],
+  "total": 10,
+  "passed": 3,
+  "failed": 7,
+  "flows": [
+    {"id": "0:q_open->q_pop_empty", "flow": ["q_open", "q_pop_empty"], "status": "failed", "exit_code": 0, "detail": "return mismatch for q_pop_empty: expected -2, got 0", "expected": "-2", "actual": "0", "bindings": "", "steps": [{"function":"q_open","status":"passed","detail":"","expected":"","actual":"","args":{}}, {"function":"q_pop_empty","status":"failed","detail":"return mismatch for q_pop_empty: expected -2, got 0","expected":"-2","actual":"0","args":{}}]},
+    {"id": "1:", "flow": [], "status": "passed", "exit_code": 0, "detail": "", "expected": "", "actual": "", "bindings": "", "steps": []},
+    {"id": "2:q_open", "flow": ["q_open"], "status": "passed", "exit_code": 0, "detail": "", "expected": "", "actual": "", "bindings": "", "steps": [{"function":"q_open","status":"passed","detail":"","expected":"","actual":"","args":{}}]},
+    {"id": "3:q_open->q_open", "flow": ["q_open", "q_open"], "status": "passed", "exit_code": 0, "detail": "", "expected": "", "actual": "", "bindings": "", "steps": [{"function":"q_open","status":"passed","detail":"","expected":"","actual":"","args":{}}, {"function":"q_open","status":"passed","detail":"","expected":"","actual":"","args":{}}]},
+    {"id": "4:q_open->q_open->q_pop_empty", "flow": ["q_open", "q_open", "q_pop_empty"], "status": "failed", "exit_code": 0, "detail": "return mismatch for q_pop_empty: expected -2, got 0", "expected": "-2", "actual": "0", "bindings": "", "steps": [{"function":"q_open","status":"passed","detail":"","expected":"","actual":"","args":{}}, {"function":"q_open","status":"passed","detail":"","expected":"","actual":"","args":{}}, {"function":"q_pop_empty","status":"failed","detail":"return mismatch for q_pop_empty: expected -2, got 0","expected":"-2","actual":"0","args":{}}]},
+    {"id": "5:q_open->q_open->q_pop_empty->q_pop_empty", "flow": ["q_open", "q_open", "q_pop_empty", "q_pop_empty"], "status": "failed", "exit_code": 0, "detail": "return mismatch for q_pop_empty: expected -2, got 0", "expected": "-2", "actual": "0", "bindings": "", "steps": [{"function":"q_open","status":"passed","detail":"","expected":"","actual":"","args":{}}, {"function":"q_open","status":"passed","detail":"","expected":"","actual":"","args":{}}, {"function":"q_pop_empty","status":"failed","detail":"return mismatch for q_pop_empty: expected -2, got 0","expected":"-2","actual":"0","args":{}}]},
+    {"id": "6:q_open->q_pop_empty", "flow": ["q_open", "q_pop_empty"], "status": "failed", "exit_code": 0, "detail": "return mismatch for q_pop_empty: expected -2, got 0", "expected": "-2", "actual": "0", "bindings": "", "steps": [{"function":"q_open","status":"passed","detail":"","expected":"","actual":"","args":{}}, {"function":"q_pop_empty","status":"failed","detail":"return mismatch for q_pop_empty: expected -2, got 0","expected":"-2","actual":"0","args":{}}]},
+    {"id": "7:q_open->q_pop_empty->q_pop_empty", "flow": ["q_open", "q_pop_empty", "q_pop_empty"], "status": "failed", "exit_code": 0, "detail": "return mismatch for q_pop_empty: expected -2, got 0", "expected": "-2", "actual": "0", "bindings": "", "steps": [{"function":"q_open","status":"passed","detail":"","expected":"","actual":"","args":{}}, {"function":"q_pop_empty","status":"failed","detail":"return mismatch for q_pop_empty: expected -2, got 0","expected":"-2","actual":"0","args":{}}]},
+    {"id": "8:q_pop_empty", "flow": ["q_pop_empty"], "status": "failed", "exit_code": 0, "detail": "return mismatch for q_pop_empty: expected -2, got 0", "expected": "-2", "actual": "0", "bindings": "", "steps": [{"function":"q_pop_empty","status":"failed","detail":"return mismatch for q_pop_empty: expected -2, got 0","expected":"-2","actual":"0","args":{}}]},
+    {"id": "9:q_pop_empty->q_pop_empty", "flow": ["q_pop_empty", "q_pop_empty"], "status": "failed", "exit_code": 0, "detail": "return mismatch for q_pop_empty: expected -2, got 0", "expected": "-2", "actual": "0", "bindings": "", "steps": [{"function":"q_pop_empty","status":"failed","detail":"return mismatch for q_pop_empty: expected -2, got 0","expected":"-2","actual":"0","args":{}}]}
+  ]
+}

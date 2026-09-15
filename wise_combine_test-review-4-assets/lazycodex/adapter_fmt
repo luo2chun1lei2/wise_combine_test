@@ -1,0 +1,4 @@
+#!/bin/sh
+# legal JSON with: newlines+spaces, reordered fields, escaped string, unicode escape, nested-free returns
+cat > /dev/null
+printf '{\n  "returns"  : { "v" : "caf\\u00e9 \\"quoted\\" \\\\ back" , "n" : 42 } ,\n  "stderr":"" ,\n  "observed_state" : "done" ,\n  "status" : "ok" ,\n  "protocol" : 1\n}\n'
